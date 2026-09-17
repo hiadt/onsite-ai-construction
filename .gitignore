@@ -1,0 +1,34 @@
+# 原始数据与模型
+*.npz
+*.npy
+*.onnx
+*.joblib
+*.pth
+*.pt
+*.zip
+*.rar
+*.7z
+
+# 受限或大体量目录
+data/
+raw/
+restricted_raw/
+model_artifacts/
+builds/
+outputs/
+
+# 运行缓存
+__pycache__/
+*.pyc
+*.log
+.pytest_cache/
+.ipynb_checkpoints/
+
+# 本机配置与凭据
+.env
+*.local
+auth.json
+.sandbox-secrets/
+.vscode/
+.idea/
+
