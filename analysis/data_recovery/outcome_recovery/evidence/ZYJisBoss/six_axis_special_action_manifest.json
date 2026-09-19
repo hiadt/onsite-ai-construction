@@ -1,0 +1,264 @@
+{
+  "schema": "special_action_contract_v1",
+  "maps": {
+    "cliff_1": {
+      "schema": "special_action_contract_v1",
+      "map": "cliff_1",
+      "route_relative_path": "cliff_1.npz",
+      "route_file_sha256": "917850222d64a7be66fb688fd8e5eb41a9841264178992827300cc1a39a9ecc6",
+      "route_reference_sha256": "dd7b2be95fffce3ff4676e36f412a99711031e151e7aa12d9f04c757c2fec4e7",
+      "action_count": 0,
+      "actions": [],
+      "global_validation": {
+        "continuous_boundary_clearance_m": 2.8049497181795884,
+        "continuous_pcd_clearance_m": 3.8098407932964,
+        "continuous_min_body_clearance_m": 2.8049497181795884
+      }
+    },
+    "cliff_2": {
+      "schema": "special_action_contract_v1",
+      "map": "cliff_2",
+      "route_relative_path": "cliff_2.npz",
+      "route_file_sha256": "82710dd3cf2645d18acb19cb411cf9c588eb5a554a02cc2a1c537c9cf64405a7",
+      "route_reference_sha256": "b9a33b3d28957591c7f99b51817ee7aee80a1918976d58e062ebef987f9a2348",
+      "action_count": 0,
+      "actions": [],
+      "global_validation": {
+        "continuous_boundary_clearance_m": 2.8418596298051777,
+        "continuous_pcd_clearance_m": 1.942508152527484,
+        "continuous_min_body_clearance_m": 1.942508152527484
+      }
+    },
+    "cross_1": {
+      "schema": "special_action_contract_v1",
+      "map": "cross_1",
+      "route_relative_path": "cross_1.npz",
+      "route_file_sha256": "309d95fbe41bd18a96d28db8343b3be51e3029e35100b5166dee8fbc964c0534",
+      "route_reference_sha256": "b23d87e2ae754ae24848af39fac9656dcb07f81c2a83971bca63cd719c114840",
+      "action_count": 0,
+      "actions": [],
+      "global_validation": {
+        "continuous_boundary_clearance_m": 0.854782680764687,
+        "continuous_pcd_clearance_m": 2.0620042498332065,
+        "continuous_min_body_clearance_m": 0.854782680764687
+      }
+    },
+    "cross_2": {
+      "schema": "special_action_contract_v1",
+      "map": "cross_2",
+      "route_relative_path": "cross_2.npz",
+      "route_file_sha256": "c516c62a4b41c26af3054cf209b64541c6d2523b0bbbcef3420c2153385b5da7",
+      "route_reference_sha256": "b44c8956dbf8ade19c5330d44e0829ce152883909d9ab206ff6d2855e452f09e",
+      "action_count": 0,
+      "actions": [],
+      "global_validation": {
+        "continuous_boundary_clearance_m": 0.45648370923454973,
+        "continuous_pcd_clearance_m": 2.4943734182743253,
+        "continuous_min_body_clearance_m": 0.45648370923454973
+      }
+    },
+    "mounarea_1": {
+      "schema": "special_action_contract_v1",
+      "map": "mounarea_1",
+      "route_relative_path": "mounarea_1.npz",
+      "route_file_sha256": "2c702cca9b77fce9b03eaea15f90191ad2f18f2ec607b8257fccbe98b4b2cea1",
+      "route_reference_sha256": "b894529cb49f476b9543ea7372e760ff1093374d9d5e3c0d2767d7002b26baef",
+      "action_count": 0,
+      "actions": [],
+      "global_validation": {
+        "continuous_boundary_clearance_m": 1.0669871378059863,
+        "continuous_pcd_clearance_m": 0.7810971602760033,
+        "continuous_min_body_clearance_m": 0.7810971602760033
+      }
+    },
+    "mounarea_2": {
+      "schema": "special_action_contract_v1",
+      "map": "mounarea_2",
+      "route_relative_path": "mounarea_2.npz",
+      "route_file_sha256": "742e4b9b32fcc73c6a2d5e180eeae475020b704882afad5df41b2d8e3d548942",
+      "route_reference_sha256": "d3dda1e6dcc52113ebed65ee463232f49686e52c1290a7579662dc968c31d282",
+      "action_count": 0,
+      "actions": [],
+      "global_validation": {
+        "continuous_boundary_clearance_m": 2.1707991724326057,
+        "continuous_pcd_clearance_m": 3.33160258635779,
+        "continuous_min_body_clearance_m": 2.1707991724326057
+      }
+    },
+    "narrow_1": {
+      "schema": "special_action_contract_v1",
+      "map": "narrow_1",
+      "route_relative_path": "narrow_1.npz",
+      "route_file_sha256": "d1485faa6f5ab452d85d3c3ed5c105dd40cdfa5ffdb4be13485b0ae78703799a",
+      "route_reference_sha256": "baebf8366bcb8f0c78bdd3b85f91691addc85b5a473465b17c6b1c42523812c0",
+      "action_count": 0,
+      "actions": [],
+      "global_validation": {
+        "continuous_boundary_clearance_m": -0.7619108000996464,
+        "continuous_pcd_clearance_m": 0.4626601333263926,
+        "continuous_min_body_clearance_m": -0.7619108000996464
+      }
+    },
+    "overpass_1": {
+      "schema": "special_action_contract_v1",
+      "map": "overpass_1",
+      "route_relative_path": "overpass_1.npz",
+      "route_file_sha256": "62ed24e06b925aaef1dd1995c23cade1f7959ebb2d5d51203193acc00348d137",
+      "route_reference_sha256": "09e0665383486fcd35583c9bdebd735e5b5a0c23518dab1efbce63f2ca3ab6a5",
+      "action_count": 0,
+      "actions": [],
+      "global_validation": {
+        "continuous_boundary_clearance_m": 0.2672332960568031,
+        "continuous_pcd_clearance_m": 1.392653996004575,
+        "continuous_min_body_clearance_m": 0.2672332960568031
+      }
+    },
+    "overpass_2": {
+      "schema": "special_action_contract_v1",
+      "map": "overpass_2",
+      "route_relative_path": "overpass_2.npz",
+      "route_file_sha256": "8007a657b6bc3ada345257d7659ed3a2d2a3af01b9ea42c4f420262a11880cca",
+      "route_reference_sha256": "288d801b959f244b7f6168b2d0360631f47b6a9cfd8c6633e3d2ea48e6190293",
+      "action_count": 1,
+      "actions": [
+        {
+          "ordinal": 0,
+          "type": "point_spin",
+          "type_id": 2,
+          "start_index": 8081,
+          "end_index": 8371,
+          "robust_terminal_region_certified": true,
+          "certification_source": "A_high_score_empirical_and_live_sweep_revalidated",
+          "execution_policy": "A_empirical_legacy_gate",
+          "entry_state_reference": {
+            "s_m": 1616.2,
+            "x_m": 27.891945087372317,
+            "y_m": -117.62497468570916,
+            "z_m": 0.0,
+            "yaw_rad": -2.1815229171464403,
+            "speed_mps": 7.8
+          },
+          "exit_state_reference": {
+            "s_m": 1674.2,
+            "x_m": -9.426859262079233,
+            "y_m": -130.19911621136453,
+            "z_m": 0.0,
+            "yaw_rad": -4.606003012990282,
+            "speed_mps": 11.586014094070523
+          },
+          "entry_envelope": {
+            "max_lateral_error_m": 3.0,
+            "maximum_speed_mps": 8.0,
+            "max_heading_error_deg": 35.0,
+            "preparation_distance_m": 40.0,
+            "preparation_target_speed_mps": 7.8
+          },
+          "exit_envelope": {
+            "source": "A_high_score_post_spin_connector",
+            "missed_trigger_grace_m": 20.0
+          },
+          "payload": {
+            "kind": "empirical_certified_npz_cache_with_live_sweep",
+            "relative_path": "overpass_2_A_empirical_fixed_route.npz",
+            "file_sha256": "b92faa9ec1908dc6e9577172ce158728f67cfb6ed7ebe19ada32967dd5410c28",
+            "legacy_payload_sha256": "56e0492453952df6a17561c9e88598ce28fa90930500386f8e2f7e8d66a0e72f",
+            "certificate_schema": 2,
+            "runtime_live_heightmap_pcd_sweep_required": true
+          },
+          "estimated_total_time_s": 21.72817963441992
+        }
+      ],
+      "global_validation": {
+        "compiled_special_validation_passed": true,
+        "compiled_special_interval_count": 1,
+        "historical_A_high_score_runs_passed": true,
+        "runtime_live_heightmap_pcd_sweep_required": true
+      }
+    },
+    "ramp_1": {
+      "schema": "special_action_contract_v1",
+      "map": "ramp_1",
+      "route_relative_path": "ramp_1.npz",
+      "route_file_sha256": "51d8fc123563b0115bfe4fd06d7a256cf949e58faf957ffc6ffb77d3a6060cff",
+      "route_reference_sha256": "065c103583a1dfbdfc66de408f84949059e30b46f728125249d03d77473db638",
+      "action_count": 0,
+      "actions": [],
+      "global_validation": {
+        "continuous_boundary_clearance_m": 0.7889372517359607,
+        "continuous_pcd_clearance_m": 2.5291652507283757,
+        "continuous_min_body_clearance_m": 0.7889372517359607
+      }
+    },
+    "ramp_2": {
+      "schema": "special_action_contract_v1",
+      "map": "ramp_2",
+      "route_relative_path": "ramp_2.npz",
+      "route_file_sha256": "3d0f6d1df39fae1987771d0337c5d96abadbdcc4c8cfdb9d1d1ebdd35404da65",
+      "route_reference_sha256": "40b4fd7e2a59c9eb17c08e9a088c931d3e4d3e083e28fc3ad4fde9120131e031",
+      "action_count": 0,
+      "actions": [],
+      "global_validation": {
+        "continuous_boundary_clearance_m": 1.3107300781554003,
+        "continuous_pcd_clearance_m": 2.0719516042179884,
+        "continuous_min_body_clearance_m": 1.3107300781554003
+      }
+    },
+    "turnaround_1": {
+      "schema": "special_action_contract_v1",
+      "map": "turnaround_1",
+      "route_relative_path": "turnaround_1.npz",
+      "route_file_sha256": "7beb102a549ee17ec2acc4503d7a98bf519dba5d2eb7a3c478406d8a546e1f60",
+      "route_reference_sha256": "44bfddcbcaf64059be342ef899c9ff2528b3b78c571a8b3f95de09358e3f096a",
+      "action_count": 1,
+      "actions": [
+        {
+          "ordinal": 0,
+          "type": "continuous_icr",
+          "type_id": 1,
+          "start_index": 413,
+          "end_index": 755,
+          "entry_state_reference": {
+            "s_m": 82.60000000000001,
+            "x_m": 7.349578109877855,
+            "y_m": -17.38647991032749,
+            "z_m": 0.0,
+            "yaw_rad": 1.5726172655228483,
+            "speed_mps": 18.796328595729516
+          },
+          "exit_state_reference": {
+            "s_m": 151.0,
+            "x_m": -4.171716690112504,
+            "y_m": -5.702555475892432,
+            "z_m": 0.0,
+            "yaw_rad": 4.714209919112655,
+            "speed_mps": 14.829601992810996
+          },
+          "entry_envelope": {
+            "source": "embedded_route_reference",
+            "maximum_speed_mps": 18.796328595729516
+          },
+          "exit_envelope": {
+            "source": "embedded_route_reference",
+            "maximum_speed_mps": 14.829601992810996
+          },
+          "payload": {
+            "kind": "embedded_npz_arrays",
+            "fields": [
+              "special_manoeuvre_type",
+              "variable_icr_mask",
+              "beta_ref_rad",
+              "yaw_per_m_ref_1pm",
+              "beta_steer_ff_rad",
+              "yaw_rate_ref_radps"
+            ]
+          }
+        }
+      ],
+      "global_validation": {
+        "continuous_boundary_clearance_m": 0.629999951830009,
+        "continuous_pcd_clearance_m": 0.5900731141664699,
+        "continuous_min_body_clearance_m": 0.5900731141664699
+      }
+    }
+  }
+}
