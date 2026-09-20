@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python3
 """Execute the seven-step PathGuard data pipeline.
 
@@ -53,20 +54,22 @@ def load():
     for r in read_csv(BASELINE): rows.append(canonical(r,"baseline_v1_359","baseline"))
     for member in ("SHANYU000","ZYJisBoss"):
         root=AUDIT/member
-        for name in ("local_candidate_samples.csv","new_candidate_samples.csv","duplicate_or_conflict_samples.csv","confirmed_new_unlabeled_routes.csv","confirmed_new_labeled_samples.csv","unresolved_candidates.csv"):
-            for r in read_csv(root/name):
-                status=first(r,"comparison_status","classification","recovery_status")
-                if "aggregate" in status or "aggregate" in first(r,"parse_notes"): group="aggregate_only"
-                elif "metric" in status or "metric" in first(r,"parse_notes"): group="metric_only"
-                elif "unlabeled" in status or "no_result" in status or "unresolved" in status: group="route_only"
-                elif first(r,"hard_certificate_passed","true_label"): group="real_labeled"
+        # Outcome-recovery tables are authoritative for the 3061+41 target pool.
+        for name in ("SHANYU000_outcome_recovery.csv","ZYJisBoss_outcome_recovery.csv"):
+            for r in read_csv(AUDIT/"outcome_recovery"/name):
+                status=first(r,"outcome_recovery_status","recovery_status","comparison_status")
+                if status == "aggregate_only": group="aggregate_only"
+                elif status == "has_metrics_no_final_label": group="metric_only"
+                elif status == "no_result_found": group="route_only"
+                elif first(r,"outcome_label","hard_certificate_passed","recovered_passed","recovered_failed"): group="real_labeled"
                 else: group="route_only"
                 rows.append(canonical(r,member,group))
-        for name in ("SHANYU000_outcome_recovery.csv","ZYJisBoss_outcome_recovery.csv"):
-            for r in read_csv(root/"outcome_recovery"/name):
-                status=first(r,"outcome_recovery_status","recovery_status","comparison_status")
-                group = "real_labeled" if first(r,"recovered_passed","recovered_failed","hard_certificate_passed") else ("metric_only" if "metric" in status else "route_only")
-                rows.append(canonical(r,member,group))
+        # Candidate inventories contribute only explicit true labels; their unlabeled
+        # rows are already represented by the authoritative outcome tables above.
+        for name in ("local_candidate_samples.csv","new_candidate_samples.csv","confirmed_new_labeled_samples.csv"):
+            for r in read_csv(root/name):
+                if first(r,"hard_certificate_passed","true_label","outcome_label") not in ("0","1","true","false","passed","failed"): continue
+                rows.append(canonical(r,member,"real_labeled"))
     return rows
 
 def dedup(rows):
