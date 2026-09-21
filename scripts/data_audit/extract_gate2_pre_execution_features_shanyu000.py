@@ -28,8 +28,9 @@ V3_COMMIT = "d423f0e"
 V3_OBJECT = f"{V3_COMMIT}:data/frozen/raw_samples/{MEMBER}/manifest.csv"
 LOCAL_CANDIDATES = REPO_ROOT / "analysis" / "data_recovery" / MEMBER / "local_candidate_samples.csv"
 OUTPUT_DIR = REPO_ROOT / "data" / "derived_features" / MEMBER
+CONTRACT_PATH = REPO_ROOT / "data" / "derived_features" / "feature_contract_v2.json"
 REPORT_PATH = REPO_ROOT / "reports" / "data_recovery" / MEMBER / "gate2_feature_extraction.md"
-FEATURE_VERSION = "pathguard_preexec_v1.0.0"
+FEATURE_VERSION = "pathguard_preexec_v2.0.0"
 FEATURE_SOURCE = "npz_pre_execution_arrays_only"
 WINDOW_M = 10.0
 SOURCE_MACHINE_ALIAS = f"{MEMBER}_local"
@@ -45,13 +46,15 @@ FORBIDDEN_ARRAY_PATTERNS = (
     "completed",
 )
 
-IDENTITY_FIELDS = [
-    "sample_id", "route_file_sha256", "map_id", "vehicle_structure",
-    "label_status", "true_label", "route_id", "feature_version",
+METADATA_COLUMNS = [
+    "sample_id", "route_file_sha256", "map_id", "route_id", "label_status",
+    "true_label", "vehicle_structure", "vehicle_structure_evidence",
+    "vehicle_axis_count", "source_machine", "match_status",
+    "vehicle_configuration_fingerprint_summary", "feature_version",
     "feature_source", "feature_missing_reason",
 ]
 
-FEATURE_FIELDS = [
+TRAINING_FEATURE_COLUMNS = [
     "route_length_m", "point_count", "sampling_spacing_mean_m",
     "sampling_spacing_median_m", "sampling_spacing_p95_m",
     "curvature_mean_1pm", "curvature_abs_mean_1pm", "curvature_abs_max_1pm",
@@ -77,8 +80,66 @@ FEATURE_FIELDS = [
     "window10m_max_mean_abs_steer_change_radpm",
     "window10m_min_mean_left_clearance_m",
     "window10m_min_mean_right_clearance_m",
-    "steering_vector_dim", "vehicle_configuration_fingerprint_summary",
+    "steering_source_dim",
 ]
+
+FEATURE_UNITS_AND_DEFINITIONS = {
+    "route_length_m": ("m", "Difference between the final and initial route station values."),
+    "point_count": ("count", "Number of ordered route samples."),
+    "sampling_spacing_mean_m": ("m", "Mean positive difference between consecutive route stations."),
+    "sampling_spacing_median_m": ("m", "Median positive difference between consecutive route stations."),
+    "sampling_spacing_p95_m": ("m", "95th percentile of positive consecutive route-station differences."),
+    "curvature_mean_1pm": ("1/m", "Arithmetic mean of signed planned route curvature."),
+    "curvature_abs_mean_1pm": ("1/m", "Arithmetic mean of absolute planned route curvature."),
+    "curvature_abs_max_1pm": ("1/m", "Maximum absolute planned route curvature."),
+    "curvature_abs_p50_1pm": ("1/m", "50th percentile of absolute planned route curvature."),
+    "curvature_abs_p90_1pm": ("1/m", "90th percentile of absolute planned route curvature."),
+    "curvature_abs_p95_1pm": ("1/m", "95th percentile of absolute planned route curvature."),
+    "curvature_abs_p99_1pm": ("1/m", "99th percentile of absolute planned route curvature."),
+    "curvature_change_abs_mean_1pm2": ("1/m^2", "Mean absolute curvature derivative with respect to route station."),
+    "curvature_change_abs_max_1pm2": ("1/m^2", "Maximum absolute curvature derivative with respect to route station."),
+    "curvature_change_abs_p95_1pm2": ("1/m^2", "95th percentile of absolute curvature derivative with respect to route station."),
+    "slope_mean": ("m/m", "Mean route elevation derivative with respect to route station."),
+    "slope_abs_mean": ("m/m", "Mean absolute route elevation derivative with respect to route station."),
+    "slope_abs_max": ("m/m", "Maximum absolute route elevation derivative with respect to route station."),
+    "slope_abs_p95": ("m/m", "95th percentile of absolute route elevation derivative."),
+    "slope_change_abs_mean_1pm": ("1/m", "Mean absolute slope derivative with respect to route station."),
+    "slope_change_abs_max_1pm": ("1/m", "Maximum absolute slope derivative with respect to route station."),
+    "slope_change_abs_p95_1pm": ("1/m", "95th percentile of absolute slope derivative with respect to route station."),
+    "speed_mean_mps": ("m/s", "Arithmetic mean of planned route speed."),
+    "speed_max_mps": ("m/s", "Maximum planned route speed."),
+    "speed_p50_mps": ("m/s", "50th percentile of planned route speed."),
+    "speed_p90_mps": ("m/s", "90th percentile of planned route speed."),
+    "speed_p95_mps": ("m/s", "95th percentile of planned route speed."),
+    "speed_abs_curvature_product_mean_mpspm": ("1/s", "Mean of planned speed multiplied by absolute planned curvature."),
+    "speed_abs_curvature_product_p95_mpspm": ("1/s", "95th percentile of planned speed multiplied by absolute planned curvature."),
+    "lateral_accel_proxy_mean_mps2": ("m/s^2", "Mean of planned speed squared multiplied by absolute planned curvature."),
+    "lateral_accel_proxy_max_mps2": ("m/s^2", "Maximum planned speed squared multiplied by absolute planned curvature."),
+    "lateral_accel_proxy_p95_mps2": ("m/s^2", "95th percentile of planned speed squared multiplied by absolute planned curvature."),
+    "speed_abs_curvature_correlation": ("dimensionless", "Pearson correlation between planned speed and absolute planned curvature, or zero for a constant input."),
+    "steer_abs_mean_rad": ("rad", "Mean pointwise steering magnitude from the selected pre-execution steering array."),
+    "steer_abs_max_rad": ("rad", "Maximum pointwise steering magnitude from the selected pre-execution steering array."),
+    "steer_abs_p50_rad": ("rad", "50th percentile of pointwise steering magnitude."),
+    "steer_abs_p90_rad": ("rad", "90th percentile of pointwise steering magnitude."),
+    "steer_abs_p95_rad": ("rad", "95th percentile of pointwise steering magnitude."),
+    "steer_change_abs_mean_radpm": ("rad/m", "Mean absolute steering-magnitude derivative with respect to route station."),
+    "steer_change_abs_max_radpm": ("rad/m", "Maximum absolute steering-magnitude derivative with respect to route station."),
+    "steer_change_abs_p95_radpm": ("rad/m", "95th percentile of absolute steering-magnitude derivative with respect to route station."),
+    "yaw_rate_abs_mean_radps": ("rad/s", "Mean absolute planned yaw rate, using the stored value or the documented pre-execution derivation."),
+    "yaw_rate_abs_max_radps": ("rad/s", "Maximum absolute planned yaw rate."),
+    "yaw_rate_abs_p95_radps": ("rad/s", "95th percentile of absolute planned yaw rate."),
+    "yaw_rate_change_abs_mean_radps_per_m": ("rad/(s*m)", "Mean absolute planned yaw-rate derivative with respect to route station."),
+    "yaw_rate_change_abs_max_radps_per_m": ("rad/(s*m)", "Maximum absolute planned yaw-rate derivative with respect to route station."),
+    "yaw_rate_change_abs_p95_radps_per_m": ("rad/(s*m)", "95th percentile of absolute planned yaw-rate derivative with respect to route station."),
+    "static_left_clearance_min_m": ("m", "Minimum planned static left-boundary clearance."),
+    "static_right_clearance_min_m": ("m", "Minimum planned static right-boundary clearance."),
+    "static_boundary_clearance_min_m": ("m", "Minimum of the planned static left- and right-boundary clearances."),
+    "window10m_max_mean_abs_curvature_1pm": ("1/m", "Maximum trailing-10-m window mean of absolute planned curvature."),
+    "window10m_max_mean_abs_steer_change_radpm": ("rad/m", "Maximum trailing-10-m window mean of absolute steering change per route metre."),
+    "window10m_min_mean_left_clearance_m": ("m", "Minimum trailing-10-m window mean of planned static left-boundary clearance."),
+    "window10m_min_mean_right_clearance_m": ("m", "Minimum trailing-10-m window mean of planned static right-boundary clearance."),
+    "steering_source_dim": ("count", "Last-dimension size of the NPZ steering array actually used for feature calculation; this is not vehicle axis count."),
+}
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -152,8 +213,46 @@ def fingerprint_summary(arrays: dict[str, np.ndarray], vehicle_structure: str, s
             value = str(raw[0]).strip()
             if value:
                 return value[:16]
-    material = f"derived:{vehicle_structure}:steering_vector_dim={steer_dim}"
+    material = f"derived:{vehicle_structure}:steering_source_dim={steer_dim}"
     return "derived-" + hashlib.sha256(material.encode("utf-8")).hexdigest()[:16]
+
+
+def normalize_vehicle_structure(raw: str) -> tuple[str, str, int | str]:
+    if raw == "five_axis_explicit":
+        return "five_axis", "explicit", 5
+    if raw == "six_axis_explicit":
+        return "six_axis", "explicit", 6
+    if raw == "six_axis_structural":
+        return "six_axis", "structural_inference", 6
+    return "unknown", "unknown", ""
+
+
+def build_feature_contract() -> tuple[dict[str, Any], str]:
+    if list(FEATURE_UNITS_AND_DEFINITIONS) != TRAINING_FEATURE_COLUMNS:
+        raise RuntimeError("Feature definition order does not match training feature order")
+    ordered_columns = METADATA_COLUMNS + TRAINING_FEATURE_COLUMNS
+    schema_material = FEATURE_VERSION + "\n" + "\n".join(ordered_columns)
+    schema_sha256 = hashlib.sha256(schema_material.encode("utf-8")).hexdigest()
+    contract = {
+        "feature_version": FEATURE_VERSION,
+        "metadata_columns": METADATA_COLUMNS,
+        "training_feature_columns": TRAINING_FEATURE_COLUMNS,
+        "training_features": [
+            {"name": name, "unit": FEATURE_UNITS_AND_DEFINITIONS[name][0], "definition": FEATURE_UNITS_AND_DEFINITIONS[name][1]}
+            for name in TRAINING_FEATURE_COLUMNS
+        ],
+        "excluded_from_training": METADATA_COLUMNS,
+        "prohibited_source_fields": [
+            "hard_certificate_passed", "hard_failure_reasons", "dynamic_pcd_clearance_m",
+            "maximum_slip_ratio", "maximum_tire_utilization", "report_path",
+            "build_family", "source_folder_name",
+        ],
+        "local_window_m": 10,
+        "label_definition": "1=pass, 0=fail",
+        "schema_sha256_algorithm": "SHA-256 over UTF-8 feature_version followed by metadata_columns and training_feature_columns, each separated by LF",
+        "schema_sha256": schema_sha256,
+    }
+    return contract, schema_sha256
 
 
 def extract_features(arrays: dict[str, np.ndarray], vehicle_structure: str) -> tuple[dict[str, Any], list[str], list[str]]:
@@ -283,7 +382,7 @@ def extract_features(arrays: dict[str, np.ndarray], vehicle_structure: str) -> t
         "window10m_max_mean_abs_steer_change_radpm": float(np.max(rolling_means(steer_rate, s_m, WINDOW_M))),
         "window10m_min_mean_left_clearance_m": float(np.min(rolling_means(left, s_m, WINDOW_M))),
         "window10m_min_mean_right_clearance_m": float(np.min(rolling_means(right, s_m, WINDOW_M))),
-        "steering_vector_dim": steer_dim,
+        "steering_source_dim": steer_dim,
         "vehicle_configuration_fingerprint_summary": fingerprint_summary(arrays, vehicle_structure, steer_dim),
     }
     numeric = [value for name, value in features.items() if name != "vehicle_configuration_fingerprint_summary"]
@@ -311,6 +410,7 @@ def map_family(map_id: str) -> str:
 def main() -> None:
     v3_rows = read_v3()
     candidate_rows = read_csv(LOCAL_CANDIDATES)
+    contract, schema_sha256 = build_feature_contract()
     v3_by_hash = {row["route_file_sha256"].lower(): row for row in v3_rows}
     v3_by_id = {row["sample_id"]: row for row in v3_rows}
 
@@ -331,6 +431,7 @@ def main() -> None:
 
     for v3 in v3_rows:
         expected_hash = v3["route_file_sha256"].lower()
+        vehicle_structure, structure_evidence, axis_count = normalize_vehicle_structure(v3["vehicle_structure"])
         candidates = candidates_by_hash.get(expected_hash, [])
         match_method = "route_file_sha256"
         if not candidates:
@@ -341,8 +442,9 @@ def main() -> None:
         if not existing:
             damaged_rows.append({
                 "sample_id": v3["sample_id"], "route_file_sha256": expected_hash,
-                "map_id": v3["map"], "vehicle_structure": v3["vehicle_structure"],
-                "source_machine": SOURCE_MACHINE_ALIAS,
+                "map_id": v3["map"], "vehicle_structure": vehicle_structure,
+                "vehicle_structure_evidence": structure_evidence, "vehicle_axis_count": axis_count,
+                "source_machine": SOURCE_MACHINE_ALIAS, "feature_version": FEATURE_VERSION,
                 "match_status": "v3_matched", "error_type": "local_file_not_found",
                 "error_message": "No available local NPZ matched the V3 record.",
             })
@@ -369,21 +471,29 @@ def main() -> None:
                 errors.append((type(exc).__name__, clean_error(exc)))
                 continue
 
-            target = "1" if v3["hard_certificate_passed"] == "1" else "0"
+            target = 1 if v3["hard_certificate_passed"] == "1" else 0
+            fingerprint = features.pop("vehicle_configuration_fingerprint_summary")
             feature_rows.append({
                 "sample_id": v3["sample_id"], "route_file_sha256": expected_hash,
-                "map_id": v3["map"], "vehicle_structure": v3["vehicle_structure"],
+                "map_id": v3["map"], "route_id": v3["map"],
                 "label_status": v3["label_status"], "true_label": target,
-                "route_id": v3["map"], "feature_version": FEATURE_VERSION,
-                "feature_source": FEATURE_SOURCE,
+                "vehicle_structure": vehicle_structure,
+                "vehicle_structure_evidence": structure_evidence,
+                "vehicle_axis_count": axis_count, "source_machine": SOURCE_MACHINE_ALIAS,
+                "match_status": "v3_exact_match",
+                "vehicle_configuration_fingerprint_summary": fingerprint,
+                "feature_version": FEATURE_VERSION, "feature_source": FEATURE_SOURCE,
                 "feature_missing_reason": ";".join(missing), **features,
             })
             quality_rows.append({
                 "sample_id": v3["sample_id"], "route_file_sha256": expected_hash,
-                "map_id": v3["map"], "vehicle_structure": v3["vehicle_structure"],
+                "map_id": v3["map"], "vehicle_structure": vehicle_structure,
+                "vehicle_structure_evidence": structure_evidence,
+                "vehicle_axis_count": axis_count, "feature_version": FEATURE_VERSION,
+                "schema_sha256": schema_sha256,
                 "match_method": match_method, "sha256_verified": "true",
                 "npz_readable": "true", "feature_row_included": "true",
-                "numeric_feature_count": len(FEATURE_FIELDS) - 1,
+                "numeric_feature_count": len(TRAINING_FEATURE_COLUMNS),
                 "missing_numeric_feature_count": 0,
                 "fallback_or_derived_count": len(missing),
                 "feature_missing_reason": ";".join(missing),
@@ -397,8 +507,9 @@ def main() -> None:
             error_type, message = errors[0] if errors else ("unknown_error", "Feature extraction failed.")
             damaged_rows.append({
                 "sample_id": v3["sample_id"], "route_file_sha256": expected_hash,
-                "map_id": v3["map"], "vehicle_structure": v3["vehicle_structure"],
-                "source_machine": SOURCE_MACHINE_ALIAS,
+                "map_id": v3["map"], "vehicle_structure": vehicle_structure,
+                "vehicle_structure_evidence": structure_evidence, "vehicle_axis_count": axis_count,
+                "source_machine": SOURCE_MACHINE_ALIAS, "feature_version": FEATURE_VERSION,
                 "match_status": "v3_matched", "error_type": error_type,
                 "error_message": message,
             })
@@ -412,11 +523,16 @@ def main() -> None:
         existing = [row for row in candidates if Path(row.get("route_path_local", "")).is_file()]
         if not existing:
             candidate = candidates[0]
+            unmatched_structure, unmatched_evidence, unmatched_axis_count = normalize_vehicle_structure(
+                candidate.get("vehicle_structure", "")
+            )
             damaged_rows.append({
                 "sample_id": "UNMATCHED-SHANYU000-" + route_hash[:16],
                 "route_file_sha256": route_hash, "map_id": candidate.get("map", ""),
-                "vehicle_structure": candidate.get("vehicle_structure", "unknown_or_conflict"),
-                "source_machine": SOURCE_MACHINE_ALIAS,
+                "vehicle_structure": unmatched_structure,
+                "vehicle_structure_evidence": unmatched_evidence,
+                "vehicle_axis_count": unmatched_axis_count,
+                "source_machine": SOURCE_MACHINE_ALIAS, "feature_version": FEATURE_VERSION,
                 "match_status": "unmatched_candidate", "error_type": "local_file_not_found",
                 "error_message": "No currently available local NPZ remained for this candidate hash.",
             })
@@ -434,21 +550,31 @@ def main() -> None:
             except Exception as exc:
                 read_errors.append(clean_error(exc))
         if not readable:
+            unmatched_structure, unmatched_evidence, unmatched_axis_count = normalize_vehicle_structure(
+                candidate.get("vehicle_structure", "")
+            )
             damaged_rows.append({
                 "sample_id": "UNMATCHED-SHANYU000-" + route_hash[:16],
                 "route_file_sha256": route_hash, "map_id": candidate.get("map", ""),
-                "vehicle_structure": candidate.get("vehicle_structure", "unknown_or_conflict"),
-                "source_machine": SOURCE_MACHINE_ALIAS,
+                "vehicle_structure": unmatched_structure,
+                "vehicle_structure_evidence": unmatched_evidence,
+                "vehicle_axis_count": unmatched_axis_count,
+                "source_machine": SOURCE_MACHINE_ALIAS, "feature_version": FEATURE_VERSION,
                 "match_status": "unmatched_candidate", "error_type": "npz_read_error",
                 "error_message": read_errors[0] if read_errors else "NPZ could not be opened.",
             })
             continue
         seen_unmatched.add(route_hash)
+        unmatched_structure, unmatched_evidence, unmatched_axis_count = normalize_vehicle_structure(
+            candidate.get("vehicle_structure", "")
+        )
         unmatched_rows.append({
             "sample_id": "UNMATCHED-SHANYU000-" + route_hash[:16],
             "route_file_sha256": route_hash,
             "map_id": candidate.get("map", ""),
-            "vehicle_structure": candidate.get("vehicle_structure", "unknown_or_conflict"),
+            "vehicle_structure": unmatched_structure,
+            "vehicle_structure_evidence": unmatched_evidence,
+            "vehicle_axis_count": unmatched_axis_count,
             "label_status": "unmatched_candidate",
             "true_label": "",
             "route_id": candidate.get("map", ""),
@@ -456,6 +582,7 @@ def main() -> None:
             "candidate_file_available": "true",
             "npz_readable": "true",
             "source_machine": SOURCE_MACHINE_ALIAS,
+            "feature_version": FEATURE_VERSION,
             "exclusion_reason": "route_file_sha256_and_sample_id_not_found_in_v3",
         })
 
@@ -463,22 +590,28 @@ def main() -> None:
     quality_rows.sort(key=lambda row: row["sample_id"])
     damaged_rows.sort(key=lambda row: (row["match_status"], row["sample_id"]))
 
-    write_csv(OUTPUT_DIR / "pre_execution_features.csv", IDENTITY_FIELDS + FEATURE_FIELDS, feature_rows)
+    CONTRACT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    CONTRACT_PATH.write_text(json.dumps(contract, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+
+    write_csv(OUTPUT_DIR / "pre_execution_features.csv", METADATA_COLUMNS + TRAINING_FEATURE_COLUMNS, feature_rows)
     write_csv(OUTPUT_DIR / "feature_quality.csv", [
-        "sample_id", "route_file_sha256", "map_id", "vehicle_structure", "match_method",
+        "sample_id", "route_file_sha256", "map_id", "vehicle_structure",
+        "vehicle_structure_evidence", "vehicle_axis_count", "feature_version", "schema_sha256", "match_method",
         "sha256_verified", "npz_readable", "feature_row_included", "numeric_feature_count",
         "missing_numeric_feature_count", "fallback_or_derived_count",
         "feature_missing_reason", "source_arrays_used",
         "finite_numeric_features", "source_machine",
     ], quality_rows)
     write_csv(OUTPUT_DIR / "unmatched_candidates.csv", [
-        "sample_id", "route_file_sha256", "map_id", "vehicle_structure", "label_status",
+        "sample_id", "route_file_sha256", "map_id", "vehicle_structure",
+        "vehicle_structure_evidence", "vehicle_axis_count", "label_status",
         "true_label", "route_id", "match_status", "candidate_file_available", "npz_readable",
-        "source_machine", "exclusion_reason",
+        "source_machine", "feature_version", "exclusion_reason",
     ], unmatched_rows)
     write_csv(OUTPUT_DIR / "damaged_files.csv", [
-        "sample_id", "route_file_sha256", "map_id", "vehicle_structure", "source_machine",
-        "match_status", "error_type", "error_message",
+        "sample_id", "route_file_sha256", "map_id", "vehicle_structure",
+        "vehicle_structure_evidence", "vehicle_axis_count", "source_machine",
+        "feature_version", "match_status", "error_type", "error_message",
     ], damaged_rows)
 
     axes = Counter("five_axis" if row["vehicle_structure"].startswith("five_axis") else "six_axis" for row in feature_rows)
@@ -504,7 +637,9 @@ def main() -> None:
 
 ## 1. 对齐范围与标签隔离
 
-本次以 `{V3_OBJECT}` 的 {len(v3_rows)} 条记录作为当前 V3 映射。匹配顺序为 `route_file_sha256` 优先、`sample_id` 次优。标签仅在数值特征完成计算后按 `sample_id` 回填为 `true_label`，原有通过/失败结果未修改。
+本次以 `{V3_OBJECT}` 的 {len(v3_rows)} 条记录作为当前 V3 映射。匹配顺序为 `route_file_sha256` 优先、`sample_id` 次优。标签仅在数值特征完成计算后按 `sample_id` 回填为整数 `true_label`，原有通过/失败结果未修改。
+
+本次统一采用 `{FEATURE_VERSION}`。唯一契约为 `data/derived_features/feature_contract_v2.json`，训练列数量为 {len(TRAINING_FEATURE_COLUMNS)}，`schema_sha256` 为 `{schema_sha256}`。主表列顺序严格等于契约中的 `metadata_columns` 后接 `training_feature_columns`。
 
 特征计算函数只接收路线、计划速度、控制向量、静态左右边界余量和车辆结构信息。它不接收硬证书结果、失败原因、报告路径、构建批次、运行后动态净空、最大滑移率、最大轮胎利用率或其他结果字段。未训练模型。
 
@@ -521,8 +656,8 @@ def main() -> None:
 | 回退或派生说明总项数 | {fallback_total} |
 | 五轴记录 | {axes['five_axis']} |
 | 六轴记录 | {axes['six_axis']} |
-| 通过标签 | {labels['1']} |
-| 失败标签 | {labels['0']} |
+| 通过标签 | {labels[1]} |
+| 失败标签 | {labels[0]} |
 | 由既有证书原因识别的局部风险覆盖 | {v3_local_risk} |
 
 覆盖的地图类别为：{', '.join(families)}。每条记录保留 `map_id` 和 `route_id`；后续切分应按 `route_id` 或地图组留出，禁止把同一路线组随机拆入训练集和测试集。
@@ -537,13 +672,13 @@ def main() -> None:
 - 转向：优先读取 `steer_ff_rad`；缺失时使用执行前 `beta_ref_rad`，并在质量表记录回退。多维转向取同一点各维绝对值最大值，再统计幅值与单位距离变化率。
 - 横摆率：优先读取 `yaw_rate_ref_radps`；缺失时由 `yaw_per_m_ref_1pm·v_profile_mps` 推导，再统计幅值和单位距离变化。
 - 局部窗口：固定 10 m 后向空间窗口，统计窗口均值的最大绝对曲率、最大转向变化和最小左右静态边界余量。
-- 车辆结构：保留五轴/六轴结构、实际使用的转向向量维度，以及车辆配置指纹前 16 位；无原始指纹时由结构和向量维度生成带 `derived-` 前缀的稳定摘要。
+- 车辆结构：`vehicle_structure` 仅使用 `five_axis`、`six_axis`、`unknown`，证据来源单列记录。`vehicle_axis_count` 和配置指纹摘要属于元数据。`steering_source_dim` 仅描述实际参与计算的转向数组末维，不代表车辆轴数。
 
 所有数值特征均使用字段名中的单位；生成过程拒绝 NaN 和无穷值。`feature_missing_reason` 记录允许的执行前回退或派生方式，不使用结果字段补值。
 
 ## 4. 覆盖限制
 
-当前 V3 映射只有 {labels['1']} 条通过样本，其中五轴通过 2 条、六轴通过 2 条。五轴失败 17 条、局部风险 {five_local_risk} 条；六轴失败 3 条、局部风险 {six_local_risk} 条，且六轴记录总量仅 {axes['six_axis']} 条。因此无法同时达到“五轴和六轴的通过、失败、局部风险各至少 5 条”。本次保留全部可用 V3 样本并明确缺口，不从未命中候选中补标签，也不修改原标签。
+当前 V3 映射只有 {labels[1]} 条通过样本，其中五轴通过 2 条、六轴通过 2 条。五轴失败 17 条、局部风险 {five_local_risk} 条；六轴失败 3 条、局部风险 {six_local_risk} 条，且六轴记录总量仅 {axes['six_axis']} 条。因此无法同时达到“五轴和六轴的通过、失败、局部风险各至少 5 条”。本次保留全部可用 V3 样本并明确缺口，不从未命中候选中补标签，也不修改原标签。
 
 仓库仍未发现明确命名为“数据冻结 V3”的文件。本次沿用 Gate 2 已采用的提交 `{V3_COMMIT}` 映射，仍待数据负责人确认。
 
@@ -553,6 +688,7 @@ def main() -> None:
 - `data/derived_features/{MEMBER}/feature_quality.csv`：哈希、可读性、有限值和回退说明。
 - `data/derived_features/{MEMBER}/unmatched_candidates.csv`：未命中 V3 的候选，不进入主表。
 - `data/derived_features/{MEMBER}/damaged_files.csv`：损坏或无法提取记录。
+- `data/derived_features/feature_contract_v2.json`：全项目唯一 v2 特征契约。
 - `reports/data_recovery/{MEMBER}/gate2_feature_extraction.md`：本报告。
 
 未提交原始 NPZ、本机绝对路径、报告路径、地图文件名或构建批次名。
@@ -564,7 +700,8 @@ def main() -> None:
         "v3_records": len(v3_rows), "features": len(feature_rows),
         "unmatched": len(unmatched_rows), "damaged": len(damaged_rows),
         "five_axis": axes["five_axis"], "six_axis": axes["six_axis"],
-        "pass": labels["1"], "fail": labels["0"],
+        "pass": labels[1], "fail": labels[0], "training_features": len(TRAINING_FEATURE_COLUMNS),
+        "schema_sha256": schema_sha256,
         "missing_numeric_feature_rows": missing_numeric_rows, "fallback_rows": fallback_rows,
     }, ensure_ascii=False))
 

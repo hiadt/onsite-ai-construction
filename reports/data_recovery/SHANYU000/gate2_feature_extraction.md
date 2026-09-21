@@ -2,7 +2,9 @@
 
 ## 1. 对齐范围与标签隔离
 
-本次以 `d423f0e:data/frozen/raw_samples/SHANYU000/manifest.csv` 的 24 条记录作为当前 V3 映射。匹配顺序为 `route_file_sha256` 优先、`sample_id` 次优。标签仅在数值特征完成计算后按 `sample_id` 回填为 `true_label`，原有通过/失败结果未修改。
+本次以 `d423f0e:data/frozen/raw_samples/SHANYU000/manifest.csv` 的 24 条记录作为当前 V3 映射。匹配顺序为 `route_file_sha256` 优先、`sample_id` 次优。标签仅在数值特征完成计算后按 `sample_id` 回填为整数 `true_label`，原有通过/失败结果未修改。
+
+本次统一采用 `pathguard_preexec_v2.0.0`。唯一契约为 `data/derived_features/feature_contract_v2.json`，训练列数量为 55，`schema_sha256` 为 `b365d5b00779cc9f1e2858e695f0063112d94771a2cbc611c734d1110983d334`。主表列顺序严格等于契约中的 `metadata_columns` 后接 `training_feature_columns`。
 
 特征计算函数只接收路线、计划速度、控制向量、静态左右边界余量和车辆结构信息。它不接收硬证书结果、失败原因、报告路径、构建批次、运行后动态净空、最大滑移率、最大轮胎利用率或其他结果字段。未训练模型。
 
@@ -35,7 +37,7 @@
 - 转向：优先读取 `steer_ff_rad`；缺失时使用执行前 `beta_ref_rad`，并在质量表记录回退。多维转向取同一点各维绝对值最大值，再统计幅值与单位距离变化率。
 - 横摆率：优先读取 `yaw_rate_ref_radps`；缺失时由 `yaw_per_m_ref_1pm·v_profile_mps` 推导，再统计幅值和单位距离变化。
 - 局部窗口：固定 10 m 后向空间窗口，统计窗口均值的最大绝对曲率、最大转向变化和最小左右静态边界余量。
-- 车辆结构：保留五轴/六轴结构、实际使用的转向向量维度，以及车辆配置指纹前 16 位；无原始指纹时由结构和向量维度生成带 `derived-` 前缀的稳定摘要。
+- 车辆结构：`vehicle_structure` 仅使用 `five_axis`、`six_axis`、`unknown`，证据来源单列记录。`vehicle_axis_count` 和配置指纹摘要属于元数据。`steering_source_dim` 仅描述实际参与计算的转向数组末维，不代表车辆轴数。
 
 所有数值特征均使用字段名中的单位；生成过程拒绝 NaN 和无穷值。`feature_missing_reason` 记录允许的执行前回退或派生方式，不使用结果字段补值。
 
@@ -51,6 +53,7 @@
 - `data/derived_features/SHANYU000/feature_quality.csv`：哈希、可读性、有限值和回退说明。
 - `data/derived_features/SHANYU000/unmatched_candidates.csv`：未命中 V3 的候选，不进入主表。
 - `data/derived_features/SHANYU000/damaged_files.csv`：损坏或无法提取记录。
+- `data/derived_features/feature_contract_v2.json`：全项目唯一 v2 特征契约。
 - `reports/data_recovery/SHANYU000/gate2_feature_extraction.md`：本报告。
 
 未提交原始 NPZ、本机绝对路径、报告路径、地图文件名或构建批次名。
