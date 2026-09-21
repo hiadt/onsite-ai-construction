@@ -1,0 +1,2 @@
+sample_id,route_file_sha256,vehicle_structure,map_id,file_sha256,source_machine,error_type,error_message
+,,five_axis_explicit,ramp_3,10cf8005d0296f81dfe1b8701c490ab0762a99486992235651df66251e0243e7,LEGION,BadZipFile,File is not a zip file
