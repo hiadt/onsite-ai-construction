@@ -73,7 +73,12 @@ class DemoLogicTests(unittest.TestCase):
         self.assertIn("模型文件不存在", state["model_error"])
         self.assertTrue(result["model_risk"].isna().all())
         self.assertTrue(result["combined_risk"].isna().all())
-        self.assertTrue(result["risk_level"].eq("模型待补").all())
+        self.assertTrue(
+            result.apply(
+                lambda row: row["risk_level"] == ("证据不足" if row["vehicle_structure"] == "unknown" else "模型待补"),
+                axis=1,
+            ).all()
+        )
 
     def test_structure_filter_and_top_k(self) -> None:
         result, _, state = evaluate_candidates(
