@@ -1,0 +1,13 @@
+{
+  "final_samples": 340,
+  "passed": 139,
+  "failed": 201,
+  "feature_count": 55,
+  "map_count": 25,
+  "five_axis_final": 99,
+  "six_axis_final": 79,
+  "unknown_structure_final": 162,
+  "feature_version": "pathguard_preexec_v2.0.0",
+  "schema_sha256": "b365d5b00779cc9f1e2858e695f0063112d94771a2cbc611c734d1110983d334",
+  "generated_at": "2026-09-22T13:58:56.987799+08:00"
+}

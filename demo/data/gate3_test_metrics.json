@@ -1,0 +1,73 @@
+{
+  "roc_auc_failure": 0.6149097815764483,
+  "pr_auc_failure": 0.6993672651546683,
+  "balanced_accuracy": 0.5427350427350427,
+  "precision_failure": 0.6129032258064516,
+  "recall_failure": 0.9743589743589743,
+  "f1_failure": 0.7524752475247525,
+  "brier_pass_probability": 0.23118668225246702,
+  "n": 66,
+  "n_failure": 39,
+  "best_model": "hist_gradient_boosting",
+  "top_k": {
+    "10": {
+      "selected": 10,
+      "failures_captured": 8,
+      "capture_rate": 0.20512820512820512,
+      "random_expected_capture_rate": 0.15151515151515152
+    },
+    "20": {
+      "selected": 20,
+      "failures_captured": 17,
+      "capture_rate": 0.4358974358974359,
+      "random_expected_capture_rate": 0.30303030303030304
+    },
+    "34": {
+      "selected": 34,
+      "failures_captured": 24,
+      "capture_rate": 0.6153846153846154,
+      "random_expected_capture_rate": 0.5151515151515151
+    },
+    "68": {
+      "selected": 66,
+      "failures_captured": 39,
+      "capture_rate": 1.0,
+      "random_expected_capture_rate": 1.0
+    }
+  },
+  "test_maps": [
+    "map_002",
+    "map_008",
+    "map_016",
+    "map_019",
+    "map_020"
+  ],
+  "development_maps": [
+    "map_001",
+    "map_003",
+    "map_004",
+    "map_005",
+    "map_006",
+    "map_007",
+    "map_009",
+    "map_010",
+    "map_011",
+    "map_012",
+    "map_013",
+    "map_014",
+    "map_015",
+    "map_017",
+    "map_018",
+    "map_021",
+    "map_022",
+    "map_023",
+    "map_024",
+    "map_025"
+  ],
+  "selected_failure_risk_threshold": 0.4499999999999999,
+  "selected_threshold_source": "development_calibration_only",
+  "selected_threshold_precision_failure": 0.6,
+  "selected_threshold_recall_failure": 1.0,
+  "selected_threshold_f1_failure": 0.7499999999999999,
+  "selected_threshold_balanced_accuracy": 0.5185185185185185
+}
