@@ -127,7 +127,6 @@ def evaluate_candidates(
     if state["model_available"]:
         conflict = result["decision_status"].eq("模型/规则冲突，人工复核") & result["vehicle_structure"].ne("unknown")
         result.loc[conflict, "next_action"] = "人工复核（模型与规则冲突）"
-        result.loc[conflict, "validation_priority"] = "P0 人工复核"
     result["validation_priority"] = [
         validation_priority(
             float(result.loc[index, score_column]),
@@ -136,6 +135,8 @@ def evaluate_candidates(
         )
         for index in result.index
     ]
+    if state['model_available']:
+        result.loc[result['decision_status'].eq('模型/规则冲突，人工复核'), 'validation_priority'] = 'P0 人工复核'
     return result, components, state
 
 

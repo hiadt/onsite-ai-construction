@@ -1,0 +1,20 @@
+{
+  "reference_version": "development_ecdf_v1",
+  "development_n": 274,
+  "test_n": 66,
+  "test_maps": [
+    "map_002",
+    "map_008",
+    "map_016",
+    "map_019",
+    "map_020"
+  ],
+  "bootstrap_unit": "map",
+  "bootstrap_repeats": 1998,
+  "model_minus_rule_pr_auc_ci95": [
+    -0.3154647164827408,
+    0.03673782921657898
+  ],
+  "scope": "All held-out candidates; pre-execution hard-filter pass flags and original planner costs unavailable.",
+  "notes": "Post-hoc audit on an already inspected test set, not a new independent validation. Random is analytical expectation. Ties broken by sample_id. No hyperparameter selection."
+}

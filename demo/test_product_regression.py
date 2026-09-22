@@ -1,0 +1,56 @@
+"""Regression coverage for fixed rules, decisions and raw NPZ upload."""
+import io,json,unittest
+from pathlib import Path
+from unittest.mock import patch
+import numpy as np
+import pandas as pd
+from demo_logic import evaluate_candidates
+from inference import load_contract
+from rule_baseline import compute_geometry_rule_risk
+from route_input import parse_route
+BASE=Path(__file__).parent
+class ProductRegressionTests(unittest.TestCase):
+    def setUp(self):
+        self.sample=pd.read_csv(BASE/'data/sample_input.csv')
+        self.contract=load_contract(BASE/'data/feature_contract_v2.json')
+    def test_rule_batch_invariant(self):
+        batch,parts=compute_geometry_rule_risk(self.sample)
+        for i in self.sample.index:
+            single,p=compute_geometry_rule_risk(self.sample.loc[[i]])
+            self.assertAlmostEqual(single.iloc[0],batch.loc[i])
+            np.testing.assert_allclose(p.iloc[0],parts.loc[i])
+        expanded=pd.concat([self.sample,self.sample]*3,ignore_index=True)
+        np.testing.assert_allclose(compute_geometry_rule_risk(expanded)[0][:12],batch)
+    def test_conflict_priority_survives_and_unknown_refuses(self):
+        with patch('demo_logic.predict_failure_risk',return_value=np.ones(12)),patch('demo_logic.compute_geometry_rule_risk',return_value=(pd.Series(np.zeros(12)),pd.DataFrame({'曲率与变化':np.zeros(12)}))):
+            result,_,state=evaluate_candidates(self.sample,self.contract,BASE/'models/pathguard_gate3_model.joblib')
+        self.assertTrue(state['model_available'])
+        known=result.vehicle_structure.ne('unknown')
+        self.assertTrue(result.loc[known,'validation_priority'].eq('P0 人工复核').all())
+        self.assertTrue(result.loc[~known,'risk_level'].eq('证据不足').all())
+    def test_real_upload_and_location(self):
+        payload=(BASE/'examples/real_route.npz').read_bytes()
+        config=json.loads((BASE/'examples/vehicle_config.json').read_text())
+        frame,key,geo=parse_route(payload,'test.npz',config)
+        result,_,state=evaluate_candidates(frame,self.contract,BASE/'models/pathguard_gate3_model.joblib')
+        self.assertTrue(state['model_available'])
+        self.assertEqual(len(geo['events']),4)
+        self.assertEqual(geo['source_sha256'],frame.iloc[0].route_file_sha256)
+        _,other,_=parse_route(payload,'same.npz',{**config,'length_m':15})
+        self.assertNotEqual(key,other)
+        self.assertEqual(geo['left_boundary'],[])
+    def test_missing_fields_rejected(self):
+        buffer=io.BytesIO();np.savez(buffer,x_m=np.arange(4))
+        with self.assertRaisesRegex(ValueError,'missing required'):
+            parse_route(buffer.getvalue(),'missing.npz')
+    def test_object_arrays_rejected(self):
+        buffer=io.BytesIO();np.savez(buffer,s_m=np.array([{}],dtype=object))
+        with self.assertRaises(ValueError):
+            parse_route(buffer.getvalue(),'object.npz')
+    def test_changed_weight_does_not_fake_prediction(self):
+        payload=(BASE/'examples/real_route.npz').read_bytes()
+        a,_,_=parse_route(payload,'a.npz',{'mass_kg':1000})
+        b,_,_=parse_route(payload,'b.npz',{'mass_kg':90000})
+        np.testing.assert_allclose(a[self.contract['training_feature_columns']],b[self.contract['training_feature_columns']])
+if __name__=='__main__':unittest.main()
+

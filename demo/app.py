@@ -13,10 +13,12 @@ try:  # Works both with `streamlit run demo/app.py` and AppTest from repo root.
     from demo_logic import apply_filters, evaluate_candidates, select_top_k
     from feature_explain import label_text
     from inference import FeatureValidationError, load_contract
+    from route_input import parse_route, render_evidence
 except ModuleNotFoundError:  # pragma: no cover - exercised by Streamlit AppTest.
     from demo.demo_logic import apply_filters, evaluate_candidates, select_top_k
     from demo.feature_explain import label_text
     from demo.inference import FeatureValidationError, load_contract
+    from demo.route_input import parse_route, render_evidence
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -186,11 +188,11 @@ def dynamic_envelope(row: pd.Series, route_geometries: dict[str, Any]) -> None:
         result = "证据不足，拒绝确定判断"
         consequence = "车辆结构未定，当前风险分不能作为车型结论"
         action = "补充车型/轴位证据后重新评估"
-    elif level in {"高风险", "高"} or combined >= .67:
+    elif level in {"高风险", "高"}:
         result = "预测为优先复核路线"
         consequence = "可能出现净空不足或轨迹执行偏差"
         action = str(row.get("next_action", "优先补测 / 人工复核"))
-    elif level in {"中风险", "中"} or combined >= .34:
+    elif level in {"中风险", "中"}:
         result = "预测为需要关注路线"
         consequence = "局部指标接近关注阈值，需结合场景复核"
         action = str(row.get("next_action", "安排复核"))
@@ -250,10 +252,31 @@ st.markdown(
 
 with st.sidebar:
     st.header("输入与筛选")
+    route_uploads = st.file_uploader('上传原始路线 NPZ（自动提取特征）', type=['npz'], accept_multiple_files=True)
+    config_upload = st.file_uploader('车辆配置 JSON（可选）', type=['json'])
+    with st.expander('下载原始路线输入示例'):
+        for name in ['real_route.npz', 'vehicle_config.json']:
+            st.download_button('下载 '+name, (DEMO_DIR/'examples'/name).read_bytes(), file_name=name)
+        st.caption('配置声明车型；长宽和重量目前不进入55维模型，也不会调整风险分数。')
+    uploaded_geometry = {}
     upload = st.file_uploader(
         "上传执行前特征 CSV", type=["csv"], help="必须包含冻结契约规定的全部55项数值特征。"
     )
-    if upload is None:
+    if route_uploads:
+        try:
+            config = json.load(config_upload) if config_upload else {}
+            frames = []
+            for route_file in route_uploads:
+                frame, key, geometry = parse_route(route_file.getvalue(), route_file.name, config)
+                frames.append(frame)
+                if geometry:
+                    uploaded_geometry[key] = geometry
+            input_frame = pd.concat(frames, ignore_index=True).drop_duplicates('sample_id')
+            st.caption(f'已自动提取 {len(input_frame)} 条路线的55维特征；无配置时按结构未定处理。')
+        except Exception as error:
+            st.error(f'原始路线不能处理：{error}')
+            st.stop()
+    elif upload is None:
         input_frame = sample_frame.copy()
         st.caption("当前使用：仓库内离线派生演示输入")
     else:
@@ -276,6 +299,7 @@ except (FeatureValidationError, ValueError) as error:
 
 if runtime["model_available"]:
     st.success(f'学习模型已加载：{runtime["model_name"]}；55维特征、版本与Schema校验通过。')
+    st.caption('当前部署模型在340条冻结样本上重训；内置样本评分用于功能演示。验证依据展示的是此前留出地图预测，不能用演示评分代替。')
 else:
     st.warning("学习模型未加载，当前为规则预览。")
     st.caption(runtime["model_error"])
@@ -320,14 +344,17 @@ with overview_tab:
     conflict_rows = evaluated[evaluated["decision_status"] == "模型/规则冲突，人工复核"]
     unknown_rows = evaluated[evaluated["vehicle_structure"] == "unknown"]
     showcase = [
-        ("优先复核", ranked.iloc[0], "模型与规则共同指向高风险，先进入验证队列"),
-        ("规则关注", conflict_rows.iloc[0] if not conflict_rows.empty else ranked.iloc[min(1, len(ranked)-1)], "模型和工程规则不一致，不能静默放行"),
-        ("证据不足", unknown_rows.iloc[0] if not unknown_rows.empty else ranked.iloc[-1], "车辆结构未定，系统要求人工补充证据"),
+        ("排序首位", ranked.iloc[0], "当前候选中模型分数最高；是否需人工复核请看证据状态"),
+        ("规则关注", conflict_rows.iloc[0] if not conflict_rows.empty else None, "模型和工程规则不一致，需人工复核"),
+        ("证据不足", unknown_rows.iloc[0] if not unknown_rows.empty else None, "车辆结构未定，系统要求人工补充证据"),
     ]
     case_cols = st.columns(3)
     for col, (title, item, note) in zip(case_cols, showcase):
         with col:
             col.markdown(f'**{title}**')
+            if item is None:
+                col.caption('当前输入无此类案例')
+                continue
             col.metric("路线", str(item["sample_id"])[-10:], f'{float(item[queue_score]):.3f} 主排序风险')
             col.caption(f'{item["vehicle_structure"]} · {item["risk_reasons"]}')
             col.info(note)
@@ -413,7 +440,15 @@ with detail_tab:
         selected_index = evaluated.index[evaluated["sample_id"].astype(str) == selected_id][0]
         row = evaluated.loc[selected_index]
         components = rule_components.loc[selected_index].sort_values(ascending=False)
-        dynamic_envelope(row, assets["route_geometry"]["routes"])
+        geometry = uploaded_geometry.get(str(row.get('geometry_key', '')))
+        if geometry is None and upload is None and not route_uploads:
+            candidate = assets['route_geometry']['routes'].get(selected_id)
+            if candidate and candidate.get('source_sha256') == str(row.get('route_file_sha256', '')):
+                geometry = candidate
+        if geometry and 'events' in geometry:
+            render_evidence(st, geometry)
+        else:
+            render_evidence(st, None)
         left, right = st.columns([1, 1])
         with left:
             st.subheader(selected_id)
@@ -422,7 +457,8 @@ with detail_tab:
             st.write(f'证据状态：**{row["evidence_status"]}**')
             st.write(f'验证优先级：**{row["validation_priority"]}**')
             st.write(f'建议动作：**{row["next_action"]}**')
-            st.write(f'主要风险因素：{row["risk_reasons"]}')
+            st.write(f'工程指标提示：{row["risk_reasons"]}')
+            st.caption('规则提示来自开发集固定参考分布，不是学习模型的特征归因；模型/规则差值0.25是待验证的人工复核策略阈值。')
         with right:
             if runtime["model_available"]:
                 st.metric("主排序风险", f'{float(row["model_risk"]):.3f}', row["risk_level"])
@@ -480,6 +516,11 @@ with detail_tab:
             )
 
 with evidence_tab:
+    st.subheader('同预算工程基线对比')
+    baseline = pd.read_csv(DATA_DIR/'engineering_comparison.csv')
+    shown = baseline[baseline['group'].eq('overall')][['method','budget','captured','precision_at_k','capture_rate','random_expected_captured']]
+    st.dataframe(shown.rename(columns={'method':'方法','budget':'验证预算','captured':'捕获失败数','precision_at_k':'入选失败比例','capture_rate':'全部失败覆盖率','random_expected_captured':'随机期望失败数'}),hide_index=True)
+    st.caption('原留出地图66条的事后复核：模型使用历史留出预测，规则参考仅取274条开发样本。模型Top-20优于规则，但Top-34及整体PR-AUC未优于规则。缺少执行前硬筛选标记和原规划器代价，尚未验证硬筛选后增益。')
     test = assets["test"]
     oof = assets["oof"]["overall"]
     audit = assets["audit"]
@@ -505,7 +546,8 @@ with evidence_tab:
     st.dataframe(pd.DataFrame(top_rows), width="stretch", hide_index=True)
     st.caption("Top-K捕获率分母为对应离线验证集合中的失败样本数。")
 
-    st.subheader("60次规则 / 模型地图分组审计")
+    st.subheader("历史60次规则 / 模型地图分组审计")
+    st.caption('历史审计采用旧规则定义；不作为本次固定开发集参考规则的验证结果。本次规则结果见上方同预算对比。')
     audit_rows = []
     for weight, item in audit["summary_by_model_weight"].items():
         audit_rows.append({
