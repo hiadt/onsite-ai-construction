@@ -95,14 +95,15 @@ def render_evidence(st, geometry):
         return
     import plotly.graph_objects as go
     events=geometry["events"]
-    selected=st.selectbox("定位工程关注点",range(len(events)),format_func=lambda i:events[i]["label"],
-                          key="event_"+geometry["source_sha256"][:12])
-    event=events[selected]; xy=np.asarray(geometry["centerline"])
     structure=geometry.get("vehicle_structure","unknown")
     defaults={"five_axis":(12.0,3.2,5.0),"six_axis":(15.0,3.4,6.0),"unknown":(12.0,3.2,5.0)}[structure]
     supplied=geometry.get("vehicle_parameters",{})
     st.markdown("#### 真实尺度刚性车体扫掠")
-    st.caption("车长、车宽和参考点只用于米制几何外廓重算；它们不进入当前55维模型，也不改变现有规则风险。")
+    st.caption("先选择工程关注点，再调整车身尺寸观察刚性矩形外廓变化。车长、车宽和参考点只参与几何重算，不进入当前55维模型，也不改变现有规则风险。")
+    selected=st.selectbox("定位工程关注点",range(len(events)),format_func=lambda i:events[i]["label"],
+                          key="event_"+geometry["source_sha256"][:12])
+    event=events[selected]; xy=np.asarray(geometry["centerline"])
+    st.info(f'当前定位：{event["label"]}，数值 {event["value"]:.4g} {event["unit"]}，位于路线里程 {event["s_m"]:.2f} m。红色大点和车身外廓会同步定位到该位置。')
     cols=st.columns(3)
     token=geometry["source_sha256"][:12]
     length=cols[0].number_input("车长 / m",3.0,30.0,float(supplied.get("length_m",defaults[0])),0.1,key="length_"+token)
@@ -128,9 +129,12 @@ def render_evidence(st, geometry):
     if zoom:
         fig.update_xaxes(range=[event["x_m"]-15,event["x_m"]+15])
         fig.update_yaxes(range=[event["y_m"]-15,event["y_m"]+15])
-    fig.update_layout(xaxis_title="x / m",yaxis_title="y / m",height=380)
+    fig.update_layout(xaxis_title="x / m",yaxis_title="y / m",height=430,
+        legend=dict(orientation="h",yanchor="bottom",y=1.02,xanchor="left",x=0),
+        margin=dict(l=20,r=20,t=78,b=20))
     fig.update_yaxes(scaleanchor="x",scaleratio=1)
     st.plotly_chart(fig,use_container_width=True)
+    st.caption("图例：实线为路线参考点轨迹；四条点线为车体四角扫掠轨迹；红色多边形为所选位置的车身外廓；小圆点为全部工程关注点，红色大点为当前定位。图中不含道路边界或障碍物时，不能据此判定碰撞或安全通过。")
     front=length-reference
     st.write(f'{event["label"]}：**{event["value"]:.4g} {event["unit"]}**；路线里程 {event["s_m"]:.2f} m，原始点索引 {event["index"]}。')
     st.caption(f"几何设置：参考点前方 {front:.2f} m、后方 {reference:.2f} m、半宽 {width/2:.2f} m。")
