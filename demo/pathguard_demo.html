@@ -1,8 +1,22 @@
-<!doctype html><meta charset="utf-8"><title>PathGuard 风险队列原型</title>
-<style>body{font-family:Arial,"Microsoft YaHei";margin:32px;background:#f6f8fb;color:#172033}.card{background:white;border-radius:12px;padding:20px;margin:12px 0;box-shadow:0 2px 10px #dfe5ef}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.num{font-size:30px;font-weight:700;color:#1459d9}table{width:100%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #e5e9f0;text-align:left}.high{color:#c62828}.medium{color:#b26a00}</style>
-<h1>PathGuard：工程车辆候选轨迹风险队列</h1><p>这是比赛展示原型：把已有证据整理成“先看哪条路线、为什么要看、下一步怎么验证”。真实标签、指标风险和代理排序分开。</p>
-<div class="grid"><div class="card"><div>真实标签样本</div><div class="num" id="real">—</div></div><div class="card"><div>指标无最终标签</div><div class="num" id="metric">—</div></div><div class="card"><div>路线信息样本</div><div class="num" id="route">—</div></div><div class="card"><div>五轴 / 六轴</div><div class="num" id="axis">—</div></div></div>
-<div class="card"><h2>演示逻辑</h2><ol><li>输入路线、车辆结构和已有工程指标。</li><li>按指标计算首版风险分数，优先查看高风险路线。</li><li>给出“补测 / 回查 / 客户共创”的下一步动作。</li></ol><p>页面可直接替换为真实 <code>risk_scored_all.csv</code> 的前20条记录。</p></div>
-<div class="card"><h2>当前建议的产品话术</h2><p>PathGuard 不替代实车检测，而是在仿真和测试之前，把候选路线按风险排序，并解释风险来自滑移、轮胎利用率、间隙、横向误差还是航向误差。五轴和六轴使用同一套风险语言，分别保留车辆结构证据。</p></div>
-<script>const s={real:0,metric:207,route:2883,axis:'五轴+六轴'};for(const[k,v]of Object.entries(s))document.getElementById(k).textContent=v;</script>
-
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PathGuard 演示入口已迁移</title>
+  <style>
+    body { margin: 0; font-family: "Microsoft YaHei", sans-serif; background: #f5f8fb; color: #193247; }
+    main { max-width: 720px; margin: 12vh auto; padding: 40px; background: white; border-radius: 18px;
+      box-shadow: 0 12px 34px rgba(20, 55, 78, .12); }
+    code { display: block; margin-top: 18px; padding: 14px; background: #edf5f7; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>PathGuard 演示入口已迁移</h1>
+    <p>本静态页面已停用。请从仓库根目录启动统一 Streamlit 演示：</p>
+    <code>streamlit run demo/app.py</code>
+    <p>该演示用于离线研发决策，不替代闭环仿真、实车测试或安全认证。</p>
+  </main>
+</body>
+</html>
