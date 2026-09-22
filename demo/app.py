@@ -136,7 +136,11 @@ def dynamic_envelope(row: pd.Series) -> None:
     risk_color = "#cf5b45" if caution >= 0.65 else "#e09a42" if caution >= 0.35 else "#4c9a82"
     combined = float(row.get("combined_risk", row.get("rule_risk", 0.0)))
     level = str(row.get("risk_level", "待判定"))
-    if level in {"高风险", "高"} or combined >= .67:
+    if structure == "unknown" or level == "证据不足":
+        result = "证据不足，拒绝确定判断"
+        consequence = "车辆结构未定，当前风险分不能作为车型结论"
+        action = "补充车型/轴位证据后重新评估"
+    elif level in {"高风险", "高"} or combined >= .67:
         result = "预测为优先复核路线"
         consequence = "可能出现净空不足或轨迹执行偏差"
         action = str(row.get("next_action", "优先补测 / 人工复核"))
@@ -318,7 +322,7 @@ with queue_tab:
     st.markdown('<div class="section-kicker">第二层：直接看决策结果</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">风险队列：先看哪条路线？</h2>', unsafe_allow_html=True)
     st.caption("这里的排序结果服务于验证资源安排：高风险不等于已经失败，低风险也不等于可以免检。")
     filter_cols = st.columns(2)
-    risk_options = ["全部", "高风险", "中风险", "低风险"]
+    risk_options = ["全部", "高风险", "中风险", "低风险", "证据不足"]
     if not runtime["model_available"]:
         risk_options.append("模型待补")
     with filter_cols[0]:

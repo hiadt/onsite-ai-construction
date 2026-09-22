@@ -104,6 +104,9 @@ def evaluate_candidates(
             else "模型与工程规则方向一致",
             axis=1,
         )
+        unknown = result["vehicle_structure"].eq("unknown")
+        result.loc[unknown, "risk_level"] = "证据不足"
+        result.loc[unknown, "decision_status"] = "证据不足，拒绝确定结论"
         state.update(
             model_available=True,
             model_name=model_display_name(model, metadata),
@@ -115,6 +118,9 @@ def evaluate_candidates(
         result["combined_risk"] = pd.NA
         result["risk_level"] = "模型待补"
         result["decision_status"] = "仅规则预览，等待模型"
+        unknown = result["vehicle_structure"].eq("unknown")
+        result.loc[unknown, "risk_level"] = "证据不足"
+        result.loc[unknown, "decision_status"] = "证据不足，拒绝确定结论"
 
     result["risk_reasons"] = [
         "；".join(top_reasons(components.loc[index])) or "当前批次内未发现突出的规则应力项"
