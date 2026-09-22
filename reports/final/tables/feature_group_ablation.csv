@@ -1,0 +1,8 @@
+﻿experiment,removed_group,feature_count,cv_pr_auc_failure_mean,delta_vs_all
+all_features,,55,0.6605329683940977,
+drop_one_group,route_geometry,40,0.6733986653671178,0.012865696973020091
+drop_one_group,terrain_slope,48,0.6849246068806237,0.024391638486526035
+drop_one_group,speed_dynamics,38,0.6691383948079414,0.008605426413843653
+drop_one_group,steering,46,0.6839562428266389,0.02342327443254122
+drop_one_group,clearance,50,0.6554205234638697,-0.0051124449302279995
+drop_one_group,local_window,53,0.6801391341438302,0.019606165749732507
