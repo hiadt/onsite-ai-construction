@@ -53,6 +53,16 @@ st.markdown(
     .sweep-edge {fill:none;stroke:#cf5b45;stroke-width:1.6;stroke-dasharray:5 4;opacity:.72;}
     .svg-label {font-size:12px;fill:#526675;}
     .envelope-note {font-size:.78rem;color:#526675;margin-top:.45rem;line-height:1.45;}
+    .section-kicker {font-size:.76rem;text-transform:uppercase;letter-spacing:.12em;color:#39718a;font-weight:700;margin:.2rem 0 .35rem;}
+    .value-grid {display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:.5rem 0 1rem;}
+    .value-card {background:#fff;border:1px solid #dce7ef;border-radius:14px;padding:1rem 1.05rem;min-height:128px;}
+    .value-card h4 {margin:0 0 .4rem;color:#173f59;font-size:1rem;}
+    .value-card p {margin:0;color:#526675;font-size:.88rem;line-height:1.55;}
+    .flow-strip {display:flex;gap:.45rem;align-items:stretch;margin:.6rem 0 1rem;}
+    .flow-step {flex:1;background:#edf5f6;border-radius:10px;padding:.7rem .75rem;color:#174d61;font-size:.87rem;}
+    .flow-step b {display:block;color:#123b5d;margin-bottom:.2rem;}
+    .judge-card {background:linear-gradient(120deg,#123b5d,#0d7180);color:#fff;border-radius:14px;padding:1rem 1.1rem;margin:.7rem 0 1rem;}
+    .judge-card b {font-size:1.08rem;}.judge-card p {margin:.35rem 0 0;opacity:.92;line-height:1.5;font-size:.9rem;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -207,6 +217,22 @@ overview_tab, queue_tab, detail_tab, evidence_tab = st.tabs(
 )
 
 with overview_tab:
+    st.markdown('<div class="section-kicker">先看懂产品</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">PathGuard 在替工程师决定：哪条路线应该先验证？</h2>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="value-grid">'
+        '<div class="value-card"><h4>路线很多，验证资源有限</h4><p>把候选路线按风险和证据强弱排队，先处理最值得复核的路线。</p></div>'
+        '<div class="value-card"><h4>结果要能解释</h4><p>不仅给出分数，还指出曲率、转向变化、净空等工程原因。</p></div>'
+        '<div class="value-card"><h4>不确定性也要被看见</h4><p>区分真实标签、指标风险和代理排序，避免把数据不足误判成安全。</p></div>'
+        '</div>', unsafe_allow_html=True,
+    )
+    st.markdown('<div class="flow-strip">'
+        '<div class="flow-step"><b>① 输入候选路线</b>执行前特征与车辆结构</div>'
+        '<div class="flow-step"><b>② AI + 规则排序</b>识别高风险候选</div>'
+        '<div class="flow-step"><b>③ 解释风险原因</b>告诉工程师为什么</div>'
+        '<div class="flow-step"><b>④ 安排下一步</b>补测、复核或共创</div>'
+        '</div>', unsafe_allow_html=True)
+    st.markdown('<div class="judge-card"><b>一句话结果</b><p>PathGuard 不替车辆做控制决策，而是把“先测哪条路线、为什么先测、下一步怎么验证”变成可追溯的工程队列。</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-kicker">数据与证据底座</div>', unsafe_allow_html=True)
     cols = st.columns(5)
     cols[0].metric("SHA-256精确匹配", f'{freeze["sha256_exact_matches"]} 条')
     cols[1].metric("成功提取特征", f'{freeze["features_extracted"]} 条')
@@ -217,11 +243,8 @@ with overview_tab:
     cols[0].metric("五轴 final", freeze["five_axis_final"])
     cols[1].metric("六轴 final", freeze["six_axis_final"])
     cols[2].metric("结构未定 final", freeze["unknown_structure_final"])
-    st.markdown(
-        "**产品闭环：** 候选轨迹输入　→　AI风险排序　→　几何规则校验　→　原因解释　→　Top-K验证队列"
-    )
     model_status = runtime["model_name"] if runtime["model_available"] else "学习模型未加载"
-    st.caption(f"模型状态：{model_status}；综合风险权重为演示配置，不是生产标定参数。")
+    st.caption(f"当前状态：{model_status}；综合风险权重为演示配置，不是生产标定参数。")
 
     st.subheader("车辆结构")
     vehicle_cols = st.columns(3)
@@ -232,6 +255,8 @@ with overview_tab:
     with vehicle_cols[2]:
         vehicle_illustration("结构未定", 3, "结构未定，建议人工复核。")
     st.caption(f"当前结构筛选：{structure_label} · 演示输入 {len(structure_view)} 条")
+    st.markdown('<div class="section-kicker">评委如何使用</div>', unsafe_allow_html=True)
+    st.info("先进入“风险队列”看优先级，再点开一条路线看“风险原因—证据等级—下一步动作”；“验证依据”用于查看模型和离线分组结果。")
     st.info(
         f'特征版本 `{freeze["feature_version"]}` · Schema `{freeze["schema_sha256"]}` · '
         "55项执行前数值特征 · 10米局部窗口"
@@ -239,6 +264,8 @@ with overview_tab:
 
 map_options = ["全部"] + sorted(evaluated["map_id"].astype(str).unique().tolist())
 with queue_tab:
+    st.markdown('<div class="section-kicker">第二层：直接看决策结果</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">风险队列：先看哪条路线？</h2>', unsafe_allow_html=True)
+    st.caption("这里的排序结果服务于验证资源安排：高风险不等于已经失败，低风险也不等于可以免检。")
     filter_cols = st.columns(2)
     risk_options = ["全部", "高风险", "中风险", "低风险"]
     if not runtime["model_available"]:
@@ -274,6 +301,7 @@ with queue_tab:
         st.caption("已选中该路线；可切换到“路线详情”查看解释卡。")
 
 with detail_tab:
+    st.markdown('<div class="section-kicker">第三层：展开专业证据</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">路线解释卡：为什么需要优先复核？</h2>', unsafe_allow_html=True)
     if structure_view.empty:
         st.info("当前车辆结构筛选下没有候选路线；请切换结构或上传对应数据。")
     else:
