@@ -11,6 +11,9 @@
 
 # 受限或大体量目录
 data/
+!demo/data/
+!demo/data/*.csv
+!demo/data/*.json
 raw/
 restricted_raw/
 model_artifacts/

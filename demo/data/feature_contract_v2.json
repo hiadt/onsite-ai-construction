@@ -1,0 +1,385 @@
+{
+  "feature_version": "pathguard_preexec_v2.0.0",
+  "metadata_columns": [
+    "sample_id",
+    "route_file_sha256",
+    "map_id",
+    "route_id",
+    "label_status",
+    "true_label",
+    "vehicle_structure",
+    "vehicle_structure_evidence",
+    "vehicle_axis_count",
+    "source_machine",
+    "match_status",
+    "vehicle_configuration_fingerprint_summary",
+    "feature_version",
+    "feature_source",
+    "feature_missing_reason"
+  ],
+  "training_feature_columns": [
+    "route_length_m",
+    "point_count",
+    "sampling_spacing_mean_m",
+    "sampling_spacing_median_m",
+    "sampling_spacing_p95_m",
+    "curvature_mean_1pm",
+    "curvature_abs_mean_1pm",
+    "curvature_abs_max_1pm",
+    "curvature_abs_p50_1pm",
+    "curvature_abs_p90_1pm",
+    "curvature_abs_p95_1pm",
+    "curvature_abs_p99_1pm",
+    "curvature_change_abs_mean_1pm2",
+    "curvature_change_abs_max_1pm2",
+    "curvature_change_abs_p95_1pm2",
+    "slope_mean",
+    "slope_abs_mean",
+    "slope_abs_max",
+    "slope_abs_p95",
+    "slope_change_abs_mean_1pm",
+    "slope_change_abs_max_1pm",
+    "slope_change_abs_p95_1pm",
+    "speed_mean_mps",
+    "speed_max_mps",
+    "speed_p50_mps",
+    "speed_p90_mps",
+    "speed_p95_mps",
+    "speed_abs_curvature_product_mean_mpspm",
+    "speed_abs_curvature_product_p95_mpspm",
+    "lateral_accel_proxy_mean_mps2",
+    "lateral_accel_proxy_max_mps2",
+    "lateral_accel_proxy_p95_mps2",
+    "speed_abs_curvature_correlation",
+    "steer_abs_mean_rad",
+    "steer_abs_max_rad",
+    "steer_abs_p50_rad",
+    "steer_abs_p90_rad",
+    "steer_abs_p95_rad",
+    "steer_change_abs_mean_radpm",
+    "steer_change_abs_max_radpm",
+    "steer_change_abs_p95_radpm",
+    "yaw_rate_abs_mean_radps",
+    "yaw_rate_abs_max_radps",
+    "yaw_rate_abs_p95_radps",
+    "yaw_rate_change_abs_mean_radps_per_m",
+    "yaw_rate_change_abs_max_radps_per_m",
+    "yaw_rate_change_abs_p95_radps_per_m",
+    "static_left_clearance_min_m",
+    "static_right_clearance_min_m",
+    "static_boundary_clearance_min_m",
+    "window10m_max_mean_abs_curvature_1pm",
+    "window10m_max_mean_abs_steer_change_radpm",
+    "window10m_min_mean_left_clearance_m",
+    "window10m_min_mean_right_clearance_m",
+    "steering_source_dim"
+  ],
+  "training_features": [
+    {
+      "name": "route_length_m",
+      "unit": "m",
+      "definition": "Difference between the final and initial route station values."
+    },
+    {
+      "name": "point_count",
+      "unit": "count",
+      "definition": "Number of ordered route samples."
+    },
+    {
+      "name": "sampling_spacing_mean_m",
+      "unit": "m",
+      "definition": "Mean positive difference between consecutive route stations."
+    },
+    {
+      "name": "sampling_spacing_median_m",
+      "unit": "m",
+      "definition": "Median positive difference between consecutive route stations."
+    },
+    {
+      "name": "sampling_spacing_p95_m",
+      "unit": "m",
+      "definition": "95th percentile of positive consecutive route-station differences."
+    },
+    {
+      "name": "curvature_mean_1pm",
+      "unit": "1/m",
+      "definition": "Arithmetic mean of signed planned route curvature."
+    },
+    {
+      "name": "curvature_abs_mean_1pm",
+      "unit": "1/m",
+      "definition": "Arithmetic mean of absolute planned route curvature."
+    },
+    {
+      "name": "curvature_abs_max_1pm",
+      "unit": "1/m",
+      "definition": "Maximum absolute planned route curvature."
+    },
+    {
+      "name": "curvature_abs_p50_1pm",
+      "unit": "1/m",
+      "definition": "50th percentile of absolute planned route curvature."
+    },
+    {
+      "name": "curvature_abs_p90_1pm",
+      "unit": "1/m",
+      "definition": "90th percentile of absolute planned route curvature."
+    },
+    {
+      "name": "curvature_abs_p95_1pm",
+      "unit": "1/m",
+      "definition": "95th percentile of absolute planned route curvature."
+    },
+    {
+      "name": "curvature_abs_p99_1pm",
+      "unit": "1/m",
+      "definition": "99th percentile of absolute planned route curvature."
+    },
+    {
+      "name": "curvature_change_abs_mean_1pm2",
+      "unit": "1/m^2",
+      "definition": "Mean absolute curvature derivative with respect to route station."
+    },
+    {
+      "name": "curvature_change_abs_max_1pm2",
+      "unit": "1/m^2",
+      "definition": "Maximum absolute curvature derivative with respect to route station."
+    },
+    {
+      "name": "curvature_change_abs_p95_1pm2",
+      "unit": "1/m^2",
+      "definition": "95th percentile of absolute curvature derivative with respect to route station."
+    },
+    {
+      "name": "slope_mean",
+      "unit": "m/m",
+      "definition": "Mean route elevation derivative with respect to route station."
+    },
+    {
+      "name": "slope_abs_mean",
+      "unit": "m/m",
+      "definition": "Mean absolute route elevation derivative with respect to route station."
+    },
+    {
+      "name": "slope_abs_max",
+      "unit": "m/m",
+      "definition": "Maximum absolute route elevation derivative with respect to route station."
+    },
+    {
+      "name": "slope_abs_p95",
+      "unit": "m/m",
+      "definition": "95th percentile of absolute route elevation derivative."
+    },
+    {
+      "name": "slope_change_abs_mean_1pm",
+      "unit": "1/m",
+      "definition": "Mean absolute slope derivative with respect to route station."
+    },
+    {
+      "name": "slope_change_abs_max_1pm",
+      "unit": "1/m",
+      "definition": "Maximum absolute slope derivative with respect to route station."
+    },
+    {
+      "name": "slope_change_abs_p95_1pm",
+      "unit": "1/m",
+      "definition": "95th percentile of absolute slope derivative with respect to route station."
+    },
+    {
+      "name": "speed_mean_mps",
+      "unit": "m/s",
+      "definition": "Arithmetic mean of planned route speed."
+    },
+    {
+      "name": "speed_max_mps",
+      "unit": "m/s",
+      "definition": "Maximum planned route speed."
+    },
+    {
+      "name": "speed_p50_mps",
+      "unit": "m/s",
+      "definition": "50th percentile of planned route speed."
+    },
+    {
+      "name": "speed_p90_mps",
+      "unit": "m/s",
+      "definition": "90th percentile of planned route speed."
+    },
+    {
+      "name": "speed_p95_mps",
+      "unit": "m/s",
+      "definition": "95th percentile of planned route speed."
+    },
+    {
+      "name": "speed_abs_curvature_product_mean_mpspm",
+      "unit": "1/s",
+      "definition": "Mean of planned speed multiplied by absolute planned curvature."
+    },
+    {
+      "name": "speed_abs_curvature_product_p95_mpspm",
+      "unit": "1/s",
+      "definition": "95th percentile of planned speed multiplied by absolute planned curvature."
+    },
+    {
+      "name": "lateral_accel_proxy_mean_mps2",
+      "unit": "m/s^2",
+      "definition": "Mean of planned speed squared multiplied by absolute planned curvature."
+    },
+    {
+      "name": "lateral_accel_proxy_max_mps2",
+      "unit": "m/s^2",
+      "definition": "Maximum planned speed squared multiplied by absolute planned curvature."
+    },
+    {
+      "name": "lateral_accel_proxy_p95_mps2",
+      "unit": "m/s^2",
+      "definition": "95th percentile of planned speed squared multiplied by absolute planned curvature."
+    },
+    {
+      "name": "speed_abs_curvature_correlation",
+      "unit": "dimensionless",
+      "definition": "Pearson correlation between planned speed and absolute planned curvature, or zero for a constant input."
+    },
+    {
+      "name": "steer_abs_mean_rad",
+      "unit": "rad",
+      "definition": "Mean pointwise steering magnitude from the selected pre-execution steering array."
+    },
+    {
+      "name": "steer_abs_max_rad",
+      "unit": "rad",
+      "definition": "Maximum pointwise steering magnitude from the selected pre-execution steering array."
+    },
+    {
+      "name": "steer_abs_p50_rad",
+      "unit": "rad",
+      "definition": "50th percentile of pointwise steering magnitude."
+    },
+    {
+      "name": "steer_abs_p90_rad",
+      "unit": "rad",
+      "definition": "90th percentile of pointwise steering magnitude."
+    },
+    {
+      "name": "steer_abs_p95_rad",
+      "unit": "rad",
+      "definition": "95th percentile of pointwise steering magnitude."
+    },
+    {
+      "name": "steer_change_abs_mean_radpm",
+      "unit": "rad/m",
+      "definition": "Mean absolute steering-magnitude derivative with respect to route station."
+    },
+    {
+      "name": "steer_change_abs_max_radpm",
+      "unit": "rad/m",
+      "definition": "Maximum absolute steering-magnitude derivative with respect to route station."
+    },
+    {
+      "name": "steer_change_abs_p95_radpm",
+      "unit": "rad/m",
+      "definition": "95th percentile of absolute steering-magnitude derivative with respect to route station."
+    },
+    {
+      "name": "yaw_rate_abs_mean_radps",
+      "unit": "rad/s",
+      "definition": "Mean absolute planned yaw rate, using the stored value or the documented pre-execution derivation."
+    },
+    {
+      "name": "yaw_rate_abs_max_radps",
+      "unit": "rad/s",
+      "definition": "Maximum absolute planned yaw rate."
+    },
+    {
+      "name": "yaw_rate_abs_p95_radps",
+      "unit": "rad/s",
+      "definition": "95th percentile of absolute planned yaw rate."
+    },
+    {
+      "name": "yaw_rate_change_abs_mean_radps_per_m",
+      "unit": "rad/(s*m)",
+      "definition": "Mean absolute planned yaw-rate derivative with respect to route station."
+    },
+    {
+      "name": "yaw_rate_change_abs_max_radps_per_m",
+      "unit": "rad/(s*m)",
+      "definition": "Maximum absolute planned yaw-rate derivative with respect to route station."
+    },
+    {
+      "name": "yaw_rate_change_abs_p95_radps_per_m",
+      "unit": "rad/(s*m)",
+      "definition": "95th percentile of absolute planned yaw-rate derivative with respect to route station."
+    },
+    {
+      "name": "static_left_clearance_min_m",
+      "unit": "m",
+      "definition": "Minimum planned static left-boundary clearance."
+    },
+    {
+      "name": "static_right_clearance_min_m",
+      "unit": "m",
+      "definition": "Minimum planned static right-boundary clearance."
+    },
+    {
+      "name": "static_boundary_clearance_min_m",
+      "unit": "m",
+      "definition": "Minimum of the planned static left- and right-boundary clearances."
+    },
+    {
+      "name": "window10m_max_mean_abs_curvature_1pm",
+      "unit": "1/m",
+      "definition": "Maximum trailing-10-m window mean of absolute planned curvature."
+    },
+    {
+      "name": "window10m_max_mean_abs_steer_change_radpm",
+      "unit": "rad/m",
+      "definition": "Maximum trailing-10-m window mean of absolute steering change per route metre."
+    },
+    {
+      "name": "window10m_min_mean_left_clearance_m",
+      "unit": "m",
+      "definition": "Minimum trailing-10-m window mean of planned static left-boundary clearance."
+    },
+    {
+      "name": "window10m_min_mean_right_clearance_m",
+      "unit": "m",
+      "definition": "Minimum trailing-10-m window mean of planned static right-boundary clearance."
+    },
+    {
+      "name": "steering_source_dim",
+      "unit": "count",
+      "definition": "Last-dimension size of the NPZ steering array actually used for feature calculation; this is not vehicle axis count."
+    }
+  ],
+  "excluded_from_training": [
+    "sample_id",
+    "route_file_sha256",
+    "map_id",
+    "route_id",
+    "label_status",
+    "true_label",
+    "vehicle_structure",
+    "vehicle_structure_evidence",
+    "vehicle_axis_count",
+    "source_machine",
+    "match_status",
+    "vehicle_configuration_fingerprint_summary",
+    "feature_version",
+    "feature_source",
+    "feature_missing_reason"
+  ],
+  "prohibited_source_fields": [
+    "hard_certificate_passed",
+    "hard_failure_reasons",
+    "dynamic_pcd_clearance_m",
+    "maximum_slip_ratio",
+    "maximum_tire_utilization",
+    "report_path",
+    "build_family",
+    "source_folder_name"
+  ],
+  "local_window_m": 10,
+  "label_definition": "1=pass, 0=fail",
+  "schema_sha256_algorithm": "SHA-256 over UTF-8 feature_version followed by metadata_columns and training_feature_columns, each separated by LF",
+  "schema_sha256": "b365d5b00779cc9f1e2858e695f0063112d94771a2cbc611c734d1110983d334"
+}
