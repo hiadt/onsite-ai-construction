@@ -35,17 +35,21 @@ def evidence_status(row: pd.Series) -> str:
     label_status = str(row.get("label_status", ""))
     feature_source = str(row.get("feature_source", ""))
     if structure == "unknown":
-        return "结构未定"
-    if label_status in {"labeled", "final"} and "npz" in feature_source:
-        return "本机恢复数据派生结果（含冻结标签）"
-    if label_status in {"labeled", "final"}:
+        return "结构未定，建议人工复核"
+    label = str(row.get("true_label", "")).strip()
+    has_label = label in {"0", "0.0", "1", "1.0"}
+    if has_label and label_status in {"labeled", "final"}:
         return "final真实标签"
-    return "无标签指标池"
+    if label_status in {"unlabeled", "metric_pool"}:
+        return "无标签指标池"
+    if feature_source:
+        return "离线派生结果"
+    return "离线派生结果（标签未随演示输入提供）"
 
 
 def next_action(score: float, row: pd.Series, model_available: bool) -> str:
     if str(row.get("vehicle_structure", "unknown")) == "unknown":
-        return "客户共创确认"
+        return "人工复核"
     if not model_available:
         return "人工复核"
     if score >= 0.80 and not str(row.get("true_label", "")).strip():
@@ -57,6 +61,18 @@ def next_action(score: float, row: pd.Series, model_available: bool) -> str:
     if not str(row.get("true_label", "")).strip():
         return "客户共创确认"
     return "暂不优先处理"
+
+
+def validation_priority(score: float, structure: str, model_available: bool) -> str:
+    if structure == "unknown":
+        return "P0 人工复核"
+    if not model_available:
+        return "规则预览"
+    if score >= 0.70:
+        return "P0"
+    if score >= 0.45:
+        return "P1"
+    return "P2"
 
 
 def label_text(value: Any) -> str:

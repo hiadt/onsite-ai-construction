@@ -5,10 +5,19 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
-from feature_explain import evidence_status, next_action, risk_level, top_reasons
+from feature_explain import (
+    evidence_status,
+    next_action,
+    risk_level,
+    top_reasons,
+    validation_priority,
+)
 from inference import (
+    FeatureValidationError,
+    ModelLoadError,
     load_gate3_model,
     model_display_name,
     predict_failure_risk,
@@ -31,16 +40,26 @@ METADATA_DEFAULTS = {
     "match_status": "unmatched_candidate",
     "vehicle_configuration_fingerprint_summary": "",
     "feature_version": "",
-    "feature_source": "uploaded_pre_execution_features",
+    "feature_source": "offline_derived_features",
     "feature_missing_reason": "",
 }
 
 
 def normalize_metadata(frame: pd.DataFrame, contract: dict[str, Any]) -> pd.DataFrame:
     normalized = frame.copy()
+    for identity_column, expected in (
+        ("feature_version", contract["feature_version"]),
+        ("schema_sha256", contract["schema_sha256"]),
+    ):
+        if identity_column in normalized.columns:
+            provided = normalized[identity_column].dropna().astype(str).str.strip()
+            provided = provided[provided.ne("")]
+            if not provided.empty and not provided.eq(expected).all():
+                raise FeatureValidationError(f"输入中的{identity_column}与冻结特征契约不一致。")
     for column in contract.get("metadata_columns", []):
         if column not in normalized.columns:
             normalized[column] = METADATA_DEFAULTS.get(column, "")
+    normalized["feature_version"] = contract["feature_version"]
     if "sample_id" not in normalized or normalized["sample_id"].astype(str).str.strip().eq("").any():
         normalized["sample_id"] = [f"UPLOAD-{index + 1:04d}" for index in range(len(normalized))]
     normalized["vehicle_structure"] = (
@@ -69,17 +88,19 @@ def evaluate_candidates(
         "model_error": "",
     }
     try:
-        model, metadata = load_gate3_model(model_path)
+        model, metadata = load_gate3_model(model_path, contract)
         model_risk = predict_failure_risk(model, features)
         result["model_risk"] = model_risk
         result["combined_risk"] = 0.6 * result["model_risk"] + 0.4 * result["rule_risk"]
+        if not np.isfinite(result[["model_risk", "rule_risk", "combined_risk"]].to_numpy()).all():
+            raise ValueError("风险输出包含NaN或无穷值。")
         result["risk_level"] = result["combined_risk"].map(risk_level)
         state.update(
             model_available=True,
             model_name=model_display_name(model, metadata),
             model_metadata=metadata,
         )
-    except (FileNotFoundError, TypeError, ValueError) as error:
+    except (FileNotFoundError, ModelLoadError, TypeError, ValueError) as error:
         state["model_error"] = str(error)
         result["model_risk"] = pd.NA
         result["combined_risk"] = pd.NA
@@ -93,6 +114,14 @@ def evaluate_candidates(
     score_column = "combined_risk" if state["model_available"] else "rule_risk"
     result["next_action"] = [
         next_action(float(result.loc[index, score_column]), result.loc[index], state["model_available"])
+        for index in result.index
+    ]
+    result["validation_priority"] = [
+        validation_priority(
+            float(result.loc[index, score_column]),
+            str(result.loc[index, "vehicle_structure"]),
+            state["model_available"],
+        )
         for index in result.index
     ]
     return result, components, state

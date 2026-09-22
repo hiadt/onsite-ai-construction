@@ -1,4 +1,6 @@
 {
+  "sha256_exact_matches": 451,
+  "features_extracted": 437,
   "final_samples": 340,
   "passed": 139,
   "failed": 201,

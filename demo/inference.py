@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,10 @@ class FeatureValidationError(ValueError):
     """Raised when uploaded data does not match the frozen feature contract."""
 
 
+class ModelLoadError(RuntimeError):
+    """Raised when the frozen Gate 3 artifact cannot be loaded or verified."""
+
+
 def load_contract(path: str | Path) -> dict[str, Any]:
     contract_path = Path(path)
     if not contract_path.is_file():
@@ -26,6 +31,13 @@ def load_contract(path: str | Path) -> dict[str, Any]:
         raise FeatureValidationError(f"特征契约缺少字段：{', '.join(missing)}")
     if len(contract["training_feature_columns"]) != 55:
         raise FeatureValidationError("特征契约不是预期的55维标准。")
+    ordered_columns = list(contract.get("metadata_columns", [])) + list(
+        contract["training_feature_columns"]
+    )
+    material = contract["feature_version"] + "\n" + "\n".join(ordered_columns)
+    calculated = hashlib.sha256(material.encode("utf-8")).hexdigest()
+    if calculated != contract["schema_sha256"]:
+        raise FeatureValidationError("特征契约Schema哈希校验失败。")
     return contract
 
 
@@ -57,14 +69,21 @@ def validate_feature_frame(frame: pd.DataFrame, contract: dict[str, Any]) -> pd.
     return converted
 
 
-def load_gate3_model(path: str | Path) -> tuple[Any, dict[str, Any]]:
+def load_gate3_model(
+    path: str | Path, contract: dict[str, Any]
+) -> tuple[Any, dict[str, Any]]:
     model_path = Path(path)
     if not model_path.is_file():
         raise FileNotFoundError(
             "Gate 3模型文件不存在。请由项目负责人提供 "
             "demo/models/pathguard_gate3_model.joblib；系统不会使用伪造模型替代。"
         )
-    artifact = joblib.load(model_path)
+    try:
+        artifact = joblib.load(model_path)
+    except Exception as error:
+        raise ModelLoadError(
+            f"学习模型加载失败：{type(error).__name__}: {error}。当前为规则预览。"
+        ) from error
     metadata: dict[str, Any] = {}
     model = artifact
     if isinstance(artifact, dict):
@@ -73,7 +92,18 @@ def load_gate3_model(path: str | Path) -> tuple[Any, dict[str, Any]]:
             model = artifact.get("estimator")
         metadata = {key: value for key, value in artifact.items() if key not in {"model", "estimator"}}
     if model is None or not hasattr(model, "predict_proba"):
-        raise TypeError("Gate 3模型必须提供 predict_proba 接口。")
+        raise ModelLoadError("Gate 3模型必须提供 predict_proba 接口。")
+
+    expected_features = list(contract["training_feature_columns"])
+    artifact_features = metadata.get("features")
+    if list(artifact_features or []) != expected_features:
+        raise ModelLoadError("模型记录的55个特征名称或顺序与特征契约不一致。")
+    if metadata.get("feature_version") != contract["feature_version"]:
+        raise ModelLoadError("模型特征版本与 feature_contract_v2.json 不一致。")
+    if metadata.get("schema_sha256") != contract["schema_sha256"]:
+        raise ModelLoadError("模型Schema哈希与 feature_contract_v2.json 不一致。")
+    if int(getattr(model, "n_features_in_", -1)) != len(expected_features):
+        raise ModelLoadError("模型输入维度不是契约规定的55维。")
     return model, metadata
 
 
@@ -82,7 +112,8 @@ def predict_failure_risk(model: Any, features: pd.DataFrame) -> np.ndarray:
     if feature_names is not None and list(feature_names) != list(features.columns):
         raise FeatureValidationError("模型训练列顺序与 feature_contract_v2.json 不一致。")
 
-    probabilities = np.asarray(model.predict_proba(features), dtype=float)
+    model_input = features if feature_names is not None else features.to_numpy(dtype=float)
+    probabilities = np.asarray(model.predict_proba(model_input), dtype=float)
     if probabilities.ndim != 2 or probabilities.shape[0] != len(features):
         raise ValueError("模型输出形状不符合 predict_proba 约定。")
     classes = getattr(model, "classes_", None)
