@@ -1,0 +1,99 @@
+{
+  "frozen_samples": 340,
+  "readable_npz": 340,
+  "full_boundary_samples": 69,
+  "verified_boundary_semantics_samples": 26,
+  "body_clearance_samples": 340,
+  "boundary_confidence_samples": 70,
+  "vehicle_profile_id_samples": 175,
+  "vehicle_profile_fingerprint_samples": 174,
+  "coverage_by_structure": [
+    {
+      "vehicle_structure": "five_axis",
+      "samples": 99,
+      "readable": 99,
+      "has_xy_yaw": 99,
+      "has_left_right_clearance": 99,
+      "has_body_clearance": 99,
+      "has_full_boundary": 69,
+      "has_boundary_confidence": 70,
+      "has_vehicle_profile_id": 99,
+      "has_vehicle_profile_fingerprint": 99,
+      "boundary_distance_semantics_verified": 26
+    },
+    {
+      "vehicle_structure": "six_axis",
+      "samples": 79,
+      "readable": 79,
+      "has_xy_yaw": 79,
+      "has_left_right_clearance": 79,
+      "has_body_clearance": 79,
+      "has_full_boundary": 0,
+      "has_boundary_confidence": 0,
+      "has_vehicle_profile_id": 76,
+      "has_vehicle_profile_fingerprint": 75,
+      "boundary_distance_semantics_verified": 0
+    },
+    {
+      "vehicle_structure": "unknown",
+      "samples": 162,
+      "readable": 162,
+      "has_xy_yaw": 162,
+      "has_left_right_clearance": 162,
+      "has_body_clearance": 162,
+      "has_full_boundary": 0,
+      "has_boundary_confidence": 0,
+      "has_vehicle_profile_id": 0,
+      "has_vehicle_profile_fingerprint": 0,
+      "boundary_distance_semantics_verified": 0
+    }
+  ],
+  "semantics": "left/right boundary coordinates reproduce centerline-to-boundary clearance within 1e-5 m",
+  "experiment": {
+    "scope": "exploratory_map_grouped_oof",
+    "eligible_samples": 26,
+    "map_count": 7,
+    "vehicle_structures": {
+      "five_axis": 26
+    },
+    "grouping": "LeaveOneGroupOut by map_id",
+    "baseline": {
+      "n": 26,
+      "failures": 9,
+      "pr_auc_failure": 0.576398260608787,
+      "roc_auc_failure": 0.5653594771241831,
+      "top_10_captured": 5,
+      "top_10_capture_rate": 0.5555555555555556,
+      "top_10_precision": 0.5,
+      "top_20_captured": 6,
+      "top_20_capture_rate": 0.6666666666666666,
+      "top_20_precision": 0.3
+    },
+    "augmented": {
+      "n": 26,
+      "failures": 9,
+      "pr_auc_failure": 0.576398260608787,
+      "roc_auc_failure": 0.5653594771241831,
+      "top_10_captured": 5,
+      "top_10_capture_rate": 0.5555555555555556,
+      "top_10_precision": 0.5,
+      "top_20_captured": 6,
+      "top_20_capture_rate": 0.6666666666666666,
+      "top_20_precision": 0.3
+    },
+    "delta": {
+      "pr_auc_failure": 0.0,
+      "roc_auc_failure": 0.0,
+      "top_10_capture_rate": 0.0,
+      "top_20_capture_rate": 0.0
+    },
+    "production_eligible": false,
+    "exit_conditions": {
+      "minimum_samples": 100,
+      "minimum_vehicle_structures": 2,
+      "minimum_pr_auc_gain": 0.02,
+      "top10_capture_must_not_decrease": true
+    },
+    "decision": "retain_as_exploratory_evidence_only"
+  }
+}

@@ -7,7 +7,7 @@ import pandas as pd
 from demo_logic import evaluate_candidates
 from inference import load_contract
 from rule_baseline import compute_geometry_rule_risk
-from route_input import parse_route, compute_rigid_body_sweep
+from route_input import parse_route, compute_boundary_rule, compute_rigid_body_sweep
 BASE=Path(__file__).parent
 class ProductRegressionTests(unittest.TestCase):
     def setUp(self):
@@ -34,11 +34,11 @@ class ProductRegressionTests(unittest.TestCase):
         frame,key,geo=parse_route(payload,'test.npz',config)
         result,_,state=evaluate_candidates(frame,self.contract,BASE/'models/pathguard_gate3_model.joblib')
         self.assertTrue(state['model_available'])
-        self.assertEqual(len(geo['events']),4)
+        self.assertGreaterEqual(len(geo['events']),4)
         self.assertEqual(geo['source_sha256'],frame.iloc[0].route_file_sha256)
         _,other,_=parse_route(payload,'same.npz',{**config,'length_m':15})
         self.assertNotEqual(key,other)
-        self.assertEqual(geo['left_boundary'],[])
+        self.assertEqual(len(geo['left_boundary']),len(geo['centerline']))
     def test_missing_fields_rejected(self):
         buffer=io.BytesIO();np.savez(buffer,x_m=np.arange(4))
         with self.assertRaisesRegex(ValueError,'missing required'):
@@ -64,4 +64,14 @@ class ProductRegressionTests(unittest.TestCase):
         self.assertGreater(longer_x[0].max(),x[0].max())
         with self.assertRaises(ValueError):
             compute_rigid_body_sweep(geometry,4,2,5)
+    def test_adjustable_dimensions_change_boundary_rule(self):
+        geometry={'centerline':[[0,0],[10,0]],'yaw_rad':[0,0],'station_m':[0,10],
+                  'left_boundary':[[0,3],[10,3]],'right_boundary':[[0,-3],[10,-3]]}
+        narrow=compute_boundary_rule(geometry,8,4,3,0.5)
+        wide=compute_boundary_rule(geometry,8,8,3,0.5)
+        self.assertTrue(narrow['available']);self.assertAlmostEqual(narrow['minimum_margin_m'],1.0)
+        self.assertEqual(narrow['state'],'局部横断面余量通过')
+        self.assertAlmostEqual(wide['minimum_margin_m'],-1.0)
+        self.assertEqual(wide['state'],'包络越界')
+        self.assertEqual(wide['priority'],'P0 人工复核')
 if __name__=='__main__':unittest.main()

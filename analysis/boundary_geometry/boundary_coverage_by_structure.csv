@@ -1,0 +1,4 @@
+﻿vehicle_structure,samples,readable,has_xy_yaw,has_left_right_clearance,has_body_clearance,has_full_boundary,has_boundary_confidence,has_vehicle_profile_id,has_vehicle_profile_fingerprint,boundary_distance_semantics_verified
+five_axis,99,99,99,99,99,69,70,99,99,26
+six_axis,79,79,79,79,79,0,0,76,75,0
+unknown,162,162,162,162,162,0,0,0,0,0
