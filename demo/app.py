@@ -175,7 +175,7 @@ def dynamic_envelope(row: pd.Series) -> None:
           <animateMotion dur="6.5s" repeatCount="indefinite" rotate="auto"><mpath href="#{route_id}"/></animateMotion>
         </g>
         <text x="18" y="257" class="svg-label">曲率P95 {curvature:.3f} · 转向变化P95 {steer_change:.3f} · 静态净空 {clearance:.2f}</text>
-        <text x="18" y="275" class="svg-label">俯视道路、障碍物与车辆扫掠关注带；车辆沿当前特征生成的示意路径循环运动</text>
+        <text x="18" y="275" class="svg-label">俯视道路、边界与车辆扫掠关注带；车辆沿当前特征生成的示意路径循环运动</text>
       </svg>
       <div class="legend"><span><i></i>蓝色虚线：车辆参考路线</span><span><i class="dashed"></i>灰色虚线：道路边界</span><span><i class="band"></i>彩色带：扫掠风险关注区</span></div>
       <div class="envelope-note">读图方法：车辆沿蓝色路线运动，彩色关注带越宽，表示当前样本的净空和转向风险越值得优先复核。本批演示数据没有统一的障碍物坐标，因此不绘制虚构障碍物；障碍物避碰需接入原始场景坐标后再计算。</div>
@@ -259,6 +259,30 @@ with overview_tab:
         '<div class="flow-step"><b>④ 安排下一步</b>补测、复核或共创</div>'
         '</div>', unsafe_allow_html=True)
     st.markdown('<div class="judge-card"><b>一句话结果</b><p>PathGuard 不替车辆做控制决策，而是把“先测哪条路线、为什么先测、下一步怎么验证”变成可追溯的工程队列。</p></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-kicker">同样的验证名额，优先找出更多失败路线</div>', unsafe_allow_html=True)
+    budget_cols = st.columns(3)
+    for col, key in zip(budget_cols, ("10", "20", "34")):
+        item = assets["test"]["top_k"][key]
+        col.metric(f"Top-{key}", f'{item["failures_captured"]} 条失败捕获',
+                   f'排序 {item["capture_rate"]:.1%} · 随机 {item["random_expected_capture_rate"]:.1%}')
+    st.caption("这组结果来自 5 张未参与开发的地图；它衡量的是有限验证名额下的排序价值，不是安全通过率。")
+    st.markdown('<div class="section-kicker">三种真实工程决策</div>', unsafe_allow_html=True)
+    queue_score = "model_risk" if runtime["model_available"] else "rule_risk"
+    ranked = evaluated.sort_values(queue_score, ascending=False)
+    conflict_rows = evaluated[evaluated["decision_status"] == "模型/规则冲突，人工复核"]
+    unknown_rows = evaluated[evaluated["vehicle_structure"] == "unknown"]
+    showcase = [
+        ("优先复核", ranked.iloc[0], "模型与规则共同指向高风险，先进入验证队列"),
+        ("规则关注", conflict_rows.iloc[0] if not conflict_rows.empty else ranked.iloc[min(1, len(ranked)-1)], "模型和工程规则不一致，不能静默放行"),
+        ("证据不足", unknown_rows.iloc[0] if not unknown_rows.empty else ranked.iloc[-1], "车辆结构未定，系统要求人工补充证据"),
+    ]
+    case_cols = st.columns(3)
+    for col, (title, item, note) in zip(case_cols, showcase):
+        with col:
+            col.markdown(f'**{title}**')
+            col.metric("路线", str(item["sample_id"])[-10:], f'{float(item[queue_score]):.3f} 主排序风险')
+            col.caption(f'{item["vehicle_structure"]} · {item["risk_reasons"]}')
+            col.info(note)
     st.markdown('<div class="section-kicker">数据与证据底座</div>', unsafe_allow_html=True)
     cols = st.columns(5)
     cols[0].metric("SHA-256精确匹配", f'{freeze["sha256_exact_matches"]} 条')
@@ -271,7 +295,7 @@ with overview_tab:
     cols[1].metric("六轴 final", freeze["six_axis_final"])
     cols[2].metric("结构未定 final", freeze["unknown_structure_final"])
     model_status = runtime["model_name"] if runtime["model_available"] else "学习模型未加载"
-    st.caption(f"当前状态：{model_status}；综合风险权重为演示配置，不是生产标定参数。")
+    st.caption(f"当前状态：{model_status}；主排序使用学习模型，工程规则作为独立交叉校验。")
 
     st.subheader("车辆结构")
     vehicle_cols = st.columns(3)
@@ -305,15 +329,15 @@ with queue_tab:
     queue = select_top_k(filtered, top_selection, runtime["model_available"]).reset_index(drop=True)
     display_columns = [
         "sample_id", "map_id", "vehicle_structure", "model_risk", "rule_risk",
-        "combined_risk", "risk_level", "validation_priority", "risk_reasons", "next_action",
+        "risk_level", "validation_priority", "decision_status", "risk_reasons", "next_action",
     ]
     display = queue[display_columns].rename(columns={
         "sample_id": "样本编号", "map_id": "地图编号", "vehicle_structure": "车辆结构",
-        "model_risk": "学习模型风险", "rule_risk": "规则风险", "combined_risk": "综合风险",
-        "risk_level": "风险等级", "validation_priority": "验证优先级",
+        "model_risk": "主排序风险", "rule_risk": "规则风险",
+        "risk_level": "风险等级", "validation_priority": "验证优先级", "decision_status": "一致性状态",
         "risk_reasons": "主要风险因素", "next_action": "下一步动作",
     })
-    score_title = "综合风险" if runtime["model_available"] else "规则预览"
+    score_title = "学习模型风险" if runtime["model_available"] else "规则预览"
     st.caption(
         f"按{score_title}降序生成 {top_selection}，当前显示 {len(display)} 条；"
         "规则风险是当前候选批次内的相对应力，不是安全概率。"

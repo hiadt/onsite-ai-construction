@@ -91,10 +91,19 @@ def evaluate_candidates(
         model, metadata = load_gate3_model(model_path, contract)
         model_risk = predict_failure_risk(model, features)
         result["model_risk"] = model_risk
-        result["combined_risk"] = 0.6 * result["model_risk"] + 0.4 * result["rule_risk"]
-        if not np.isfinite(result[["model_risk", "rule_risk", "combined_risk"]].to_numpy()).all():
+        # The learned model is the queue score. The rule is an independent
+        # engineering cross-check; it is deliberately not blended into a
+        # pseudo-probability whose weight would need separate calibration.
+        result["combined_risk"] = result["model_risk"]
+        if not np.isfinite(result[["model_risk", "rule_risk"]].to_numpy()).all():
             raise ValueError("风险输出包含NaN或无穷值。")
-        result["risk_level"] = result["combined_risk"].map(risk_level)
+        result["risk_level"] = result["model_risk"].map(risk_level)
+        result["decision_status"] = result.apply(
+            lambda row: "模型/规则冲突，人工复核"
+            if abs(float(row["model_risk"]) - float(row["rule_risk"])) >= 0.25
+            else "模型与工程规则方向一致",
+            axis=1,
+        )
         state.update(
             model_available=True,
             model_name=model_display_name(model, metadata),
@@ -105,17 +114,22 @@ def evaluate_candidates(
         result["model_risk"] = pd.NA
         result["combined_risk"] = pd.NA
         result["risk_level"] = "模型待补"
+        result["decision_status"] = "仅规则预览，等待模型"
 
     result["risk_reasons"] = [
         "；".join(top_reasons(components.loc[index])) or "当前批次内未发现突出的规则应力项"
         for index in result.index
     ]
     result["evidence_status"] = result.apply(evidence_status, axis=1)
-    score_column = "combined_risk" if state["model_available"] else "rule_risk"
+    score_column = "model_risk" if state["model_available"] else "rule_risk"
     result["next_action"] = [
         next_action(float(result.loc[index, score_column]), result.loc[index], state["model_available"])
         for index in result.index
     ]
+    if state["model_available"]:
+        conflict = result["decision_status"].eq("模型/规则冲突，人工复核") & result["vehicle_structure"].ne("unknown")
+        result.loc[conflict, "next_action"] = "人工复核（模型与规则冲突）"
+        result.loc[conflict, "validation_priority"] = "P0 人工复核"
     result["validation_priority"] = [
         validation_priority(
             float(result.loc[index, score_column]),
@@ -155,7 +169,7 @@ def apply_filters(
 
 
 def select_top_k(frame: pd.DataFrame, selection: str, model_available: bool) -> pd.DataFrame:
-    score_column = "combined_risk" if model_available else "rule_risk"
+    score_column = "model_risk" if model_available else "rule_risk"
     ordered = frame.sort_values(score_column, ascending=False)
     if selection == "Top 10%":
         count = max(1, int(len(ordered) * 0.1 + 0.9999)) if len(ordered) else 0
