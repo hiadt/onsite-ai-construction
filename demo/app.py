@@ -63,6 +63,15 @@ st.markdown(
     .flow-step b {display:block;color:#123b5d;margin-bottom:.2rem;}
     .judge-card {background:linear-gradient(120deg,#123b5d,#0d7180);color:#fff;border-radius:14px;padding:1rem 1.1rem;margin:.7rem 0 1rem;}
     .judge-card b {font-size:1.08rem;}.judge-card p {margin:.35rem 0 0;opacity:.92;line-height:1.5;font-size:.9rem;}
+    .risk-summary {display:grid;grid-template-columns:1.15fr 1fr 1fr 1fr;gap:.55rem;margin:.65rem 0 .8rem;}
+    .risk-box {background:#f7fafb;border:1px solid #dce7ef;border-radius:10px;padding:.65rem .75rem;min-height:76px;}
+    .risk-box b {display:block;color:#173f59;font-size:.82rem;margin-bottom:.25rem;}
+    .risk-box span {color:#304c5d;font-size:.86rem;line-height:1.4;}
+    .risk-box.primary {background:#fff4ed;border-color:#efc4a9;}.risk-box.primary span{color:#a44c2f;font-weight:700;}
+    .legend {display:flex;flex-wrap:wrap;gap:.65rem 1rem;margin:.45rem 0 0;color:#526675;font-size:.78rem;}
+    .legend i {display:inline-block;width:22px;border-top:3px solid #2b6f8d;vertical-align:middle;margin-right:4px;}
+    .legend i.dashed {border-top-style:dashed;}.legend i.band {border-top:7px solid #cf5b45;opacity:.55;}
+    .legend i.block {width:13px;height:11px;border:1px solid #765b42;background:#c5a483;border-top:1px solid #765b42;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -127,8 +136,29 @@ def dynamic_envelope(row: pd.Series) -> None:
     )
     attention = "较高" if caution >= 0.65 else "中等" if caution >= 0.35 else "较低"
     risk_color = "#cf5b45" if caution >= 0.65 else "#e09a42" if caution >= 0.35 else "#4c9a82"
+    combined = float(row.get("combined_risk", row.get("rule_risk", 0.0)))
+    level = str(row.get("risk_level", "待判定"))
+    if level in {"高风险", "高"} or combined >= .67:
+        result = "预测为优先复核路线"
+        consequence = "可能出现净空不足或轨迹执行偏差"
+        action = str(row.get("next_action", "优先补测 / 人工复核"))
+    elif level in {"中风险", "中"} or combined >= .34:
+        result = "预测为需要关注路线"
+        consequence = "局部指标接近关注阈值，需结合场景复核"
+        action = str(row.get("next_action", "安排复核"))
+    else:
+        result = "预测为当前批次低优先级路线"
+        consequence = "当前证据未显示明显风险，但不代表免检"
+        action = str(row.get("next_action", "暂缓处理 / 按计划验证"))
+    reasons = str(row.get("risk_reasons", "曲率、转向变化、净空等指标"))
     svg = f'''<div class="envelope-card">
-      <div class="envelope-title"><strong>动态空间风险示意</strong><span>{structure_label} · 净空关注度{attention}</span></div>
+      <div class="envelope-title"><strong>这条路线会发生什么？</strong><span>{structure_label} · 风险等级：{level}</span></div>
+      <div class="risk-summary">
+        <div class="risk-box primary"><b>预测结论</b><span>{result}</span></div>
+        <div class="risk-box"><b>可能的工程情况</b><span>{consequence}</span></div>
+        <div class="risk-box"><b>主要原因</b><span>{reasons}</span></div>
+        <div class="risk-box"><b>建议动作</b><span>{action}</span></div>
+      </div>
       <svg viewBox="0 0 600 290" role="img" aria-label="候选路线动态空间风险示意">
         <defs><marker id="pg-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#2b6f8d"/></marker></defs>
         <path d="{route_d}" class="envelope-band" style="stroke:{risk_color};stroke-width:{envelope_width:.1f}px"/>
@@ -151,7 +181,8 @@ def dynamic_envelope(row: pd.Series) -> None:
         <text x="18" y="257" class="svg-label">曲率P95 {curvature:.3f} · 转向变化P95 {steer_change:.3f} · 静态净空 {clearance:.2f}</text>
         <text x="18" y="275" class="svg-label">俯视道路、障碍物与车辆扫掠关注带；车辆沿当前特征生成的示意路径循环运动</text>
       </svg>
-      <div class="envelope-note">车辆运动、弯曲程度和关注带宽随当前样本变化。该视图用于解释为什么需要优先复核，不代表真实车身尺寸、轮迹、碰撞检测或动力学仿真。</div>
+      <div class="legend"><span><i></i>蓝色虚线：车辆参考路线</span><span><i class="dashed"></i>灰色虚线：道路边界</span><span><i class="band"></i>彩色带：扫掠风险关注区</span><span><i class="block"></i>棕色块：障碍物示意</span></div>
+      <div class="envelope-note">读图方法：车辆沿蓝色路线运动；彩色关注带越宽，表示当前样本的净空和转向风险越值得优先复核。车辆靠近障碍物或道路边界时，需安排补测、人工复核或客户共创。</div>
     </div>'''
     st.markdown(svg, unsafe_allow_html=True)
 
