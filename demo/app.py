@@ -43,9 +43,14 @@ st.markdown(
     .envelope-card svg {width:100%;height:auto;max-height:300px;background:#f7fafb;border-radius:10px;}
     .route-line {fill:none;stroke:#2b6f8d;stroke-width:3;stroke-dasharray:8 5;}
     .envelope-band {fill:none;opacity:.18;stroke-linecap:round;}
-    .vehicle-body {fill:#2b7890;fill-opacity:.88;stroke:#123b5d;stroke-width:2;}
-    .vehicle-nose {fill:#70b9bf;stroke:#123b5d;stroke-width:1.5;}
-    .axle-line {stroke:#d6eef0;stroke-width:4;}
+    .vehicle-body {fill:#eaf4f6;fill-opacity:.96;stroke:#123b5d;stroke-width:2;}
+    .vehicle-cab {fill:#7fbec5;stroke:#123b5d;stroke-width:1.5;}
+    .vehicle-nose {fill:#b9dfe1;stroke:#123b5d;stroke-width:1.5;}
+    .axle-line {stroke:#2b7890;stroke-width:3;}
+    .road-surface {fill:#dfe7eb;stroke:#9aabb5;stroke-width:1.2;}
+    .road-edge {fill:none;stroke:#8c9ca5;stroke-width:2;stroke-dasharray:7 6;}
+    .obstacle {fill:#c5a483;stroke:#765b42;stroke-width:1.5;}
+    .sweep-edge {fill:none;stroke:#cf5b45;stroke-width:1.6;stroke-dasharray:5 4;opacity:.72;}
     .svg-label {font-size:12px;fill:#526675;}
     .envelope-note {font-size:.78rem;color:#526675;margin-top:.45rem;line-height:1.45;}
     </style>
@@ -117,16 +122,24 @@ def dynamic_envelope(row: pd.Series) -> None:
       <svg viewBox="0 0 600 290" role="img" aria-label="候选路线动态空间风险示意">
         <defs><marker id="pg-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#2b6f8d"/></marker></defs>
         <path d="{route_d}" class="envelope-band" style="stroke:{risk_color};stroke-width:{envelope_width:.1f}px"/>
+        <path d="M 5 222 L 142 222 C 190 222, 217 {218-bend:.1f}, 300 {168-bend/2:.1f} S 474 {70+bend/4:.1f}, 595 47 L 595 5 L 5 5 Z" class="road-surface" opacity=".54"/>
+        <path d="M 5 195 L 145 195 C 194 195, 220 {206-bend:.1f}, 302 {160-bend/2:.1f} S 477 {61+bend/4:.1f}, 595 34" class="road-edge"/>
+        <path d="M 5 249 L 145 249 C 194 249, 220 {230-bend:.1f}, 302 {176-bend/2:.1f} S 477 {88+bend/4:.1f}, 595 60" class="road-edge"/>
+        <rect x="245" y="38" width="48" height="25" rx="3" class="obstacle" transform="rotate({-bend/5:.1f} 269 50)"/>
+        <rect x="407" y="125" width="42" height="23" rx="3" class="obstacle" transform="rotate({bend/7:.1f} 428 136)"/>
         <path id="{route_id}" d="{route_d}" class="route-line" marker-end="url(#pg-arrow)"/>
         <circle r="7" fill="{risk_color}" opacity=".55"><animate attributeName="r" values="5;10;5" dur="1.4s" repeatCount="indefinite"/><animateMotion dur="6.5s" repeatCount="indefinite" rotate="auto"><mpath href="#{route_id}"/></animateMotion></circle>
         <g class="moving-vehicle">
           <rect x="{-body_length/2:.1f}" y="{-body_width/2:.1f}" width="{body_length:.1f}" height="{body_width:.1f}" rx="10" class="vehicle-body"/>
+          <rect x="{body_length/2-38:.1f}" y="{-body_width/2+3:.1f}" width="24" height="{body_width-6:.1f}" rx="5" class="vehicle-cab"/>
           <path d="M {body_length/2-18:.1f} {-body_width/2:.1f} L {body_length/2:.1f} 0 L {body_length/2-18:.1f} {body_width/2:.1f} Z" class="vehicle-nose"/>
           {''.join(axle_lines)}
+          <path d="M {-body_length/2-2:.1f} {-body_width/2-8:.1f} L {body_length/2+5:.1f} {-body_width/2-8:.1f}" class="sweep-edge"/>
+          <path d="M {-body_length/2-2:.1f} {body_width/2+8:.1f} L {body_length/2+5:.1f} {body_width/2+8:.1f}" class="sweep-edge"/>
           <animateMotion dur="6.5s" repeatCount="indefinite" rotate="auto"><mpath href="#{route_id}"/></animateMotion>
         </g>
         <text x="18" y="257" class="svg-label">曲率P95 {curvature:.3f} · 转向变化P95 {steer_change:.3f} · 静态净空 {clearance:.2f}</text>
-        <text x="18" y="275" class="svg-label">彩色带表示归一化扫掠关注区；车辆沿当前特征生成的示意路径循环运动</text>
+        <text x="18" y="275" class="svg-label">俯视道路、障碍物与车辆扫掠关注带；车辆沿当前特征生成的示意路径循环运动</text>
       </svg>
       <div class="envelope-note">车辆运动、弯曲程度和关注带宽随当前样本变化。该视图用于解释为什么需要优先复核，不代表真实车身尺寸、轮迹、碰撞检测或动力学仿真。</div>
     </div>'''
