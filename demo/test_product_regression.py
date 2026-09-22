@@ -53,4 +53,3 @@ class ProductRegressionTests(unittest.TestCase):
         b,_,_=parse_route(payload,'b.npz',{'mass_kg':90000})
         np.testing.assert_allclose(a[self.contract['training_feature_columns']],b[self.contract['training_feature_columns']])
 if __name__=='__main__':unittest.main()
-

@@ -1,4 +1,4 @@
-"""Transparent batch-relative geometry stress baseline for PathGuard."""
+"""Geometry stress relative to a frozen development-only reference distribution."""
 
 from __future__ import annotations
 
