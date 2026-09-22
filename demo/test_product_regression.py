@@ -7,7 +7,7 @@ import pandas as pd
 from demo_logic import evaluate_candidates
 from inference import load_contract
 from rule_baseline import compute_geometry_rule_risk
-from route_input import parse_route
+from route_input import parse_route, compute_rigid_body_sweep
 BASE=Path(__file__).parent
 class ProductRegressionTests(unittest.TestCase):
     def setUp(self):
@@ -52,4 +52,15 @@ class ProductRegressionTests(unittest.TestCase):
         a,_,_=parse_route(payload,'a.npz',{'mass_kg':1000})
         b,_,_=parse_route(payload,'b.npz',{'mass_kg':90000})
         np.testing.assert_allclose(a[self.contract['training_feature_columns']],b[self.contract['training_feature_columns']])
+    def test_real_scale_rigid_sweep(self):
+        geometry={'centerline':[[0,0],[10,0]],'yaw_rad':[0,0]}
+        x,y=compute_rigid_body_sweep(geometry,12,4,5)
+        np.testing.assert_allclose(x,[[7,7,-5,-5],[17,17,5,5]])
+        np.testing.assert_allclose(y,[[2,-2,-2,2],[2,-2,-2,2]])
+        wider_y=compute_rigid_body_sweep(geometry,12,6,5)[1]
+        self.assertGreater(np.ptp(wider_y[0]),np.ptp(y[0]))
+        longer_x=compute_rigid_body_sweep(geometry,16,4,5)[0]
+        self.assertGreater(longer_x[0].max(),x[0].max())
+        with self.assertRaises(ValueError):
+            compute_rigid_body_sweep(geometry,4,2,5)
 if __name__=='__main__':unittest.main()
