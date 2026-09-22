@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import Any
 
@@ -37,6 +38,16 @@ st.markdown(
     .axles {display:flex;gap:7px;margin:12px 0 8px}.axle {height:28px;width:9px;
       border-radius:4px;background:#157a8a;border:2px solid #0c4b61;}
     .small-note {font-size:.84rem;color:#526675}.offline {color:#526675;font-size:.86rem;}
+    .envelope-card {padding:1rem;background:white;border:1px solid #dce7ef;border-radius:14px;margin:.8rem 0 1rem;}
+    .envelope-title {display:flex;justify-content:space-between;color:#173f59;margin-bottom:.35rem;}
+    .envelope-title span {font-size:.82rem;color:#39718a;background:#e8f2f5;padding:.2rem .55rem;border-radius:999px;}
+    .envelope-card svg {width:100%;height:auto;max-height:300px;background:#f7fafb;border-radius:10px;}
+    .route-line {fill:none;stroke:#2b6f8d;stroke-width:3;stroke-dasharray:8 5;}
+    .sweep-line {fill:none;stroke:#e09a42;stroke-width:2;stroke-dasharray:4 5;opacity:.82;}
+    .vehicle-body {fill:#2b7890;fill-opacity:.88;stroke:#123b5d;stroke-width:2;}
+    .axle-line {stroke:#d6eef0;stroke-width:3;}
+    .svg-label {font-size:9px;fill:#526675;}
+    .envelope-note {font-size:.78rem;color:#526675;margin-top:.45rem;line-height:1.45;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -68,6 +79,43 @@ def vehicle_illustration(title: str, count: int, caption: str) -> None:
         f'<div class="small-note">{caption}</div></div>',
         unsafe_allow_html=True,
     )
+
+
+def dynamic_envelope(row: pd.Series) -> None:
+    """Render a normalized engineering envelope cue for the selected route."""
+    structure = str(row.get("vehicle_structure", "unknown"))
+    axle_count = 6 if structure == "six_axis" else 5
+    curvature = abs(float(row.get("curvature_abs_p95_1pm", 0.0)))
+    steer_change = abs(float(row.get("steer_change_abs_p95_radpm", 0.0)))
+    clearance = float(row.get("static_boundary_clearance_min_m", 0.0))
+    turn = max(-16.0, min(16.0, 240.0 * curvature + 18.0 * steer_change))
+    caution = max(0.0, min(1.0, 1.0 - clearance / 4.0))
+    envelope_width = 58.0 + 24.0 * caution
+    body_width = 30.0
+    body_height = 124.0 if axle_count == 6 else 112.0
+    axle_lines = []
+    for idx in range(axle_count):
+        y = 103.0 - idx * (body_height - 18.0) / max(1, axle_count - 1)
+        axle_lines.append(
+            f'<line x1="{100-body_width/2:.1f}" y1="{y:.1f}" '
+            f'x2="{100+body_width/2:.1f}" y2="{y:.1f}" class="axle-line"/>'
+        )
+    structure_label = "六轴" if axle_count == 6 else "五轴" if structure == "five_axis" else "结构未定"
+    svg = f'''<div class="envelope-card">
+      <div class="envelope-title"><strong>动态车辆包络示意</strong><span>{structure_label}</span></div>
+      <svg viewBox="0 0 300 270" role="img" aria-label="候选路线车辆动态包络示意">
+        <defs><marker id="pg-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#2b6f8d"/></marker></defs>
+        <path d="M42 46 Q150 {76-turn:.1f} 258 46" class="route-line" marker-end="url(#pg-arrow)"/>
+        <path d="M42 46 Q150 {76-turn-envelope_width/3:.1f} 258 46" class="sweep-line"/>
+        <path d="M42 46 Q150 {76+turn+envelope_width/3:.1f} 258 46" class="sweep-line"/>
+        <rect x="{100-body_width/2:.1f}" y="{103-body_height+18:.1f}" width="{body_width:.1f}" height="{body_height:.1f}" rx="12" class="vehicle-body" transform="rotate({turn/5:.1f} 100 103)"/>
+        {''.join(axle_lines)}
+        <text x="18" y="232" class="svg-label">局部曲率 {curvature:.3f} · 转向变化 {steer_change:.3f}</text>
+        <text x="18" y="249" class="svg-label">静态边界净空 {clearance:.2f} · 包络宽度为归一化示意</text>
+      </svg>
+      <div class="envelope-note">根据当前样本的执行前几何指标动态变化；用于定位复核方向，不代表实车扫掠仿真或碰撞结论。</div>
+    </div>'''
+    st.markdown(svg, unsafe_allow_html=True)
 
 
 def percent(value: float) -> str:
@@ -210,6 +258,7 @@ with detail_tab:
         selected_index = evaluated.index[evaluated["sample_id"].astype(str) == selected_id][0]
         row = evaluated.loc[selected_index]
         components = rule_components.loc[selected_index].sort_values(ascending=False)
+        dynamic_envelope(row)
         left, right = st.columns([1, 1])
         with left:
             st.subheader(selected_id)
