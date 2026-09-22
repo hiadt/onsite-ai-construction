@@ -1,0 +1,74 @@
+[
+  {
+    "sample_id": "sample_1457c0c45167b411e8ed",
+    "map_id": "map_002",
+    "vehicle_structure": "six_axis",
+    "true_label": "0",
+    "failure_risk": "0.72575392",
+    "reasons": [
+      {
+        "feature": "curvature_change_abs_p95_1pm2",
+        "value": 0.035089981147186436,
+        "standardized_stress": 21.35978027735342
+      },
+      {
+        "feature": "curvature_change_abs_mean_1pm2",
+        "value": 0.006191037869824306,
+        "standardized_stress": 19.978351598821636
+      },
+      {
+        "feature": "yaw_rate_change_abs_max_radps_per_m",
+        "value": 1.095394068812505,
+        "standardized_stress": 12.811092346694968
+      }
+    ]
+  },
+  {
+    "sample_id": "sample_ab1ff671882e21989104",
+    "map_id": "map_008",
+    "vehicle_structure": "five_axis",
+    "true_label": "1",
+    "failure_risk": "0.68789110",
+    "reasons": [
+      {
+        "feature": "window10m_max_mean_abs_curvature_1pm",
+        "value": 0.10431465004122518,
+        "standardized_stress": 2.440417287841825
+      },
+      {
+        "feature": "curvature_change_abs_max_1pm2",
+        "value": 0.022487447755444007,
+        "standardized_stress": 1.2179201948588756
+      },
+      {
+        "feature": "speed_abs_curvature_correlation",
+        "value": -0.4038588865983675,
+        "standardized_stress": 1.2119111662669824
+      }
+    ]
+  },
+  {
+    "sample_id": "sample_6e22eefecfa03e7bd0dd",
+    "map_id": "map_016",
+    "vehicle_structure": "six_axis",
+    "true_label": "1",
+    "failure_risk": "0.66268338",
+    "reasons": [
+      {
+        "feature": "curvature_change_abs_mean_1pm2",
+        "value": 0.005861679052993185,
+        "standardized_stress": 18.830580877848316
+      },
+      {
+        "feature": "curvature_change_abs_p95_1pm2",
+        "value": 0.029828757076605258,
+        "standardized_stress": 17.947266658203482
+      },
+      {
+        "feature": "lateral_accel_proxy_max_mps2",
+        "value": 14.227835241478571,
+        "standardized_stress": 14.223023459216996
+      }
+    ]
+  }
+]
