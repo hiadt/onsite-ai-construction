@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import math
 from pathlib import Path
 from typing import Any
 
@@ -43,10 +42,11 @@ st.markdown(
     .envelope-title span {font-size:.82rem;color:#39718a;background:#e8f2f5;padding:.2rem .55rem;border-radius:999px;}
     .envelope-card svg {width:100%;height:auto;max-height:300px;background:#f7fafb;border-radius:10px;}
     .route-line {fill:none;stroke:#2b6f8d;stroke-width:3;stroke-dasharray:8 5;}
-    .sweep-line {fill:none;stroke:#e09a42;stroke-width:2;stroke-dasharray:4 5;opacity:.82;}
+    .envelope-band {fill:none;opacity:.18;stroke-linecap:round;}
     .vehicle-body {fill:#2b7890;fill-opacity:.88;stroke:#123b5d;stroke-width:2;}
-    .axle-line {stroke:#d6eef0;stroke-width:3;}
-    .svg-label {font-size:9px;fill:#526675;}
+    .vehicle-nose {fill:#70b9bf;stroke:#123b5d;stroke-width:1.5;}
+    .axle-line {stroke:#d6eef0;stroke-width:4;}
+    .svg-label {font-size:12px;fill:#526675;}
     .envelope-note {font-size:.78rem;color:#526675;margin-top:.45rem;line-height:1.45;}
     </style>
     """,
@@ -82,38 +82,53 @@ def vehicle_illustration(title: str, count: int, caption: str) -> None:
 
 
 def dynamic_envelope(row: pd.Series) -> None:
-    """Render a normalized engineering envelope cue for the selected route."""
+    """Animate a normalized spatial-risk cue for the selected route."""
     structure = str(row.get("vehicle_structure", "unknown"))
     axle_count = 6 if structure == "six_axis" else 5
+    signed_curvature = float(row.get("curvature_mean_1pm", 0.0))
     curvature = abs(float(row.get("curvature_abs_p95_1pm", 0.0)))
     steer_change = abs(float(row.get("steer_change_abs_p95_radpm", 0.0)))
     clearance = float(row.get("static_boundary_clearance_min_m", 0.0))
-    turn = max(-16.0, min(16.0, 240.0 * curvature + 18.0 * steer_change))
     caution = max(0.0, min(1.0, 1.0 - clearance / 4.0))
-    envelope_width = 58.0 + 24.0 * caution
+    bend = min(125.0, 24.0 + 520.0 * curvature + 45.0 * steer_change)
+    direction = -1.0 if signed_curvature < 0 else 1.0
+    bend *= direction
+    envelope_width = 34.0 + 34.0 * caution
+    body_length = 104.0 if axle_count == 6 else 92.0
     body_width = 30.0
-    body_height = 124.0 if axle_count == 6 else 112.0
     axle_lines = []
     for idx in range(axle_count):
-        y = 103.0 - idx * (body_height - 18.0) / max(1, axle_count - 1)
+        x = -body_length / 2 + 11.0 + idx * (body_length - 22.0) / max(1, axle_count - 1)
         axle_lines.append(
-            f'<line x1="{100-body_width/2:.1f}" y1="{y:.1f}" '
-            f'x2="{100+body_width/2:.1f}" y2="{y:.1f}" class="axle-line"/>'
+            f'<line x1="{x:.1f}" y1="{-body_width/2-3:.1f}" '
+            f'x2="{x:.1f}" y2="{body_width/2+3:.1f}" class="axle-line"/>'
         )
     structure_label = "六轴" if axle_count == 6 else "五轴" if structure == "five_axis" else "结构未定"
+    sample_token = "".join(ch for ch in str(row.get("sample_id", "route")) if ch.isalnum())[-12:]
+    route_id = f"motion-route-{sample_token or 'selected'}"
+    route_d = (
+        f"M 38 218 C 150 218, 190 {218-bend:.1f}, 300 {168-bend/2:.1f} "
+        f"S 470 {76+bend/4:.1f}, 565 54"
+    )
+    attention = "较高" if caution >= 0.65 else "中等" if caution >= 0.35 else "较低"
+    risk_color = "#cf5b45" if caution >= 0.65 else "#e09a42" if caution >= 0.35 else "#4c9a82"
     svg = f'''<div class="envelope-card">
-      <div class="envelope-title"><strong>动态车辆包络示意</strong><span>{structure_label}</span></div>
-      <svg viewBox="0 0 300 270" role="img" aria-label="候选路线车辆动态包络示意">
+      <div class="envelope-title"><strong>动态空间风险示意</strong><span>{structure_label} · 净空关注度{attention}</span></div>
+      <svg viewBox="0 0 600 290" role="img" aria-label="候选路线动态空间风险示意">
         <defs><marker id="pg-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#2b6f8d"/></marker></defs>
-        <path d="M42 46 Q150 {76-turn:.1f} 258 46" class="route-line" marker-end="url(#pg-arrow)"/>
-        <path d="M42 46 Q150 {76-turn-envelope_width/3:.1f} 258 46" class="sweep-line"/>
-        <path d="M42 46 Q150 {76+turn+envelope_width/3:.1f} 258 46" class="sweep-line"/>
-        <rect x="{100-body_width/2:.1f}" y="{103-body_height+18:.1f}" width="{body_width:.1f}" height="{body_height:.1f}" rx="12" class="vehicle-body" transform="rotate({turn/5:.1f} 100 103)"/>
-        {''.join(axle_lines)}
-        <text x="18" y="232" class="svg-label">局部曲率 {curvature:.3f} · 转向变化 {steer_change:.3f}</text>
-        <text x="18" y="249" class="svg-label">静态边界净空 {clearance:.2f} · 包络宽度为归一化示意</text>
+        <path d="{route_d}" class="envelope-band" style="stroke:{risk_color};stroke-width:{envelope_width:.1f}px"/>
+        <path id="{route_id}" d="{route_d}" class="route-line" marker-end="url(#pg-arrow)"/>
+        <circle r="7" fill="{risk_color}" opacity=".55"><animate attributeName="r" values="5;10;5" dur="1.4s" repeatCount="indefinite"/><animateMotion dur="6.5s" repeatCount="indefinite" rotate="auto"><mpath href="#{route_id}"/></animateMotion></circle>
+        <g class="moving-vehicle">
+          <rect x="{-body_length/2:.1f}" y="{-body_width/2:.1f}" width="{body_length:.1f}" height="{body_width:.1f}" rx="10" class="vehicle-body"/>
+          <path d="M {body_length/2-18:.1f} {-body_width/2:.1f} L {body_length/2:.1f} 0 L {body_length/2-18:.1f} {body_width/2:.1f} Z" class="vehicle-nose"/>
+          {''.join(axle_lines)}
+          <animateMotion dur="6.5s" repeatCount="indefinite" rotate="auto"><mpath href="#{route_id}"/></animateMotion>
+        </g>
+        <text x="18" y="257" class="svg-label">曲率P95 {curvature:.3f} · 转向变化P95 {steer_change:.3f} · 静态净空 {clearance:.2f}</text>
+        <text x="18" y="275" class="svg-label">彩色带表示归一化扫掠关注区；车辆沿当前特征生成的示意路径循环运动</text>
       </svg>
-      <div class="envelope-note">根据当前样本的执行前几何指标动态变化；用于定位复核方向，不代表实车扫掠仿真或碰撞结论。</div>
+      <div class="envelope-note">车辆运动、弯曲程度和关注带宽随当前样本变化。该视图用于解释为什么需要优先复核，不代表真实车身尺寸、轮迹、碰撞检测或动力学仿真。</div>
     </div>'''
     st.markdown(svg, unsafe_allow_html=True)
 
