@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import json
 from pathlib import Path
 from typing import Any
@@ -27,6 +28,17 @@ DATA_DIR = DEMO_DIR / "data"
 MODEL_PATH = DEMO_DIR / "models" / "pathguard_gate3_model.joblib"
 CONTRACT_PATH = DATA_DIR / "feature_contract_v2.json"
 SAMPLE_PATH = DATA_DIR / "sample_input.csv"
+HERO_IMAGE_PATH = DEMO_DIR / "assets" / "pathguard-heavy-haul-hero.png"
+
+
+def image_data_uri(path: Path) -> str:
+    """Return a self-contained image URL so Streamlit can render local assets reliably."""
+    if not path.exists():
+        return ""
+    return "data:image/png;base64," + base64.b64encode(path.read_bytes()).decode("ascii")
+
+
+hero_image_uri = image_data_uri(HERO_IMAGE_PATH)
 
 st.set_page_config(page_title="PathGuard 路线风险决策", page_icon="🛡️", layout="wide")
 st.markdown(
@@ -79,6 +91,87 @@ st.markdown(
     .legend i.dashed {border-top-style:dashed;}.legend i.band {border-top:7px solid #cf5b45;opacity:.55;}
     </style>
     """,
+    unsafe_allow_html=True,
+)
+st.markdown(
+    """
+    <style>
+    :root {
+      --pg-navy: #071a2b; --pg-navy-2: #0e3048; --pg-teal: #00a7a7;
+      --pg-amber: #ff9d2e; --pg-ink: #102f43; --pg-muted: #5d7282;
+      --pg-line: #d9e5ec; --pg-surface: rgba(255,255,255,.96);
+    }
+    html, body, [class*="css"] {font-family: Inter, "Microsoft YaHei", "PingFang SC", sans-serif;}
+    .stApp {
+      color:var(--pg-ink);
+      background:linear-gradient(180deg,rgba(4,18,31,.12) 0,rgba(244,248,251,.94) 34rem,#f4f8fb 44rem),
+        url("__HERO_IMAGE__") top center/100% auto no-repeat fixed,#f4f8fb;
+    }
+    [data-testid="stHeader"] {background:rgba(5,24,39,.72);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.1);}
+    [data-testid="stToolbar"] {color:white;}
+    [data-testid="stSidebar"] {
+      background:linear-gradient(180deg,#081f32 0%,#0b2b42 54%,#0b3347 100%);
+      border-right:1px solid rgba(255,255,255,.08);box-shadow:14px 0 38px rgba(4,20,34,.16);
+    }
+    [data-testid="stSidebar"] * {color:#e9f5f7;}
+    [data-testid="stSidebar"] h1,[data-testid="stSidebar"] h2,[data-testid="stSidebar"] h3 {color:#fff;letter-spacing:-.02em;}
+    [data-testid="stSidebar"] [data-baseweb="select"]>div,
+    [data-testid="stSidebar"] [data-baseweb="input"]>div,
+    [data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {
+      background:rgba(255,255,255,.07);border-color:rgba(145,214,216,.3);border-radius:12px;
+    }
+    [data-testid="stSidebar"] details {background:rgba(255,255,255,.05);border:1px solid rgba(145,214,216,.16);border-radius:12px;}
+    [data-testid="stMainBlockContainer"] {max-width:1480px;padding-top:4.4rem;padding-bottom:4rem;}
+    .hero {
+      position:relative;overflow:hidden;min-height:330px;display:flex;flex-direction:column;
+      justify-content:center;align-items:flex-start;padding:3.6rem clamp(1.5rem,5vw,5rem);margin:0 0 1.1rem;
+      border:1px solid rgba(255,255,255,.2);border-radius:26px;
+      background:linear-gradient(90deg,rgba(3,18,31,.98) 0%,rgba(4,29,47,.88) 37%,rgba(5,30,45,.28) 70%,rgba(5,19,31,.1) 100%),
+        url("__HERO_IMAGE__") center/cover no-repeat;box-shadow:0 28px 70px rgba(3,24,39,.34);
+    }
+    .hero:after {content:"";position:absolute;inset:auto 0 0;height:5px;background:linear-gradient(90deg,var(--pg-teal),var(--pg-amber),transparent 78%);}
+    .hero-kicker {display:inline-flex;align-items:center;gap:.55rem;color:#a9eeee;font-weight:700;font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;margin-bottom:.8rem;}
+    .hero-kicker:before {content:"";width:28px;height:2px;background:var(--pg-amber);}
+    .hero h1 {margin:0;color:#fff;font-size:clamp(2.7rem,6vw,5.4rem);line-height:.95;letter-spacing:-.055em;text-shadow:0 8px 30px rgba(0,0,0,.25);}
+    .hero p {max-width:650px;margin:1.05rem 0 1.35rem;color:#dff4f5;font-size:clamp(1rem,1.55vw,1.32rem);line-height:1.7;opacity:.95;}
+    .hero-badges {display:flex;flex-wrap:wrap;gap:.55rem;}
+    .hero-badges span {padding:.42rem .72rem;border:1px solid rgba(171,235,235,.25);border-radius:999px;background:rgba(6,31,48,.58);backdrop-filter:blur(8px);color:#e8ffff;font-size:.78rem;}
+    .notice {padding:.92rem 1.1rem;border:1px solid #f0d7b6;border-left:4px solid var(--pg-amber);background:rgba(255,249,239,.96);box-shadow:0 8px 28px rgba(98,66,24,.06);border-radius:12px;color:#6d4919;margin:.45rem 0 1.35rem;}
+    [data-testid="stTabs"] [data-baseweb="tab-list"] {
+      gap:.5rem;padding:.45rem;background:rgba(255,255,255,.92);border:1px solid var(--pg-line);border-radius:16px;
+      box-shadow:0 12px 32px rgba(9,45,67,.08);position:sticky;top:3.7rem;z-index:20;backdrop-filter:blur(16px);
+    }
+    [data-testid="stTabs"] [data-baseweb="tab"] {height:44px;padding:0 1.2rem;border-radius:11px;color:#4f6676;font-weight:650;}
+    [data-testid="stTabs"] [aria-selected="true"] {background:linear-gradient(135deg,var(--pg-navy-2),#087580);color:#fff!important;box-shadow:0 8px 18px rgba(6,73,89,.2);}
+    [data-testid="stTabs"] [data-baseweb="tab-highlight"] {display:none;}
+    [data-testid="stMetric"] {background:var(--pg-surface);border:1px solid var(--pg-line);border-radius:15px;padding:1rem 1.1rem;box-shadow:0 10px 28px rgba(9,45,67,.07);min-height:112px;}
+    [data-testid="stMetricLabel"] {color:var(--pg-muted);font-weight:650;}
+    [data-testid="stMetricValue"] {color:var(--pg-navy-2);font-weight:760;letter-spacing:-.035em;}
+    [data-testid="stDataFrame"],[data-testid="stTable"],[data-testid="stPlotlyChart"],
+    [data-testid="stForm"],[data-testid="stFileUploaderDropzone"] {
+      background:var(--pg-surface);border:1px solid var(--pg-line);border-radius:16px;box-shadow:0 12px 32px rgba(9,45,67,.07);overflow:hidden;
+    }
+    [data-testid="stExpander"] {background:rgba(255,255,255,.88);border:1px solid var(--pg-line);border-radius:14px!important;box-shadow:0 8px 24px rgba(9,45,67,.05);overflow:hidden;}
+    .stButton>button,.stDownloadButton>button,[data-testid="stFormSubmitButton"]>button {
+      border:0;border-radius:10px;background:linear-gradient(135deg,#0d6172,var(--pg-teal));color:#fff;font-weight:700;
+      box-shadow:0 8px 18px rgba(0,128,139,.2);transition:transform .16s ease,box-shadow .16s ease;
+    }
+    .stButton>button:hover,.stDownloadButton>button:hover,[data-testid="stFormSubmitButton"]>button:hover {transform:translateY(-1px);box-shadow:0 12px 24px rgba(0,128,139,.28);color:#fff;}
+    .vehicle-card,.value-card,.envelope-card,.risk-box {background:var(--pg-surface);border-color:var(--pg-line);box-shadow:0 12px 32px rgba(9,45,67,.07);}
+    .vehicle-card {border-top:3px solid var(--pg-teal);}
+    .value-card {position:relative;overflow:hidden;transition:transform .18s ease,box-shadow .18s ease;}
+    .value-card:hover {transform:translateY(-2px);box-shadow:0 18px 38px rgba(9,45,67,.12);}
+    .flow-step {border:1px solid #d8e9eb;background:linear-gradient(145deg,#f3faf9,#edf4f7);}
+    .judge-card {background:linear-gradient(130deg,#09253b,#086b76);box-shadow:0 18px 38px rgba(6,54,70,.18);border:1px solid rgba(255,255,255,.1);}
+    h1,h2,h3 {color:var(--pg-navy-2);letter-spacing:-.028em;} hr {border-color:#dce7ed!important;}
+    @media (max-width:900px) {
+      [data-testid="stMainBlockContainer"] {padding-top:3.7rem;padding-left:1rem;padding-right:1rem;}
+      .hero {min-height:300px;padding:2.3rem 1.4rem;background-position:64% center;}
+      .hero p {max-width:88%;}.value-grid,.risk-summary {grid-template-columns:1fr!important;}.flow-strip {flex-direction:column;}
+      [data-testid="stTabs"] [data-baseweb="tab"] {padding:0 .65rem;font-size:.82rem;}
+    }
+    </style>
+    """.replace("__HERO_IMAGE__", hero_image_uri),
     unsafe_allow_html=True,
 )
 
@@ -241,7 +334,12 @@ assets, contract, sample_frame = load_static_assets()
 freeze = assets["freeze"]
 
 st.markdown(
-    '<section class="hero"><h1>PathGuard</h1><p>让每一条候选工程车辆路线，都有可解释的风险等级和下一步动作。</p></section>',
+    '''<section class="hero">
+      <div class="hero-kicker">工程车辆路线风险决策</div>
+      <h1>PathGuard</h1>
+      <p>在昂贵的闭环仿真和实车验证之前，先找出应该优先验证的路线，并说明为什么。</p>
+      <div class="hero-badges"><span>候选路线导入</span><span>可信拒判</span><span>风险原因解释</span><span>Top-K 验证队列</span></div>
+    </section>''',
     unsafe_allow_html=True,
 )
 st.markdown(
@@ -301,8 +399,9 @@ if runtime["model_available"]:
     st.success(f'学习模型已加载：{runtime["model_name"]}；55维特征、版本与Schema校验通过。')
     st.caption('当前部署模型在340条冻结样本上重训；内置样本评分用于功能演示。验证依据展示的是此前留出地图预测，不能用演示评分代替。')
 else:
-    st.warning("学习模型未加载，当前为规则预览。")
-    st.caption(runtime["model_error"])
+    st.warning("当前为规则预览：冻结模型与本机运行时版本不一致，系统已安全回退，不影响界面与流程演示。")
+    with st.expander("查看技术状态"):
+        st.caption(runtime["model_error"])
 
 active_structure = structure_map[structure_label]
 structure_view = (
