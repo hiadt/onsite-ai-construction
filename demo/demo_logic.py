@@ -115,7 +115,7 @@ def evaluate_candidates(
         result.loc[unknown, "decision_status"] = "证据不足，拒绝确定结论"
 
     result["risk_reasons"] = [
-        "；".join(top_reasons(components.loc[index])) or "当前批次内未发现突出的规则应力项"
+        "；".join(top_reasons(components.loc[index])) or "冻结开发参考分布中未见突出的工程应力项"
         for index in result.index
     ]
     result["evidence_status"] = result.apply(evidence_status, axis=1)
@@ -175,3 +175,28 @@ def select_top_k(frame: pd.DataFrame, selection: str, model_available: bool) -> 
     else:
         count = min(int(selection.split()[-1]), len(ordered))
     return ordered.head(count)
+
+
+def select_validation_queue(frame: pd.DataFrame, selection: str, model_available: bool) -> pd.DataFrame:
+    """Keep mandatory review cases outside the ordinary Top-K budget."""
+    if frame.empty:
+        return frame.assign(mandatory_review=pd.Series(dtype=bool), queue_reason=pd.Series(dtype=str))
+    score_column = "model_risk" if model_available else "rule_risk"
+    ordered = frame.sort_values(score_column, ascending=False, kind="mergesort").copy()
+    mandatory = ordered.get("mandatory_review", pd.Series(False, index=ordered.index)).fillna(False).astype(bool)
+    if selection == "Top 10%":
+        count = max(1, int(len(ordered) * 0.1 + 0.9999))
+    else:
+        count = min(int(selection.split()[-1]), len(ordered))
+    ordinary = ordered.loc[~mandatory].head(count).copy()
+    forced = ordered.loc[mandatory].copy()
+    ordinary["mandatory_review"] = False
+    ordinary["queue_reason"] = "常规风险排序"
+    forced["mandatory_review"] = True
+    forced["queue_reason"] = forced.get("mandatory_review_reason", "必须人工复核")
+    result = pd.concat([forced, ordinary], axis=0)
+    if not result.empty:
+        result = result.sort_values(
+            ["mandatory_review", score_column], ascending=[False, False], kind="mergesort"
+        )
+    return result

@@ -3,6 +3,11 @@ import hashlib, importlib.util, io, json, zipfile
 from pathlib import Path
 import numpy as np
 import pandas as pd
+
+try:
+    from geometry_integrity import screen_boundary_integrity
+except ModuleNotFoundError:
+    from demo.geometry_integrity import screen_boundary_integrity
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location("pg_frozen_extractor",ROOT/"scripts/data_audit/extract_gate2_pre_execution_features_shanyu000.py")
 extractor=importlib.util.module_from_spec(spec); spec.loader.exec_module(extractor)
@@ -34,15 +39,35 @@ def compute_rigid_body_sweep(geometry, length_m, width_m, reference_from_rear_m)
 
 
 def compute_boundary_rule(geometry, length_m, width_m, reference_from_rear_m, review_margin_m=0.5):
-    """Evaluate the adjustable rigid body against measured boundary cross-sections."""
-    left=np.asarray(geometry.get("left_boundary",[]),dtype=float)
-    right=np.asarray(geometry.get("right_boundary",[]),dtype=float)
-    center=np.asarray(geometry.get("centerline",[]),dtype=float)
-    station=np.asarray(geometry.get("station_m",[]),dtype=float)
+    """Estimate local cross-section body margins only for verified, aligned boundaries."""
+    calculation = geometry.get("calculation_geometry", geometry)
+    left=np.asarray(calculation.get("left_boundary",[]),dtype=float)
+    right=np.asarray(calculation.get("right_boundary",[]),dtype=float)
+    center=np.asarray(calculation.get("centerline",[]),dtype=float)
+    station=np.asarray(calculation.get("station_m",[]),dtype=float)
+    if not geometry.get("boundary_integrity_screen_passed", False):
+        return {"available":False,"reason":"边界距离检查虽通过，但完整点列的左右方向/连续性筛查未通过。"}
+    if not geometry.get("boundary_semantics_verified", False):
+        return {"available":False,"reason":"左右边界未通过中心线净空距离语义校验，拒绝尺寸联动判断。"}
     if not (len(center)>=2 and left.shape==center.shape and right.shape==center.shape and len(station)==len(center)):
         return {"available":False,"reason":"当前路线没有与中心线逐点对齐的左右边界坐标。"}
-    if np.any(np.diff(station)<0):
-        return {"available":False,"reason":"路线里程不是单调序列，无法进行前后车体边界插值。"}
+    if not (np.isfinite(center).all() and np.isfinite(left).all() and np.isfinite(right).all()
+            and np.isfinite(station).all() and np.isfinite(np.asarray(calculation.get("yaw_rad",[]),dtype=float)).all()):
+        return {"available":False,"reason":"路线、边界或航向含非有限值，拒绝输出尺寸联动判断。"}
+    if np.any(np.diff(station)<=0):
+        return {"available":False,"reason":"路线里程不是严格递增序列，无法进行前后车体边界插值。"}
+    tangent=np.gradient(center,station,axis=0)
+    tangent_norm=np.linalg.norm(tangent,axis=1)
+    if np.any(tangent_norm<=1e-9):
+        return {"available":False,"reason":"中心线存在零长度切向，无法稳定确定道路左右侧。"}
+    tangent=tangent/tangent_norm[:,None]
+    normal=np.column_stack([-tangent[:,1],tangent[:,0]])
+    left_signed=np.sum((left-center)*normal,axis=1)
+    right_signed=np.sum((right-center)*normal,axis=1)
+    if np.mean(left_signed>0)<=0.99 or np.mean(right_signed<0)<=0.99:
+        return {"available":False,"reason":"边界点未稳定落在路线左/右侧，左右语义或点列对应关系不可靠。"}
+    if np.any(left_signed<=right_signed):
+        return {"available":False,"reason":"左右边界在局部横断面上发生交叉或次序反转。"}
     length_m=float(length_m); width_m=float(width_m); reference_from_rear_m=float(reference_from_rear_m)
     corners_local=np.asarray([
         [length_m-reference_from_rear_m,width_m/2], [length_m-reference_from_rear_m,-width_m/2],
@@ -52,7 +77,7 @@ def compute_boundary_rule(geometry, length_m, width_m, reference_from_rear_m, re
     for start,end in zip(corners_local,np.roll(corners_local,-1,axis=0)):
         for ratio in (0.0,0.25,0.5,0.75): samples.append(start+(end-start)*ratio)
     local=np.asarray(samples)
-    yaw=np.asarray(geometry["yaw_rad"],dtype=float)
+    yaw=np.asarray(calculation["yaw_rad"],dtype=float)
     c=np.cos(yaw)[:,None]; s=np.sin(yaw)[:,None]
     body_points=np.empty((len(center),len(local),2),dtype=float)
     body_points[:,:,0]=center[:,0,None]+c*local[None,:,0]-s*local[None,:,1]
@@ -86,22 +111,22 @@ def compute_boundary_rule(geometry, length_m, width_m, reference_from_rear_m, re
     minimum=float(residual[minimum_index])
     affected_side="左侧" if left_margin[minimum_index]<=right_margin[minimum_index] else "右侧"
     if minimum<0:
-        state="包络越界"; priority="P0 人工复核"; action="调整车辆尺寸或路线，并优先复核首次越界区间"
+        state="局部外廓估算越界"; priority="P0 人工复核"; action="优先复核对应位置；核实车辆参考点、边界和外廓后再安排仿真"
     elif minimum<float(review_margin_m):
-        state="边界余量不足"; priority="P1 优先补测"; action="复核低余量区间，确认边界更新和定位误差后再验证"
+        state="局部余量低于复核阈值"; priority="P1 优先补测"; action="复核低余量区间，确认边界更新和定位误差后再验证"
     else:
-        state="局部横断面余量通过"; priority="按模型队列安排"; action="保留模型排序，按既定验证预算推进"
-    confidence=np.asarray(geometry.get("boundary_confidence",[]),dtype=float)
+        state="局部横断面估算余量充足"; priority="按模型队列安排"; action="保留模型排序，按既定验证预算推进"
+    confidence=np.asarray(calculation.get("boundary_confidence",geometry.get("boundary_confidence",[])),dtype=float)
     confidence_min=float(np.nanmin(confidence)) if confidence.size==len(center) and np.isfinite(confidence).any() else None
     return {
-        "available":True,"method":"rigid_body_boundary_cross_section_v2","state":state,"priority":priority,"action":action,
+        "available":True,"method":"rigid_body_boundary_cross_section_v3","state":state,"priority":priority,"action":action,
         "review_margin_m":float(review_margin_m),"minimum_margin_m":minimum,"minimum_index":minimum_index,
         "minimum_station_m":float(station[minimum_index]),"affected_side":affected_side,
         "violation_point_count":int(violation.sum()),"violation_length_m":violation_length,
         "low_margin_point_count":int(low.sum()),"low_margin_length_m":low_length,
         "left_margin_m":left_margin.tolist(),"right_margin_m":right_margin.tolist(),
         "residual_margin_m":residual.tolist(),"boundary_confidence_min":confidence_min,
-        "explanation":"沿车体四条边采样16个外廓点，将每个点按车身纵向位置映射到对应路线里程，并与插值后的左右边界横断面计算剩余距离。",
+        "explanation":"基于原始全分辨率边界点列；该点列已通过距离一致性、左右朝向/顺序和保守连续性筛查。沿车体四边取16个外廓点，按纵向位置映射到局部路线里程，计算横断面估算余量。它不检查完整二维走廊拓扑、边界自交、所有车身表面或点间连续碰撞，也不是碰撞概率或安全认证。",
     }
 def parse_route(payload, name, config=None):
     config=config or {}
@@ -156,7 +181,9 @@ def parse_route(payload, name, config=None):
         yaw_source=arrays["yaw_rad"] if "yaw_rad" in arrays else np.unwrap(np.arctan2(np.gradient(y),np.gradient(x)))
         yaw=extractor.finite_1d(yaw_source,"yaw_rad_or_xy_derived",n)
         idx=np.unique(np.r_[np.linspace(0,n-1,min(n,800),dtype=int),[e["index"] for e in events]])
-        left_boundary=[]; right_boundary=[]; boundary_confidence=[]; boundary_semantics_verified=False
+        left_boundary=[]; right_boundary=[]; boundary_confidence=[]
+        boundary_semantics_verified=False; boundary_integrity_screen_passed=False
+        boundary_integrity={}; calculation_geometry=None
         boundary_keys={"left_boundary_xyz_m","right_boundary_xyz_m"}
         if boundary_keys.issubset(arrays):
             left_raw=np.asarray(arrays["left_boundary_xyz_m"],dtype=float)
@@ -164,11 +191,19 @@ def parse_route(payload, name, config=None):
             if left_raw.ndim==2 and right_raw.ndim==2 and left_raw.shape[0]==n and right_raw.shape[0]==n and left_raw.shape[1]>=2 and right_raw.shape[1]>=2:
                 if np.isfinite(left_raw[:,:2]).all() and np.isfinite(right_raw[:,:2]).all():
                     center_full=np.column_stack([x,y])
-                    left_error=np.max(np.abs(np.linalg.norm(left_raw[:,:2]-center_full,axis=1)-np.asarray(arrays["left_clearance_m"],dtype=float)))
-                    right_error=np.max(np.abs(np.linalg.norm(right_raw[:,:2]-center_full,axis=1)-np.asarray(arrays["right_clearance_m"],dtype=float)))
-                    boundary_semantics_verified=bool(max(left_error,right_error)<=1e-5)
-                    if boundary_semantics_verified:
+                    boundary_integrity=screen_boundary_integrity(
+                        center_full,s,left_raw[:,:2],right_raw[:,:2],
+                        arrays["left_clearance_m"],arrays["right_clearance_m"])
+                    boundary_semantics_verified=bool(boundary_integrity.get("distance_semantics_pass",False))
+                    boundary_integrity_screen_passed=bool(boundary_integrity.get("integrity_screen_pass",False))
+                    if boundary_semantics_verified and boundary_integrity_screen_passed:
                         left_boundary=left_raw[idx,:2].tolist(); right_boundary=right_raw[idx,:2].tolist()
+                        calc_confidence=(extractor.finite_1d(arrays["boundary_confidence"],"boundary_confidence",n)
+                                         if "boundary_confidence" in arrays else np.full(n,np.nan))
+                        calculation_geometry=dict(
+                            centerline=center_full.tolist(),yaw_rad=yaw.astype(float).tolist(),station_m=s.astype(float).tolist(),
+                            left_boundary=left_raw[:,:2].tolist(),right_boundary=right_raw[:,:2].tolist(),
+                            boundary_confidence=calc_confidence.astype(float).tolist())
         if "boundary_confidence" in arrays:
             confidence=extractor.finite_1d(arrays["boundary_confidence"],"boundary_confidence",n)
             boundary_confidence=confidence[idx].astype(float).tolist()
@@ -183,8 +218,10 @@ def parse_route(payload, name, config=None):
              station_m=s[idx].astype(float).tolist(),point_indices=idx.astype(int).tolist(),
              left_boundary=left_boundary,right_boundary=right_boundary,boundary_confidence=boundary_confidence,
              boundary_semantics_verified=boundary_semantics_verified,
+             boundary_integrity_screen_passed=boundary_integrity_screen_passed,
+             boundary_integrity=boundary_integrity,calculation_geometry=calculation_geometry,
              body_clearance_m=body_clearance,point_count_original=n,point_count_display=len(idx),
-             events=events,coordinate_note=("原始路线与逐点左右边界坐标已通过净空距离一致性校验；尺寸联动采用局部横断面规则。" if has_boundaries else "原始路线坐标；当前文件没有通过语义校验的完整左右边界坐标。"),
+             events=events,coordinate_note=("原始路线左右边界通过距离、方向、顺序和保守连续性筛查；尺寸联动仅作局部横断面估算。" if has_boundaries else "原始路线坐标；当前文件没有通过完整边界完整性筛查的左右边界点列。"),
              used_arrays=used,derived_fields=derived,vehicle_parameters=config)
     return pd.DataFrame([values]), identity, geometry
 
@@ -197,8 +234,15 @@ def render_evidence(st, geometry):
     structure=geometry.get("vehicle_structure","unknown")
     defaults={"five_axis":(12.0,3.2,5.0),"six_axis":(15.0,3.4,6.0),"unknown":(12.0,3.2,5.0)}[structure]
     supplied=geometry.get("vehicle_parameters",{})
-    st.markdown("#### 真实尺度刚性车体扫掠")
-    st.caption("调整车身尺寸后，系统会重算四角扫掠包络；存在逐点边界坐标时，还会同步重算局部横断面余量和越界位置。")
+    has_dimensions=(all(key in supplied for key in ("length_m","width_m","reference_from_rear_m"))
+                    and supplied.get("dimension_source")!="illustrative_demo_values")
+    if not has_dimensions:
+        if supplied.get("dimension_source")=="illustrative_demo_values":
+            st.warning("当前配置标为示例假设尺寸。几何图只表示这些输入下的条件性结果，不代表真实车型参数。")
+        else:
+            st.warning("该路线配置未提供车长、车宽和参考点的确认值。以下为可编辑的示例假设值，几何图不代表真实车型参数。")
+    st.markdown("#### 米制刚性车体扫掠")
+    st.caption("调整车身长宽和参考点后，系统会重算四角轨迹；仅在左右边界语义检查通过时，才估算局部横断面余量。该计算不含车辆动力学，也不覆盖完整走廊拓扑。")
     cols=st.columns(4)
     token=geometry["source_sha256"][:12]
     length=cols[0].number_input("车长 / m",3.0,30.0,float(supplied.get("length_m",defaults[0])),0.1,key="length_"+token)
@@ -211,17 +255,24 @@ def render_evidence(st, geometry):
     corner_x,corner_y=compute_rigid_body_sweep(geometry,length,width,reference)
     xy=np.asarray(geometry["centerline"])
     retained=np.asarray(geometry.get("point_indices",range(len(xy))))
-    boundary_rule=compute_boundary_rule(geometry,length,width,reference,review_margin)
+    dimensions_enabled=st.checkbox(
+        "确认使用当前车长、车宽和参考点计算边界余量",
+        value=has_dimensions,
+        key="use_dimensions_"+token,
+        help="未启用时仍可查看条件性车体扫掠图，但不输出尺寸联动边界结论。",
+    )
+    boundary_rule=(compute_boundary_rule(geometry,length,width,reference,review_margin)
+                   if dimensions_enabled else {"available":False,"reason":"车辆尺寸尚未确认。"})
     location_events=list(events)
     if boundary_rule["available"]:
-        boundary_pose=boundary_rule["minimum_index"]
-        location_events.insert(0,dict(label="可调尺寸最小边界余量",index=int(retained[boundary_pose]),
-            s_m=boundary_rule["minimum_station_m"],x_m=float(xy[boundary_pose,0]),y_m=float(xy[boundary_pose,1]),
+        boundary_pose_display=int(np.argmin(np.abs(np.asarray(geometry["station_m"])-boundary_rule["minimum_station_m"])))
+        location_events.insert(0,dict(label="可调尺寸最小边界余量",index=int(retained[boundary_pose_display]),
+            s_m=boundary_rule["minimum_station_m"],x_m=float(xy[boundary_pose_display,0]),y_m=float(xy[boundary_pose_display,1]),
             value=boundary_rule["minimum_margin_m"],unit="m",source="车体包络与逐点边界实时计算"))
     selected=st.selectbox("定位工程关注点",range(len(location_events)),format_func=lambda i:location_events[i]["label"],
                           key="event_"+token)
     event=location_events[selected]
-    st.info(f'当前定位：{event["label"]}，数值 {event["value"]:.4g} {event["unit"]}，位于路线里程 {event["s_m"]:.2f} m。红色大点和车身外廓会同步定位到该位置。')
+    st.info(f'当前定位：{event["label"]}，数值 {event["value"]:.4g} {event["unit"]}，位于路线里程 {event["s_m"]:.2f} m。车身外廓会同步显示在最近路线参考点处。')
     pose=int(np.argmin(np.abs(retained-int(event["index"]))))
     fig=go.Figure(go.Scatter(x=xy[:,0],y=xy[:,1],mode="lines",name="原始路线"))
     if boundary_rule["available"]:

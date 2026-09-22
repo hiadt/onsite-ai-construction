@@ -1,0 +1,52 @@
+{
+  "source": "reports/final/tables/engineering_heldout_scores.csv",
+  "source_rows_confirmed_vehicle_structure": 36,
+  "label_convention": "true_label=1 means pass; true_label=0 means failure; failure is 1 - true_label",
+  "total_failures_confirmed_vehicle_structure": 27,
+  "proxy_context": "map_id × confirmed vehicle_structure; not a true planner invocation batch",
+  "proxy_groups_with_at_least_two_candidates": 4,
+  "proxy_candidates_in_eligible_groups": 33,
+  "proxy_failures_in_eligible_groups": 27,
+  "selection_budget": "ceil(20% of each eligible proxy group), ties split fractionally",
+  "results": [
+    {
+      "method": "学习模型",
+      "proxy_groups": 4,
+      "included_candidates": 33,
+      "failures_in_included_groups": 27,
+      "top_fraction": 0.2,
+      "expected_failures_captured_tie_aware": 5.0,
+      "capture_rate": 0.1852,
+      "random_expected_failures_captured_same_group_budgets": 6.625,
+      "random_expected_capture_rate": 0.2454
+    },
+    {
+      "method": "冻结几何规则",
+      "proxy_groups": 4,
+      "included_candidates": 33,
+      "failures_in_included_groups": 27,
+      "top_fraction": 0.2,
+      "expected_failures_captured_tie_aware": 6.0,
+      "capture_rate": 0.2222,
+      "random_expected_failures_captured_same_group_budgets": 6.625,
+      "random_expected_capture_rate": 0.2454
+    },
+    {
+      "method": "最小净空基线",
+      "proxy_groups": 4,
+      "included_candidates": 33,
+      "failures_in_included_groups": 27,
+      "top_fraction": 0.2,
+      "expected_failures_captured_tie_aware": 5.0,
+      "capture_rate": 0.1852,
+      "random_expected_failures_captured_same_group_budgets": 6.625,
+      "random_expected_capture_rate": 0.2454
+    }
+  ],
+  "limitations": [
+    "No planner invocation or candidate-batch identifier exists in the frozen held-out table.",
+    "Map × vehicle structure is only a proxy context and may still combine unrelated runs.",
+    "Only groups with at least two candidates are eligible; small sample and few failures make estimates unstable.",
+    "Unknown vehicle structures are excluded from ranking comparison and should enter evidence review."
+  ]
+}

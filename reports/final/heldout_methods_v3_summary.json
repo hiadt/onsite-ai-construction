@@ -1,0 +1,22 @@
+{
+  "source": "reports/final/tables/engineering_heldout_scores.csv",
+  "rows": 66,
+  "held_out_maps": [
+    "map_002",
+    "map_008",
+    "map_016",
+    "map_019",
+    "map_020"
+  ],
+  "failures": 39,
+  "label_convention": "true_label=1 pass, 0 failure",
+  "hybrid_definition": "0.5 × model failure-risk score + 0.5 × frozen development-reference engineering stress score",
+  "hybrid_status": "uncalibrated retrospective comparator only; not used by product or for threshold/model selection",
+  "independence": "The held-out maps and scores have already been inspected in prior work. This is a post-hoc re-tabulation, not a new independent validation.",
+  "limitations": [
+    "The blended rule percentile is not calibrated as a failure probability.",
+    "Global held-out Top-K is not same-planner-batch ranking.",
+    "No conclusion of model superiority or field safety follows from this table."
+  ],
+  "table": "reports/final/tables/heldout_methods_v3.csv"
+}

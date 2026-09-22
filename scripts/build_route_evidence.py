@@ -8,6 +8,13 @@ from route_input import parse_route
 def main():
     p=argparse.ArgumentParser();p.add_argument("--manifest",type=Path,required=True);a=p.parse_args()
     samples=pd.read_csv(ROOT/"demo/data/sample_input.csv")
+    integrity_path=ROOT/"reports/final/tables/boundary_integrity_reaudit.csv"
+    frozen_features=pd.read_csv(ROOT/"demo/data/modeling_features_final.csv")
+    if integrity_path.exists():
+        integrity=pd.read_csv(integrity_path)
+        verified_ids=integrity.loc[integrity["integrity_screen_pass"].fillna(False),"sample_id"].astype(str).tolist()
+        additions=frozen_features[frozen_features["sample_id"].astype(str).isin(verified_ids)].reindex(columns=samples.columns)
+        samples=pd.concat([samples,additions],ignore_index=True).drop_duplicates("sample_id")
     manifest=pd.read_csv(a.manifest).set_index("sample_id")
     routes={}; columns=json.loads((ROOT/"demo/data/feature_contract_v2.json").read_text(encoding="utf-8"))["training_feature_columns"]
     example=False
@@ -18,13 +25,13 @@ def main():
         defaults={"five_axis":(12.0,3.2,5.0),"six_axis":(15.0,3.4,6.0),"unknown":(12.0,3.2,5.0)}[sample.vehicle_structure]
         config={"vehicle_structure":sample.vehicle_structure,"map_id":sample.map_id,
                 "length_m":defaults[0],"width_m":defaults[1],
-                "reference_from_rear_m":defaults[2]}
+                "reference_from_rear_m":defaults[2],"dimension_source":"illustrative_demo_values"}
         features,key,geo=parse_route(raw.read_bytes(),raw.name,config)
         np.testing.assert_allclose(features[columns].to_numpy(float),sample[columns].to_numpy(float)[None,:],rtol=1e-5,atol=1e-7)
         assert features.iloc[0].route_file_sha256==row.route_file_sha256
         samples.loc[samples.sample_id.eq(sample.sample_id),'route_file_sha256']=row.route_file_sha256
         if geo:routes[sample.sample_id]=geo
-        if not example and sample.vehicle_structure!="unknown":
+        if not example and geo and geo.get("boundary_integrity_screen_passed"):
             folder=ROOT/"demo/examples";folder.mkdir(exist_ok=True)
             shutil.copyfile(raw,folder/"real_route.npz")
             (folder/"vehicle_config.json").write_text(json.dumps(config,indent=2),encoding="utf-8")

@@ -11,15 +11,17 @@ import pandas as pd
 import streamlit as st
 
 try:  # Works both with `streamlit run demo/app.py` and AppTest from repo root.
-    from demo_logic import apply_filters, evaluate_candidates, select_top_k
+    from demo_logic import apply_filters, evaluate_candidates, select_validation_queue
     from feature_explain import label_text
     from inference import FeatureValidationError, load_contract
-    from route_input import parse_route, render_evidence
+    from route_input import compute_boundary_rule, parse_route, render_evidence
+    from feedback_store import load_feedback, save_feedback
 except ModuleNotFoundError:  # pragma: no cover - exercised by Streamlit AppTest.
-    from demo.demo_logic import apply_filters, evaluate_candidates, select_top_k
+    from demo.demo_logic import apply_filters, evaluate_candidates, select_validation_queue
     from demo.feature_explain import label_text
     from demo.inference import FeatureValidationError, load_contract
-    from demo.route_input import parse_route, render_evidence
+    from demo.route_input import compute_boundary_rule, parse_route, render_evidence
+    from demo.feedback_store import load_feedback, save_feedback
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -200,6 +202,11 @@ def load_static_assets() -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame]:
     }
     boundary_summary = REPO_ROOT / "analysis" / "boundary_geometry" / "boundary_coverage_summary.json"
     assets["boundary"] = json.loads(boundary_summary.read_text(encoding="utf-8")) if boundary_summary.exists() else {}
+    integrity_summary = REPO_ROOT / "reports" / "final" / "boundary_integrity_reaudit_summary.json"
+    assets["boundary_integrity"] = json.loads(integrity_summary.read_text(encoding="utf-8")) if integrity_summary.exists() else {}
+    batch_summary = REPO_ROOT / "reports" / "final" / "candidate_batch_proxy_summary.json"
+    assets["batch_proxy"] = json.loads(batch_summary.read_text(encoding="utf-8")) if batch_summary.exists() else {}
+    assets["heldout_methods_v3"] = pd.read_csv(REPO_ROOT / "reports" / "final" / "tables" / "heldout_methods_v3.csv")
     contract = load_contract(CONTRACT_PATH)
     sample = pd.read_csv(SAMPLE_PATH, encoding="utf-8-sig")
     return assets, contract, sample
@@ -214,8 +221,25 @@ def vehicle_illustration(title: str, count: int, caption: str) -> None:
     )
 
 
-def _svg_paths(geometry: dict[str, Any]) -> tuple[str, str, str]:
-    groups = [geometry["centerline"], geometry["left_boundary"], geometry["right_boundary"]]
+def _svg_paths(geometry: dict[str, Any], focus_station: float | None = None) -> tuple[str, str, str, float]:
+    center = geometry["centerline"]
+    station = geometry.get("station_m", list(range(len(center))))
+    station_array = pd.Series(station, dtype=float).to_numpy()
+    if focus_station is None:
+        focus_station = float(station_array[len(station_array) // 2])
+    selected = (station_array >= focus_station - 35.0) & (station_array <= focus_station + 35.0)
+    if selected.sum() < 2:
+        nearest = int(abs(station_array - focus_station).argmin())
+        lo, hi = max(0, nearest - 1), min(len(center), nearest + 2)
+        selected = [i >= lo and i < hi for i in range(len(center))]
+    center_path = [point for point, keep in zip(center, selected) if keep]
+    groups = [center_path]
+    for key in ("left_boundary", "right_boundary"):
+        values = geometry.get(key, [])
+        groups.append(
+            [point for point, keep in zip(values, selected) if keep]
+            if len(values) == len(center) else []
+        )
     points = [point for group in groups for point in group]
     xs = [float(point[0]) for point in points]
     ys = [float(point[1]) for point in points]
@@ -226,6 +250,8 @@ def _svg_paths(geometry: dict[str, Any]) -> tuple[str, str, str]:
     offset_y = 20.0 + (220.0 - span_y * scale) / 2.0
 
     def path(group: list[list[float]]) -> str:
+        if not group:
+            return ""
         transformed = [
             (offset_x + (float(x) - min(xs)) * scale, offset_y + (max(ys) - float(y)) * scale)
             for x, y in group
@@ -235,61 +261,51 @@ def _svg_paths(geometry: dict[str, Any]) -> tuple[str, str, str]:
             for index, (x, y) in enumerate(transformed)
         )
 
-    return path(groups[0]), path(groups[1]), path(groups[2])
+    return path(groups[0]), path(groups[1]), path(groups[2]), scale
 
 
-def dynamic_envelope(row: pd.Series, route_geometries: dict[str, Any]) -> None:
-    """Animate a normalized spatial-risk cue for the selected route."""
+def dynamic_envelope(row: pd.Series, route_geometries: dict[str, Any], boundary_rule: dict[str, Any] | None = None) -> None:
+    """Animate a meter-scaled rigid-body proxy along the selected real route segment."""
     structure = str(row.get("vehicle_structure", "unknown"))
-    axle_count = 6 if structure == "six_axis" else 5
-    signed_curvature = float(row.get("curvature_mean_1pm", 0.0))
     curvature = abs(float(row.get("curvature_abs_p95_1pm", 0.0)))
     steer_change = abs(float(row.get("steer_change_abs_p95_radpm", 0.0)))
     clearance = float(row.get("static_boundary_clearance_min_m", 0.0))
-    caution = max(0.0, min(1.0, 1.0 - clearance / 4.0))
-    bend = min(125.0, 24.0 + 520.0 * curvature + 45.0 * steer_change)
-    direction = -1.0 if signed_curvature < 0 else 1.0
-    bend *= direction
-    envelope_width = 34.0 + 34.0 * caution
-    body_length = 104.0 if axle_count == 6 else 92.0
-    body_width = 30.0
-    axle_lines = []
-    for idx in range(axle_count):
-        x = -body_length / 2 + 11.0 + idx * (body_length - 22.0) / max(1, axle_count - 1)
-        axle_lines.append(
-            f'<line x1="{x:.1f}" y1="{-body_width/2-3:.1f}" '
-            f'x2="{x:.1f}" y2="{body_width/2+3:.1f}" class="axle-line"/>'
-        )
-    structure_label = "六轴" if axle_count == 6 else "五轴" if structure == "five_axis" else "结构未定"
+    structure_label = "六轴" if structure == "six_axis" else "五轴" if structure == "five_axis" else "结构未定"
     sample_token = "".join(ch for ch in str(row.get("sample_id", "route")) if ch.isalnum())[-12:]
     route_id = f"motion-route-{sample_token or 'selected'}"
     geometry = route_geometries.get(str(row.get("sample_id", "")))
-    if geometry and geometry.get("left_boundary") and geometry.get("right_boundary"):
-        route_d, left_boundary_d, right_boundary_d = _svg_paths(geometry)
-        boundary_markup = (
-            f'<path d="{left_boundary_d}" class="road-edge"/>'
-            f'<path d="{right_boundary_d}" class="road-edge"/>'
-        )
-        geometry_badge = f'真实NPZ路线 · {geometry["point_count_original"]}点→{geometry["point_count_display"]}点显示'
-        geometry_note = "中心线和两侧边界来自当前样本NPZ；边界坐标已通过中心线净空距离一致性校验，显示时仅做等比例缩放和降采样。"
-    elif geometry:
-        route_d, _, _ = _svg_paths(geometry)
-        boundary_markup = ""
-        geometry_badge = f'真实NPZ路线 · {geometry["point_count_original"]}点→{geometry["point_count_display"]}点显示'
-        geometry_note = "中心线来自当前样本NPZ；该文件没有通过语义校验的完整左右边界，因此示意图不绘制道路边界。"
+    if not geometry or len(geometry.get("centerline", [])) < 2:
+        st.info("当前输入没有原始路线坐标，不能生成动态车辆或空间风险图。请上传含 x_m、y_m 的原始路线 NPZ；仅凭汇总特征不绘制虚构道路、障碍物或车身运动。")
+        return
+    parameters = geometry.get("vehicle_parameters", {})
+    defaults = {"five_axis": (12.0, 3.2, 5.0), "six_axis": (15.0, 3.4, 6.0), "unknown": (12.0, 3.2, 5.0)}[structure]
+    token = str(geometry.get("source_sha256", ""))[:12]
+    length = float(st.session_state.get("length_" + token, parameters.get("length_m", defaults[0])))
+    width = float(st.session_state.get("width_" + token, parameters.get("width_m", defaults[1])))
+    reference_ratio = float(st.session_state.get("reference_" + token, round(float(parameters.get("reference_from_rear_m", defaults[2])) / max(length, 1e-6) * 100)))
+    reference = length * reference_ratio / 100.0
+    dimensions_are_assumed = (
+        not all(key in parameters for key in ("length_m", "width_m", "reference_from_rear_m"))
+        or parameters.get("dimension_source") == "illustrative_demo_values"
+    )
+    rule = boundary_rule or {}
+    if rule.get("available"):
+        focus_station = float(rule["minimum_station_m"])
     else:
-        route_d = (
-            f"M 38 218 C 150 218, 190 {218-bend:.1f}, 300 {168-bend/2:.1f} "
-            f"S 470 {76+bend/4:.1f}, 565 54"
-        )
-        boundary_markup = ""
-        geometry_badge = "汇总特征 · 抽象路线示意"
-        geometry_note = "当前输入没有原始路线点列；曲线只帮助理解排序结果，不代表真实地图、道路边界或障碍物。"
-    boundary_legend = '<span><i class="dashed"></i>灰色虚线：已校验道路边界</span>' if boundary_markup else ''
-    scene_caption = "真实路线、边界与车辆扫掠示意" if boundary_markup else "路线与车辆扫掠解释示意"
-    attention = "较高" if caution >= 0.65 else "中等" if caution >= 0.35 else "较低"
-    risk_color = "#cf5b45" if caution >= 0.65 else "#e09a42" if caution >= 0.35 else "#4c9a82"
-    combined = float(row.get("combined_risk", row.get("rule_risk", 0.0)))
+        body = geometry.get("body_clearance_m", [])
+        station = geometry.get("station_m", [])
+        focus_station = float(station[int(abs(pd.Series(body, dtype=float).argmin()))]) if body and len(body) == len(station) else float(station[len(station) // 2])
+    route_d, left_boundary_d, right_boundary_d, meter_scale = _svg_paths(geometry, focus_station)
+    boundary_markup = ""
+    if geometry.get("boundary_semantics_verified") and left_boundary_d and right_boundary_d:
+        boundary_markup = f'<path d="{left_boundary_d}" class="road-edge"/><path d="{right_boundary_d}" class="road-edge"/>'
+    body_length = length * meter_scale
+    body_width = width * meter_scale
+    body_x = -reference * meter_scale
+    geometry_badge = f'真实路线局部视图 · {geometry["point_count_original"]}原始点 / {geometry["point_count_display"]}显示点'
+    geometry_note = "路线坐标来自当前NPZ；视图聚焦在当前最小净空或边界估算点前后各35米。矩形按输入车长、车宽和参考点比例缩放，颜色不表示风险概率。"
+    if dimensions_are_assumed:
+        geometry_note += " 未上传尺寸配置，当前长宽和参考点为可编辑的示例假设值，不代表某一车型的公开参数。"
     level = str(row.get("risk_level", "待判定"))
     if structure == "unknown" or level == "证据不足":
         result = "证据不足，拒绝确定判断"
@@ -297,15 +313,15 @@ def dynamic_envelope(row: pd.Series, route_geometries: dict[str, Any]) -> None:
         action = "补充车型/轴位证据后重新评估"
     elif level in {"高风险", "高"}:
         result = "预测为优先复核路线"
-        consequence = "可能出现净空不足或轨迹执行偏差"
+        consequence = "排序提示需结合下方工程量值和边界证据复核；风险分数不是概率"
         action = str(row.get("next_action", "优先补测 / 人工复核"))
     elif level in {"中风险", "中"}:
         result = "预测为需要关注路线"
-        consequence = "局部指标接近关注阈值，需结合场景复核"
+        consequence = "请查看对应工程指标和边界证据，确认风险成因"
         action = str(row.get("next_action", "安排复核"))
     else:
         result = "预测为当前批次低优先级路线"
-        consequence = "当前证据未显示明显风险，但不代表免检"
+        consequence = "当前排序靠后不代表路线安全，也不构成免检依据"
         action = str(row.get("next_action", "暂缓处理 / 按计划验证"))
     reasons = str(row.get("risk_reasons", "曲率、转向变化、净空等指标"))
     svg = f'''<div class="envelope-card">
@@ -316,26 +332,19 @@ def dynamic_envelope(row: pd.Series, route_geometries: dict[str, Any]) -> None:
         <div class="risk-box"><b>主要原因</b><span>{reasons}</span></div>
         <div class="risk-box"><b>建议动作</b><span>{action}</span></div>
       </div>
-      <svg viewBox="0 0 600 290" role="img" aria-label="候选路线动态空间风险示意">
+      <svg viewBox="0 0 600 290" role="img" aria-label="米制局部路线与车身外廓动态示意">
         <defs><marker id="pg-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#2b6f8d"/></marker></defs>
-        <path d="{route_d}" class="envelope-band" style="stroke:{risk_color};stroke-width:{envelope_width:.1f}px"/>
         {boundary_markup}
         <path id="{route_id}" d="{route_d}" class="route-line" marker-end="url(#pg-arrow)"/>
-        <circle r="7" fill="{risk_color}" opacity=".55"><animate attributeName="r" values="5;10;5" dur="1.4s" repeatCount="indefinite"/><animateMotion dur="6.5s" repeatCount="indefinite" rotate="auto"><mpath href="#{route_id}"/></animateMotion></circle>
         <g class="moving-vehicle">
-          <rect x="{-body_length/2:.1f}" y="{-body_width/2:.1f}" width="{body_length:.1f}" height="{body_width:.1f}" rx="10" class="vehicle-body"/>
-          <rect x="{body_length/2-38:.1f}" y="{-body_width/2+3:.1f}" width="24" height="{body_width-6:.1f}" rx="5" class="vehicle-cab"/>
-          <path d="M {body_length/2-18:.1f} {-body_width/2:.1f} L {body_length/2:.1f} 0 L {body_length/2-18:.1f} {body_width/2:.1f} Z" class="vehicle-nose"/>
-          {''.join(axle_lines)}
-          <path d="M {-body_length/2-2:.1f} {-body_width/2-8:.1f} L {body_length/2+5:.1f} {-body_width/2-8:.1f}" class="sweep-edge"/>
-          <path d="M {-body_length/2-2:.1f} {body_width/2+8:.1f} L {body_length/2+5:.1f} {body_width/2+8:.1f}" class="sweep-edge"/>
+          <rect x="{body_x:.2f}" y="{-body_width/2:.2f}" width="{body_length:.2f}" height="{body_width:.2f}" rx="2" class="vehicle-body"/>
           <animateMotion dur="6.5s" repeatCount="indefinite" rotate="auto"><mpath href="#{route_id}"/></animateMotion>
         </g>
-        <text x="18" y="257" class="svg-label">曲率P95 {curvature:.3f} · 转向变化P95 {steer_change:.3f} · 静态净空 {clearance:.2f}</text>
-        <text x="18" y="275" class="svg-label">{scene_caption}；车辆沿路线循环运动</text>
+        <text x="18" y="257" class="svg-label">车长 {length:.2f} m · 车宽 {width:.2f} m · 参考点距车尾 {reference:.2f} m</text>
+        <text x="18" y="275" class="svg-label">局部净空 {clearance:.2f} m · 曲率P95 {curvature:.3f} 1/m · 转向变化P95 {steer_change:.3f} rad/m</text>
       </svg>
-      <div class="legend"><span><i></i>蓝色虚线：车辆参考路线</span>{boundary_legend}<span><i class="band"></i>彩色带：风险关注程度</span></div>
-      <div class="envelope-note">{geometry_note} 当前数据没有统一障碍物坐标，因此不绘制障碍物；彩色关注带表示风险关注程度，不是碰撞概率。</div>
+      <div class="legend"><span><i></i>蓝线：当前NPZ路线参考点轨迹</span><span><i class="dashed"></i>灰线：通过语义与左右顺序检查的边界点列</span><span>浅色矩形：车长/车宽按米制比例绘制的刚性外廓</span></div>
+      <div class="envelope-note">{geometry_note} 矩形不含轴位/铰接结构、车身形变、轮胎或动力学参数；坐标不支持可信边界时仅显示路线与车身示意，不推断障碍物碰撞。</div>
     </div>'''
     st.markdown(svg, unsafe_allow_html=True)
 
@@ -385,7 +394,7 @@ if site_page == "产品介绍":
         '</div>', unsafe_allow_html=True)
     st.markdown('<div class="section-kicker">客户最终得到什么</div>', unsafe_allow_html=True)
     st.markdown('<div class="value-grid">'
-        '<div class="value-card"><h4>一张先后有序的路线清单</h4><p>在相同验证预算下，把更可能失败或证据冲突的路线排到前面。</p></div>'
+        '<div class="value-card"><h4>一张先后有序的路线清单</h4><p>按现有模型排序和证据状态组织复核顺序；是否减少漏检，需要在真实候选批次中继续验证。</p></div>'
         '<div class="value-card"><h4>一张能落到位置的解释卡</h4><p>展示风险原因、最小边界余量、影响部位和尺寸变化后的结果。</p></div>'
         '<div class="value-card"><h4>一套可回流的验证记录</h4><p>把人工、仿真和实车结论留作下一轮校准证据。</p></div>'
         '</div>', unsafe_allow_html=True)
@@ -442,6 +451,68 @@ try:
 except (FeatureValidationError, ValueError) as error:
     st.error(f"输入未通过冻结特征契约校验：{error}")
     st.stop()
+
+# Attach geometry evidence to the same evaluated route used by the queue and detail view.
+route_geometries: dict[str, Any] = {}
+for _, candidate_row in evaluated.iterrows():
+    sid = str(candidate_row.get("sample_id", ""))
+    geometry_key = str(candidate_row.get("geometry_key", ""))
+    geometry = uploaded_geometry.get(geometry_key) if geometry_key else None
+    if geometry is None and upload is None and not route_uploads:
+        built_in = assets["route_geometry"]["routes"].get(sid)
+        if built_in and built_in.get("source_sha256") == str(candidate_row.get("route_file_sha256", "")):
+            geometry = built_in
+    if geometry:
+        route_geometries[sid] = geometry
+
+geometry_results = {}
+geometry_states = []
+geometry_margins = []
+for _, candidate_row in evaluated.iterrows():
+    sid = str(candidate_row.get("sample_id", ""))
+    geometry = route_geometries.get(sid)
+    rule = {"available": False, "reason": "没有可用的原始坐标或语义校验通过的边界。"}
+    if geometry and geometry.get("boundary_semantics_verified"):
+        params = geometry.get("vehicle_parameters", {})
+        token = str(geometry.get("source_sha256", ""))[:12]
+        has_dimensions = (
+            all(key in params for key in ("length_m", "width_m", "reference_from_rear_m"))
+            and params.get("dimension_source") != "illustrative_demo_values"
+        )
+        dimensions_enabled = st.session_state.get("use_dimensions_" + token, has_dimensions)
+        try:
+            if not dimensions_enabled:
+                raise ValueError("请先确认车辆长宽和参考点配置，再启用尺寸联动规则。")
+            length = float(st.session_state.get("length_" + token, params.get("length_m")))
+            width = float(st.session_state.get("width_" + token, params.get("width_m")))
+            default_reference = float(params.get("reference_from_rear_m", 0.0))
+            ratio = float(st.session_state.get("reference_" + token, round(default_reference / max(length, 1e-6) * 100)))
+            reference = length * ratio / 100.0
+            margin = float(st.session_state.get("margin_" + token, 0.5))
+            rule = compute_boundary_rule(
+                geometry,
+                length,
+                width,
+                reference,
+                margin,
+            )
+        except (KeyError, TypeError, ValueError):
+            rule = {"available": False, "reason": "车辆长宽或参考点配置缺失，无法计算边界余量。"}
+    geometry_results[sid] = rule
+    geometry_states.append(rule.get("state", "未评估"))
+    geometry_margins.append(rule.get("minimum_margin_m"))
+evaluated["geometry_state"] = geometry_states
+evaluated["geometry_min_margin_m"] = geometry_margins
+geometry_forced = evaluated["geometry_state"].eq("局部外廓估算越界")
+unknown_forced = evaluated["vehicle_structure"].eq("unknown")
+conflict_forced = evaluated["decision_status"].isin(["模型/规则冲突，人工复核", "证据不足，拒绝确定结论"])
+priority_forced = evaluated["validation_priority"].astype(str).str.startswith("P0")
+evaluated["mandatory_review"] = geometry_forced | unknown_forced | conflict_forced | priority_forced
+evaluated["mandatory_review_reason"] = ""
+evaluated.loc[unknown_forced, "mandatory_review_reason"] = "车型结构未确认"
+evaluated.loc[conflict_forced & ~unknown_forced, "mandatory_review_reason"] = "模型与冻结规则不一致"
+evaluated.loc[priority_forced & ~unknown_forced & ~conflict_forced, "mandatory_review_reason"] = "进入P0风险等级"
+evaluated.loc[geometry_forced, "mandatory_review_reason"] = "局部外廓估算越过语义校验边界"
 
 if runtime["model_available"]:
     st.success(f'学习模型已加载：{runtime["model_name"]}；55维特征、版本与Schema校验通过。')
@@ -548,22 +619,25 @@ with queue_tab:
     with filter_cols[1]:
         map_filter = st.selectbox("地图", map_options)
     filtered = apply_filters(evaluated, active_structure, risk_filter, map_filter, search)
-    queue = select_top_k(filtered, top_selection, runtime["model_available"]).reset_index(drop=True)
+    queue = select_validation_queue(filtered, top_selection, runtime["model_available"]).reset_index(drop=True)
     display_columns = [
         "sample_id", "map_id", "vehicle_structure", "model_risk", "rule_risk",
-        "risk_level", "validation_priority", "decision_status", "risk_reasons", "next_action",
+        "risk_level", "validation_priority", "mandatory_review", "queue_reason",
+        "geometry_state", "decision_status", "risk_reasons", "next_action",
     ]
     display = queue[display_columns].rename(columns={
         "sample_id": "样本编号", "map_id": "地图编号", "vehicle_structure": "车辆结构",
         "model_risk": "主排序风险", "rule_risk": "规则风险",
         "risk_level": "风险等级", "validation_priority": "验证优先级", "decision_status": "一致性状态",
+        "mandatory_review": "预算外必须复核", "queue_reason": "入队原因", "geometry_state": "车体边界估算",
         "risk_reasons": "主要风险因素", "next_action": "下一步动作",
     })
     score_title = "学习模型风险" if runtime["model_available"] else "规则预览"
     st.caption(
-        f"按{score_title}降序生成 {top_selection}，当前显示 {len(display)} 条；"
-        "规则风险是当前候选批次内的相对应力，不是安全概率。"
+        f"先纳入全部必须人工复核路线，再按{score_title}降序补足 {top_selection} 常规名额；"
+        f"当前共 {len(display)} 条（其中预算外必须复核 {int(queue['mandatory_review'].sum())} 条）。"
     )
+    st.caption("规则应力按冻结开发集参考分布计算，不会随本次上传批次变化，也不是失败概率。边界估算只在坐标语义校验通过且车辆尺寸可用时启用。")
     queue_event = st.dataframe(
         display, width="stretch", hide_index=True, on_select="rerun",
         selection_mode="single-row", key="risk_queue_table",
@@ -587,14 +661,11 @@ with detail_tab:
         selected_index = evaluated.index[evaluated["sample_id"].astype(str) == selected_id][0]
         row = evaluated.loc[selected_index]
         components = rule_components.loc[selected_index].sort_values(ascending=False)
-        geometry = uploaded_geometry.get(str(row.get('geometry_key', '')))
-        if geometry is None and upload is None and not route_uploads:
-            candidate = assets['route_geometry']['routes'].get(selected_id)
-            if candidate and candidate.get('source_sha256') == str(row.get('route_file_sha256', '')):
-                geometry = candidate
+        geometry = route_geometries.get(selected_id)
+        geometry_rule = geometry_results.get(selected_id, {})
         if geometry and 'events' in geometry:
             st.markdown('<div class="section-kicker">先看通俗结论</div>', unsafe_allow_html=True)
-            dynamic_envelope(row, {selected_id: geometry})
+            dynamic_envelope(row, {selected_id: geometry}, geometry_rule)
             st.markdown('<div class="section-kicker">再看米制几何与专业证据</div>', unsafe_allow_html=True)
             render_evidence(st, geometry)
         else:
@@ -609,6 +680,11 @@ with detail_tab:
             st.write(f'验证优先级：**{row["validation_priority"]}**')
             st.write(f'建议动作：**{row["next_action"]}**')
             st.write(f'工程指标提示：{row["risk_reasons"]}')
+            if geometry_rule.get("available"):
+                st.write(f'尺寸联动估算：**{geometry_rule["state"]}**，最小局部余量 {geometry_rule["minimum_margin_m"]:.3f} m（{geometry_rule["affected_side"]}，里程 {geometry_rule["minimum_station_m"]:.2f} m）')
+                st.caption(geometry_rule["explanation"])
+            else:
+                st.write(f'尺寸联动估算：**不提供结论**（{geometry_rule.get("reason", "缺少可信边界证据")}）')
             st.caption('规则提示来自开发集固定参考分布，不是学习模型的特征归因；模型/规则差值0.25是待验证的人工复核策略阈值。')
         with right:
             if runtime["model_available"]:
@@ -636,7 +712,7 @@ with detail_tab:
         ], columns=["执行前指标", "数值", "单位"])
         st.dataframe(key_metrics, width="stretch", hide_index=True)
         st.markdown('<div class="section-kicker">验证结果回流</div>', unsafe_allow_html=True)
-        st.caption("把人工复核、仿真或实车结果记录回来，形成下一轮校准所需的闭环。当前演示保存在本次浏览会话中。")
+        st.caption("提交后保存在本机 SQLite 历史中，并记录路线哈希、模型/特征版本、车辆配置指纹和当时的判断依据。只有本表提交的验证结果会成为反馈，不会把已有训练标签误当成新反馈。")
         with st.form(f"feedback_{selected_id}"):
             feedback_cols = st.columns(3)
             with feedback_cols[0]:
@@ -647,53 +723,88 @@ with detail_tab:
                 feedback_note = st.text_input("工程备注", placeholder="例如：左侧净空不足，需补充边界信息", key=f"note_{selected_id}")
             submitted = st.form_submit_button("保存验证结果")
         if submitted:
-            st.session_state.setdefault("validation_feedback", [])
-            st.session_state["validation_feedback"].append({
-                "样本": selected_id,
-                "结果": feedback_result,
-                "方式": feedback_method,
-                "备注": feedback_note or "—",
+            geometry_params = geometry.get("vehicle_parameters", {}) if geometry else {}
+            record_id = save_feedback({
+                "sample_id": selected_id,
+                "route_sha256": row.get("route_file_sha256", ""),
+                "map_id": row.get("map_id", ""),
+                "vehicle_structure": row.get("vehicle_structure", "unknown"),
+                "vehicle_config": geometry_params,
+                "feature_version": contract.get("feature_version", ""),
+                "schema_sha256": contract.get("schema_sha256", ""),
+                "model_name": runtime.get("model_name", "模型未加载"),
+                "model_risk": row.get("model_risk"),
+                "rule_risk": row.get("rule_risk"),
+                "risk_level": row.get("risk_level", ""),
+                "queue_reason": str(row.get("mandatory_review_reason", "")) or str(row.get("validation_priority", "")),
+                "geometry_state": geometry_rule.get("state", "未评估"),
+                "geometry_min_margin_m": geometry_rule.get("minimum_margin_m"),
+                "validation_result": feedback_result,
+                "validation_method": feedback_method,
+                "note": feedback_note or "",
             })
-            st.success("已记录本次验证结果；后续可导出为校准和复盘输入。")
-        if st.session_state.get("validation_feedback"):
-            feedback_frame = pd.DataFrame(st.session_state["validation_feedback"])
+            st.success(f"已保存到本机验证历史（记录 {record_id}）。")
+        feedback_frame = load_feedback()
+        if not feedback_frame.empty:
             st.dataframe(feedback_frame, width="stretch", hide_index=True)
             st.download_button(
-                "下载本轮验证回填 CSV",
+                "下载本机累计验证历史 CSV",
                 data=feedback_frame.to_csv(index=False).encode("utf-8-sig"),
                 file_name="pathguard_validation_feedback.csv",
                 mime="text/csv",
                 key=f"download_feedback_{selected_id}",
             )
+        st.caption("历史文件位于用户 LocalAppData/PathGuard/validation_history.sqlite3；记录不会自动上传或改写训练数据。")
 
 with evidence_tab:
     st.markdown('<div class="section-kicker">数据是否支持当前能力</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">验证证据：哪些结论已经有数据，哪些仍需补齐？</h2>', unsafe_allow_html=True)
     boundary = assets.get("boundary", {})
     if boundary:
-        boundary_cols = st.columns(4)
+        boundary_cols = st.columns(5)
         boundary_cols[0].metric("冻结NPZ可读取",f'{boundary["readable_npz"]} / {boundary["frozen_samples"]}')
         boundary_cols[1].metric("含完整边界坐标",boundary["full_boundary_samples"])
-        boundary_cols[2].metric("边界语义校验通过",boundary["verified_boundary_semantics_samples"])
-        boundary_cols[3].metric("含原配置车体净空",boundary["body_clearance_samples"])
-        st.caption("边界语义校验要求左右边界坐标计算出的中心线距离与NPZ净空字段在1e-5米内一致。只有通过校验的样本用于可调尺寸边界规则。")
+        boundary_cols[2].metric("距离语义校验通过",boundary["verified_boundary_semantics_samples"])
+        boundary_cols[3].metric("完整点列筛查通过",assets.get("boundary_integrity",{}).get("orientation_and_continuity_screen_pass",0))
+        boundary_cols[4].metric("含原配置车体净空",boundary["body_clearance_samples"])
+        st.caption("距离语义只检查边界点到中心线的距离是否复现净空字段（误差≤1e-5m）。继续通过左右方向、次序和连续性筛查的只有3条；这仍不证明走廊无自交或完成连续碰撞检测。")
         coverage=pd.DataFrame(boundary["coverage_by_structure"])
-        coverage=coverage[["vehicle_structure","samples","has_full_boundary","boundary_distance_semantics_verified","has_body_clearance","has_vehicle_profile_id"]].rename(columns={
-            "vehicle_structure":"车辆结构","samples":"冻结样本","has_full_boundary":"完整边界","boundary_distance_semantics_verified":"语义通过","has_body_clearance":"原配置车体净空","has_vehicle_profile_id":"车型配置ID"})
+        coverage["integrity_screen_passed"] = coverage["vehicle_structure"].map({"five_axis":3,"six_axis":0,"unknown":0}).fillna(0).astype(int)
+        coverage=coverage[["vehicle_structure","samples","has_full_boundary","boundary_distance_semantics_verified","integrity_screen_passed","has_body_clearance","has_vehicle_profile_id"]].rename(columns={
+            "vehicle_structure":"车辆结构","samples":"冻结样本","has_full_boundary":"完整边界","boundary_distance_semantics_verified":"距离语义通过","integrity_screen_passed":"完整点列筛查通过","has_body_clearance":"原配置车体净空","has_vehicle_profile_id":"车型配置ID"})
         st.dataframe(coverage,width="stretch",hide_index=True)
-        experiment=boundary["experiment"]
-        st.subheader("空间特征小实验的退出判断")
-        exp_cols=st.columns(4)
-        exp_cols[0].metric("可用于实验",experiment["eligible_samples"],f'{experiment["map_count"]} 张地图')
-        exp_cols[1].metric("55维基线 PR-AUC",f'{experiment["baseline"]["pr_auc_failure"]:.3f}')
-        exp_cols[2].metric("增加空间特征",f'{experiment["augmented"]["pr_auc_failure"]:.3f}',f'变化 {experiment["delta"]["pr_auc_failure"]:+.3f}')
-        exp_cols[3].metric("正式接入", "暂不接入" if not experiment["production_eligible"] else "满足条件")
-        st.info("当前严格语义通过样本只有26条，均为五轴；地图分组实验没有带来PR-AUC或Top-K提升。因此空间特征保留为探索证据，正式产品继续采用冻结模型加确定性边界规则。")
+        st.subheader("空间特征实验状态")
+        st.warning("旧实验预测文件中，55维基线和空间增广模型的逐条分数完全相同，且地图内预测恒定。因此旧实验不能回答空间特征是否有效；不将其并入训练模型。需先记录真实候选批次ID并重做独立对照。")
         st.divider()
-    st.subheader('同预算工程基线对比')
-    baseline = pd.read_csv(DATA_DIR/'engineering_comparison.csv')
-    shown = baseline[baseline['group'].eq('overall')][['method','budget','captured','precision_at_k','capture_rate','random_expected_captured']]
-    st.dataframe(shown.rename(columns={'method':'方法','budget':'验证预算','captured':'捕获失败数','precision_at_k':'入选失败比例','capture_rate':'全部失败覆盖率','random_expected_captured':'随机期望失败数'}),hide_index=True)
-    st.caption('原留出地图66条的事后复核：模型使用历史留出预测，规则参考仅取274条开发样本。模型Top-20优于规则，但Top-34及整体PR-AUC未优于规则。缺少执行前硬筛选标记和原规划器代价，尚未验证硬筛选后增益。')
+    st.subheader('留出地图：模型、规则与混合排序对照')
+    method_frame = assets["heldout_methods_v3"].copy()
+    method_names = {
+        "learning_model":"55维学习模型",
+        "frozen_geometry_rule":"冻结开发集规则",
+        "naive_uncalibrated_50_50_hybrid":"未校准50:50混合（仅对照）",
+        "minimum_clearance":"最小静态净空",
+    }
+    method_frame["method_label"] = method_frame["method"].map(method_names)
+    shown = method_frame[["method_label","budget","captured_failures","precision_at_k","failure_capture_rate","roc_auc_failure","pr_auc_failure","random_expected_captured"]]
+    st.dataframe(shown.rename(columns={
+        "method_label":"方法","budget":"验证预算","captured_failures":"捕获失败数",
+        "precision_at_k":"入选失败比例","failure_capture_rate":"全部失败覆盖率",
+        "roc_auc_failure":"失败ROC-AUC","pr_auc_failure":"失败PR-AUC",
+        "random_expected_captured":"随机期望失败数",
+    }),hide_index=True)
+    st.caption("66条、5张已留出的地图；这是已检查留出集的事后重排，不是新独立验证。50:50分数混合未校准、未接入产品，也未据此选阈值。没有规划器调用ID，因此全局Top-K不等于同一次任务挑路线。")
+    batch = assets.get("batch_proxy", {})
+    if batch:
+        st.markdown("#### 同地图、同确认车型的批次代理分析")
+        proxy_rows=[]
+        for item in batch["results"]:
+            proxy_rows.append({
+                "方法":method_names.get(item["method"],item["method"]),
+                "代理组内20%名额捕获失败期望":item["expected_failures_captured_tie_aware"],
+                "组内失败捕获率":item["capture_rate"],
+                "相同名额随机期望":item["random_expected_failures_captured_same_group_budgets"],
+            })
+        st.dataframe(pd.DataFrame(proxy_rows),hide_index=True)
+        st.warning(f"只有{batch['proxy_groups_with_at_least_two_candidates']}个地图×车型代理组，共{batch['proxy_candidates_in_eligible_groups']}条候选；该预算的随机期望高于各排序结果。缺少真实 planner_run_id/candidate_batch_id，当前不能证明模型带来同批挑选增益。")
     test = assets["test"]
     oof = assets["oof"]["overall"]
     audit = assets["audit"]

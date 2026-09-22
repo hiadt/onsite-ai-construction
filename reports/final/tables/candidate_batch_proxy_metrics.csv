@@ -1,0 +1,8 @@
+﻿map_id,vehicle_structure,candidate_count,failures,eligible_for_top_fraction_proxy,model_score_unique_scores,frozen_geometry_rule_score_unique_scores,minimum_clearance_score_unique_scores
+map_002,five_axis,3,3,True,2,3,2
+map_002,six_axis,24,19,True,7,15,2
+map_008,five_axis,1,0,False,1,1,1
+map_016,five_axis,3,3,True,2,2,2
+map_016,six_axis,3,2,True,3,3,3
+map_019,five_axis,1,0,False,1,1,1
+map_020,five_axis,1,0,False,1,1,1

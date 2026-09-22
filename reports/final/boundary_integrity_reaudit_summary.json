@@ -1,0 +1,13 @@
+{
+  "candidate_rows": 26,
+  "readable_and_hash_matched": 26,
+  "strict_distance_semantics_pass": 26,
+  "orientation_and_continuity_screen_pass": 3,
+  "method": "raw full-resolution arrays; 1e-5 m distance reproduction, centerline normal side/order, station monotonicity, and boundary-to-center step ratios P99.9 <= 3 and max <= 5",
+  "limitations": [
+    "The continuity screen is a conservative point-sequence check, not proof of a simple polygon or a self-intersection-free corridor.",
+    "Vehicle sweep remains a sampled local cross-section estimate, not continuous collision detection.",
+    "Manifest local paths are not copied into results."
+  ],
+  "details_file": "reports/final/tables/boundary_integrity_reaudit.csv"
+}
