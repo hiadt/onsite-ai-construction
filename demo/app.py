@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import hashlib
 from pathlib import Path
 from typing import Any
 
@@ -50,7 +49,6 @@ st.markdown(
     .axle-line {stroke:#2b7890;stroke-width:3;}
     .road-surface {fill:#dfe7eb;stroke:#9aabb5;stroke-width:1.2;}
     .road-edge {fill:none;stroke:#8c9ca5;stroke-width:2;stroke-dasharray:7 6;}
-    .obstacle {fill:#c5a483;stroke:#765b42;stroke-width:1.5;}
     .sweep-edge {fill:none;stroke:#cf5b45;stroke-width:1.6;stroke-dasharray:5 4;opacity:.72;}
     .svg-label {font-size:12px;fill:#526675;}
     .envelope-note {font-size:.78rem;color:#526675;margin-top:.45rem;line-height:1.45;}
@@ -72,7 +70,6 @@ st.markdown(
     .legend {display:flex;flex-wrap:wrap;gap:.65rem 1rem;margin:.45rem 0 0;color:#526675;font-size:.78rem;}
     .legend i {display:inline-block;width:22px;border-top:3px solid #2b6f8d;vertical-align:middle;margin-right:4px;}
     .legend i.dashed {border-top-style:dashed;}.legend i.band {border-top:7px solid #cf5b45;opacity:.55;}
-    .legend i.block {width:13px;height:11px;border:1px solid #765b42;background:#c5a483;border-top:1px solid #765b42;}
     </style>
     """,
     unsafe_allow_html=True,
@@ -131,16 +128,6 @@ def dynamic_envelope(row: pd.Series) -> None:
     structure_label = "六轴" if axle_count == 6 else "五轴" if structure == "five_axis" else "结构未定"
     sample_token = "".join(ch for ch in str(row.get("sample_id", "route")) if ch.isalnum())[-12:]
     route_id = f"motion-route-{sample_token or 'selected'}"
-    # 障碍物是场景中的静态对象；当前数据没有统一的障碍物坐标时，
-    # 用地图/路线标识和净空特征生成可复现的位置，避免所有样本显示同一场景。
-    scene_key = f'{row.get("map_id", "map")}|{row.get("route_id", "route")}|{row.get("sample_id", "sample")}'
-    scene_seed = int(hashlib.sha256(scene_key.encode("utf-8")).hexdigest()[:8], 16)
-    obstacle_1_x = 228 + scene_seed % 58
-    obstacle_1_y = 34 + int(24 * caution) + scene_seed % 12
-    obstacle_2_x = 382 + (scene_seed // 17) % 68
-    obstacle_2_y = 111 + int(28 * caution) + (scene_seed // 29) % 18
-    obstacle_1_angle = -bend / 5 + (scene_seed % 9 - 4)
-    obstacle_2_angle = bend / 7 + ((scene_seed // 11) % 9 - 4)
     route_d = (
         f"M 38 218 C 150 218, 190 {218-bend:.1f}, 300 {168-bend/2:.1f} "
         f"S 470 {76+bend/4:.1f}, 565 54"
@@ -176,8 +163,6 @@ def dynamic_envelope(row: pd.Series) -> None:
         <path d="M 5 222 L 142 222 C 190 222, 217 {218-bend:.1f}, 300 {168-bend/2:.1f} S 474 {70+bend/4:.1f}, 595 47 L 595 5 L 5 5 Z" class="road-surface" opacity=".54"/>
         <path d="M 5 195 L 145 195 C 194 195, 220 {206-bend:.1f}, 302 {160-bend/2:.1f} S 477 {61+bend/4:.1f}, 595 34" class="road-edge"/>
         <path d="M 5 249 L 145 249 C 194 249, 220 {230-bend:.1f}, 302 {176-bend/2:.1f} S 477 {88+bend/4:.1f}, 595 60" class="road-edge"/>
-        <rect x="{obstacle_1_x:.1f}" y="{obstacle_1_y:.1f}" width="48" height="25" rx="3" class="obstacle" transform="rotate({obstacle_1_angle:.1f} {obstacle_1_x+24:.1f} {obstacle_1_y+12.5:.1f})"/>
-        <rect x="{obstacle_2_x:.1f}" y="{obstacle_2_y:.1f}" width="42" height="23" rx="3" class="obstacle" transform="rotate({obstacle_2_angle:.1f} {obstacle_2_x+21:.1f} {obstacle_2_y+11.5:.1f})"/>
         <path id="{route_id}" d="{route_d}" class="route-line" marker-end="url(#pg-arrow)"/>
         <circle r="7" fill="{risk_color}" opacity=".55"><animate attributeName="r" values="5;10;5" dur="1.4s" repeatCount="indefinite"/><animateMotion dur="6.5s" repeatCount="indefinite" rotate="auto"><mpath href="#{route_id}"/></animateMotion></circle>
         <g class="moving-vehicle">
@@ -192,8 +177,8 @@ def dynamic_envelope(row: pd.Series) -> None:
         <text x="18" y="257" class="svg-label">曲率P95 {curvature:.3f} · 转向变化P95 {steer_change:.3f} · 静态净空 {clearance:.2f}</text>
         <text x="18" y="275" class="svg-label">俯视道路、障碍物与车辆扫掠关注带；车辆沿当前特征生成的示意路径循环运动</text>
       </svg>
-      <div class="legend"><span><i></i>蓝色虚线：车辆参考路线</span><span><i class="dashed"></i>灰色虚线：道路边界</span><span><i class="band"></i>彩色带：扫掠风险关注区</span><span><i class="block"></i>棕色块：当前场景静态障碍物</span></div>
-      <div class="envelope-note">读图方法：车辆沿蓝色路线运动，障碍物属于当前路线场景并保持静止；彩色关注带越宽，表示当前样本的净空和转向风险越值得优先复核。当前数据未提供统一障碍物坐标，位置由地图/路线标识与净空特征稳定生成，接入真实路线点列后可替换为实测坐标。</div>
+      <div class="legend"><span><i></i>蓝色虚线：车辆参考路线</span><span><i class="dashed"></i>灰色虚线：道路边界</span><span><i class="band"></i>彩色带：扫掠风险关注区</span></div>
+      <div class="envelope-note">读图方法：车辆沿蓝色路线运动，彩色关注带越宽，表示当前样本的净空和转向风险越值得优先复核。本批演示数据没有统一的障碍物坐标，因此不绘制虚构障碍物；障碍物避碰需接入原始场景坐标后再计算。</div>
     </div>'''
     st.markdown(svg, unsafe_allow_html=True)
 
