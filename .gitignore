@@ -32,3 +32,10 @@ auth.json
 .vscode/
 .idea/
 
+# PathGuard演示所需的受控派生模型与演示数据
+!demo/data/
+!demo/data/*.json
+!demo/data/sample_input.csv
+!demo/models/
+!demo/models/pathguard_gate3_model.joblib
+
