@@ -15,10 +15,10 @@ def main():
         row=manifest.loc[sample.sample_id]
         if isinstance(row,pd.DataFrame):row=row.iloc[0]
         raw=Path(row.route_path_local)
-        defaults={"five_axis":(12.0,3.2,5.0,35000),"six_axis":(15.0,3.4,6.0,50000),"unknown":(12.0,3.2,5.0,35000)}[sample.vehicle_structure]
+        defaults={"five_axis":(12.0,3.2,5.0),"six_axis":(15.0,3.4,6.0),"unknown":(12.0,3.2,5.0)}[sample.vehicle_structure]
         config={"vehicle_structure":sample.vehicle_structure,"map_id":sample.map_id,
                 "length_m":defaults[0],"width_m":defaults[1],
-                "reference_from_rear_m":defaults[2],"mass_kg":defaults[3]}
+                "reference_from_rear_m":defaults[2]}
         features,key,geo=parse_route(raw.read_bytes(),raw.name,config)
         np.testing.assert_allclose(features[columns].to_numpy(float),sample[columns].to_numpy(float)[None,:],rtol=1e-5,atol=1e-7)
         assert features.iloc[0].route_file_sha256==row.route_file_sha256

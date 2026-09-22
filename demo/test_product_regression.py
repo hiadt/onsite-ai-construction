@@ -47,11 +47,12 @@ class ProductRegressionTests(unittest.TestCase):
         buffer=io.BytesIO();np.savez(buffer,s_m=np.array([{}],dtype=object))
         with self.assertRaises(ValueError):
             parse_route(buffer.getvalue(),'object.npz')
-    def test_changed_weight_does_not_fake_prediction(self):
+    def test_dimensions_do_not_fake_model_or_rule_risk(self):
         payload=(BASE/'examples/real_route.npz').read_bytes()
-        a,_,_=parse_route(payload,'a.npz',{'mass_kg':1000})
-        b,_,_=parse_route(payload,'b.npz',{'mass_kg':90000})
+        a,_,_=parse_route(payload,'a.npz',{'length_m':8,'width_m':2,'reference_from_rear_m':3})
+        b,_,_=parse_route(payload,'b.npz',{'length_m':18,'width_m':5,'reference_from_rear_m':7})
         np.testing.assert_allclose(a[self.contract['training_feature_columns']],b[self.contract['training_feature_columns']])
+        np.testing.assert_allclose(compute_geometry_rule_risk(a)[0],compute_geometry_rule_risk(b)[0])
     def test_real_scale_rigid_sweep(self):
         geometry={'centerline':[[0,0],[10,0]],'yaw_rad':[0,0]}
         x,y=compute_rigid_body_sweep(geometry,12,4,5)

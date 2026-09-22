@@ -44,7 +44,7 @@ def parse_route(payload, name, config=None):
     structure=config.get("vehicle_structure","unknown")
     if structure not in {"five_axis","six_axis","unknown"}:
         raise ValueError("vehicle_structure 必须为 five_axis、six_axis 或 unknown")
-    for key in ("length_m","width_m","mass_kg","reference_from_rear_m"):
+    for key in ("length_m","width_m","reference_from_rear_m"):
         if key in config and (not np.isfinite(float(config[key])) or float(config[key])<=0):
             raise ValueError(key+" 必须为正有限数值")
     if "length_m" in config and "reference_from_rear_m" in config and float(config["reference_from_rear_m"]) > float(config["length_m"]):
@@ -99,18 +99,17 @@ def render_evidence(st, geometry):
                           key="event_"+geometry["source_sha256"][:12])
     event=events[selected]; xy=np.asarray(geometry["centerline"])
     structure=geometry.get("vehicle_structure","unknown")
-    defaults={"five_axis":(12.0,3.2,5.0,35000),"six_axis":(15.0,3.4,6.0,50000),"unknown":(12.0,3.2,5.0,35000)}[structure]
+    defaults={"five_axis":(12.0,3.2,5.0),"six_axis":(15.0,3.4,6.0),"unknown":(12.0,3.2,5.0)}[structure]
     supplied=geometry.get("vehicle_parameters",{})
     st.markdown("#### 真实尺度刚性车体扫掠")
-    st.caption("参数可用于几何外廓重算；预设值仅供演示。重量不进入当前55维模型，也不改变风险分数。")
-    cols=st.columns(4)
+    st.caption("车长、车宽和参考点只用于米制几何外廓重算；它们不进入当前55维模型，也不改变现有规则风险。")
+    cols=st.columns(3)
     token=geometry["source_sha256"][:12]
     length=cols[0].number_input("车长 / m",3.0,30.0,float(supplied.get("length_m",defaults[0])),0.1,key="length_"+token)
     width=cols[1].number_input("车宽 / m",1.0,8.0,float(supplied.get("width_m",defaults[1])),0.1,key="width_"+token)
     ref_default=min(float(supplied.get("reference_from_rear_m",defaults[2]))/length,1.0)
     reference_ratio=cols[2].slider("参考点距车尾 / %车长",0,100,int(round(ref_default*100)),1,key="reference_"+token)
     reference=length*reference_ratio/100.0
-    mass=cols[3].number_input("总质量 / kg",1000,200000,int(supplied.get("mass_kg",defaults[3])),1000,key="mass_"+token)
     corner_x,corner_y=compute_rigid_body_sweep(geometry,length,width,reference)
     retained=np.asarray(geometry.get("point_indices",range(len(xy))))
     pose=int(np.argmin(np.abs(retained-int(event["index"]))))
@@ -134,5 +133,6 @@ def render_evidence(st, geometry):
     st.plotly_chart(fig,use_container_width=True)
     front=length-reference
     st.write(f'{event["label"]}：**{event["value"]:.4g} {event["unit"]}**；路线里程 {event["s_m"]:.2f} m，原始点索引 {event["index"]}。')
-    st.caption(f"几何设置：参考点前方 {front:.2f} m、后方 {reference:.2f} m、半宽 {width/2:.2f} m；质量 {mass:,} kg 仅记录，不参与几何或模型计算。")
+    st.caption(f"几何设置：参考点前方 {front:.2f} m、后方 {reference:.2f} m、半宽 {width/2:.2f} m。")
+    st.info("参数影响链：车长/车宽/参考点 → 车体四角坐标与扫掠包络。模型风险仍由冻结55维路线特征计算；规则风险仍由固定曲率、坡度、速度与净空特征计算。当前没有可信道路边界或障碍物几何，因此扫掠包络不直接生成碰撞概率或风险加分。")
     st.caption("四条角点轨迹和红色车体外廓按米制坐标及逐点航向角重算。它们是刚性矩形几何扫掠，不包含铰接、轮胎侧偏、悬架、载荷转移或制动动力学。"+geometry["coordinate_note"])
