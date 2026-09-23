@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -195,6 +196,14 @@ def read_json(name: str) -> dict[str, Any] | list[dict[str, Any]]:
     return json.loads((DATA_DIR / name).read_text(encoding="utf-8"))
 
 
+def read_route_geometry() -> dict[str, Any]:
+    full_asset = DATA_DIR / "route_geometry_all.json.gz"
+    if full_asset.exists():
+        with gzip.open(full_asset, "rt", encoding="utf-8") as source:
+            return json.load(source)
+    return read_json("route_geometry.json")
+
+
 @st.cache_data
 def load_static_assets() -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame]:
     assets: dict[str, Any] = {
@@ -203,7 +212,7 @@ def load_static_assets() -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame]:
         "oof": read_json("gate3_oof_metrics.json"),
         "audit": read_json("repeated_group_hybrid_summary.json"),
         "mechanisms": read_json("failure_mechanism_cards.json"),
-        "route_geometry": read_json("route_geometry.json"),
+        "route_geometry": read_route_geometry(),
     }
     boundary_summary = REPO_ROOT / "analysis" / "boundary_geometry" / "boundary_coverage_summary.json"
     assets["boundary"] = json.loads(boundary_summary.read_text(encoding="utf-8")) if boundary_summary.exists() else {}
@@ -320,7 +329,8 @@ def render_full_route_context(st, geometry: dict[str, Any], boundary_rule: dict[
     fig.update_yaxes(scaleanchor="x", scaleratio=1)
     st.markdown("#### 输入路线全貌与局部位置")
     st.caption(f"输入文件覆盖 {stations[-1]-stations[0]:.1f} m、原始 {geometry.get('point_count_original', len(center))} 个点；橙色区段为里程 {max(float(stations[0]),focus-35):.1f}—{min(float(stations[-1]),focus+35):.1f} m，对应下方局部动画。该文件是否代表完整工程任务路线，由数据提供方确认。")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch", config={"displayModeBar": False, "scrollZoom": True})
+    st.caption("图表操作：拖动框选放大，滚轮缩放，双击图表恢复全图。")
 
 
 def dynamic_envelope(row: pd.Series, route_geometries: dict[str, Any], boundary_rule: dict[str, Any] | None = None) -> None:
@@ -514,8 +524,8 @@ with st.expander("① 任务与输入 · 选择历史案例或建立新任务", 
         else:
             st.info("本机尚无保存的任务。")
     else:
-        history_scope = st.radio("历史记录范围", ["可视化案例（15）", "冻结记录全集（340）"], horizontal=True)
-        st.caption("15条案例有可复现的路线坐标演示资产；其他冻结记录保留55项特征和历史标签，但当前仓库没有对应坐标资产。不同编号不代表同一任务的候选方案。")
+        history_scope = st.radio("历史记录范围", ["冻结记录全集（340）", "快速讲解示例（15）"], horizontal=True)
+        st.caption("全部340条冻结记录已从哈希匹配的原始NPZ恢复路线坐标；可逐条查看动态路径。可靠的左右边界和车辆尺寸仍须另行核验。不同编号不代表同一任务的候选方案。")
         upload = st.file_uploader("上传执行前特征 CSV", type=["csv"],
                                   help="必须包含冻结契约规定的全部55项数值特征。")
     uploaded_geometry = {}
@@ -538,7 +548,7 @@ with st.expander("① 任务与输入 · 选择历史案例或建立新任务", 
         st.info("请创建或选择任务后开展评估。")
         st.stop()
     elif upload is None:
-        input_frame = (sample_frame if history_scope == "可视化案例（15）"
+        input_frame = (sample_frame if history_scope == "快速讲解示例（15）"
                        else assets["frozen_features"]).copy()
         st.caption(f"当前使用：{history_scope}；记录之间不预设为同一候选批次。")
     else:
@@ -550,7 +560,8 @@ with st.expander("① 任务与输入 · 选择历史案例或建立新任务", 
             st.stop()
     structure_label = st.radio("车辆结构", ["全部", "五轴", "六轴", "结构未定"], horizontal=True)
     structure_map = {"全部": "all", "五轴": "five_axis", "六轴": "six_axis", "结构未定": "unknown"}
-    top_selection = (st.selectbox("常规优先验证名额", ["Top 10", "Top 20", "Top 34"])
+    top_selection = (st.selectbox("常规优先验证名额", ["Top 10", "Top 20", "Top 34"],
+                                  format_func=lambda value: f'优先 {value.split()[-1]} 条')
                      if task_mode != "历史案例库" else "历史案例")
     search = st.text_input("检索样本或路线编号")
 
@@ -629,11 +640,10 @@ if active_task:
     if len(evaluated) < 2:
         st.warning("当前只有一条输入路线：可以解释其风险，但无法比较候选方案或证明排序节省了复核工作量。请上传同场景、同配置的多条路线。")
 else:
-    st.info(f'当前是历史记录浏览：展示 {len(evaluated)} 条，冻结监督记录共 {len(assets["frozen_cases"])} 条；其中仅15条有随仓库提供的路线坐标演示资产。它们不代表同一次规划生成的候选路线，也不能用本页的复核占比估算日常工作量。')
+    st.info(f'当前是历史记录浏览：展示 {len(evaluated)} 条，冻结监督记录共 {len(assets["frozen_cases"])} 条；全部可逐条查看动态路线。它们不代表同一次规划生成的候选路线，也不能用本页的复核占比估算日常工作量。')
 
 if runtime["model_available"]:
-    st.success(f'学习模型已加载：{runtime["model_name"]}；55维特征、版本与Schema校验通过。')
-    st.caption('当前部署模型在340条冻结样本上重训；内置样本评分用于功能演示。验证依据展示的是此前留出地图预测，不能用演示评分代替。')
+    st.success("当前使用学习模型为路线排序，工程规则单独提示需要核查的情况。模型版本与输入格式已经核对。")
 else:
     st.warning("当前为规则预览：冻结模型与本机运行时版本不一致，系统已安全回退，不影响界面与流程演示。")
     with st.expander("查看技术状态"):
@@ -647,81 +657,30 @@ structure_view = (
 )
 
 overview_tab, queue_tab, detail_tab, evidence_tab = st.tabs(
-    ["工作台导览", "验证队列" if active_task else "历史记录", "路线分析", "验证证据"]
+    ["任务概览" if active_task else "历史概览", "验证队列" if active_task else "历史记录", "路线分析", "验证证据"]
 )
 
 with overview_tab:
-    st.markdown('<div class="section-kicker">操作导览</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">从候选路线到验证动作，只保留工程师需要作出的决定</h2>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="value-grid">'
-        '<div class="value-card"><h4>路线很多，验证资源有限</h4><p>在同一任务的候选中安排复核顺序；历史案例单独查看。</p></div>'
-        '<div class="value-card"><h4>结果要能解释</h4><p>展示整条路线及曲率、转向变化、净空等可定位关注点。</p></div>'
-        '<div class="value-card"><h4>不确定性也要被看见</h4><p>区分真实标签、指标风险和代理排序，避免把数据不足误判成安全。</p></div>'
-        '</div>', unsafe_allow_html=True,
-    )
+    if active_task:
+        st.markdown('<div class="section-kicker">当前工程任务</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">先确定验证顺序，再看每条路线为什么值得关注</h2>', unsafe_allow_html=True)
+        status_cols = st.columns(3)
+        status_cols[0].metric("本任务候选路线", len(evaluated))
+        status_cols[1].metric("当前筛选后", len(structure_view))
+        status_cols[2].metric("有路线坐标可解释", len(route_geometries))
+        st.info(f'任务「{active_task["title"]}」使用场景「{active_task["scene"]}」、环境版本「{active_task["environment_version"]}」。请在“验证队列”查看每条路线的建议去向，选择路线后在“路线分析”查看位置、指标和验证记录。')
+    else:
+        st.markdown('<div class="section-kicker">历史记录浏览</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">选择一条历史路线，看清风险提示来自哪里</h2>', unsafe_allow_html=True)
+        status_cols = st.columns(3)
+        status_cols[0].metric("当前浏览记录", len(evaluated))
+        status_cols[1].metric("冻结记录总数", len(assets["frozen_cases"]))
+        status_cols[2].metric("有路线坐标可解释", len(route_geometries))
+        st.info("历史记录供查看路线分析与已知结果，不是同一次规划任务的候选批次。要比较同一任务的多条新路线，请在顶部切换到“新建评估任务”。")
     st.markdown('<div class="flow-strip">'
-        '<div class="flow-step"><b>① 建立任务</b>场景、车型、版本与候选输入</div>'
-        '<div class="flow-step"><b>② AI + 规则排序</b>识别高风险候选</div>'
-        '<div class="flow-step"><b>③ 解释风险原因</b>告诉工程师为什么</div>'
-        '<div class="flow-step"><b>④ 验证与回流</b>逐次保存结果，复核争议后审核训练资格</div>'
+        '<div class="flow-step"><b>① 看路线清单</b>了解当前输入与优先级</div>'
+        '<div class="flow-step"><b>② 看具体位置</b>查看路线、车辆外廓和关注点</div>'
+        '<div class="flow-step"><b>③ 定下一步动作</b>记录人工、仿真或现场验证结论</div>'
         '</div>', unsafe_allow_html=True)
-    st.markdown('<div class="judge-card"><b>一句话结果</b><p>PathGuard 不替车辆做控制决策，而是把“先测哪条路线、为什么先测、下一步怎么验证”变成可追溯的工程队列。</p></div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-kicker">冻结模型的历史留出实验</div>', unsafe_allow_html=True)
-    budget_cols = st.columns(3)
-    for col, key in zip(budget_cols, ("10", "20", "34")):
-        item = assets["test"]["top_k"][key]
-        col.metric(f"Top-{key}", f'{item["failures_captured"]} 条失败捕获',
-                   f'排序 {item["capture_rate"]:.1%} · 随机 {item["random_expected_capture_rate"]:.1%}')
-    st.caption("这组结果来自历史留出地图，与当前新任务的结果分开；同任务候选批次的优选收益仍需进一步验证。")
-    st.markdown('<div class="section-kicker">三种真实工程决策</div>', unsafe_allow_html=True)
-    queue_score = "model_risk" if runtime["model_available"] else "rule_risk"
-    ranked = evaluated.sort_values(queue_score, ascending=False)
-    conflict_rows = evaluated[evaluated["decision_status"] == "模型/规则冲突，人工复核"]
-    unknown_rows = evaluated[evaluated["vehicle_structure"] == "unknown"]
-    showcase = [
-        ("排序首位", ranked.iloc[0], "当前候选中模型分数最高；是否需人工复核请看证据状态"),
-        ("规则关注", conflict_rows.iloc[0] if not conflict_rows.empty else None, "模型和工程规则不一致，需人工复核"),
-        ("证据不足", unknown_rows.iloc[0] if not unknown_rows.empty else None, "车辆结构未定，系统要求人工补充证据"),
-    ]
-    case_cols = st.columns(3)
-    for col, (title, item, note) in zip(case_cols, showcase):
-        with col:
-            col.markdown(f'**{title}**')
-            if item is None:
-                col.caption('当前输入无此类案例')
-                continue
-            col.metric("路线", str(item["sample_id"])[-10:], f'{float(item[queue_score]):.3f} 主排序风险')
-            col.caption(f'{item["vehicle_structure"]} · {item["risk_reasons"]}')
-            col.info(note)
-    st.markdown('<div class="section-kicker">当前演示数据与运行状态</div>', unsafe_allow_html=True)
-    cols = st.columns(5)
-    cols[0].metric("SHA-256精确匹配", f'{freeze["sha256_exact_matches"]} 条')
-    cols[1].metric("成功提取特征", f'{freeze["features_extracted"]} 条')
-    cols[2].metric("final监督样本", f'{freeze["final_samples"]} 条')
-    cols[3].metric("通过 / 失败", f'{freeze["passed"]} / {freeze["failed"]}')
-    cols[4].metric("训练特征", f'{freeze["feature_count"]} 项')
-    cols = st.columns(3)
-    cols[0].metric("五轴 final", freeze["five_axis_final"])
-    cols[1].metric("六轴 final", freeze["six_axis_final"])
-    cols[2].metric("结构未定 final", freeze["unknown_structure_final"])
-    model_status = runtime["model_name"] if runtime["model_available"] else "学习模型未加载"
-    st.caption(f"当前状态：{model_status}；主排序使用学习模型，工程规则作为独立交叉校验。")
-
-    st.subheader("车辆结构")
-    vehicle_cols = st.columns(3)
-    with vehicle_cols[0]:
-        vehicle_illustration("五轴", 5, "结构来自样本元数据；图示不表达尺寸、载荷或动力学参数。")
-    with vehicle_cols[1]:
-        vehicle_illustration("六轴", 6, "转向来源数组维度不用于替代车辆轴数证据。")
-    with vehicle_cols[2]:
-        vehicle_illustration("结构未定", 3, "结构未定，建议人工复核。")
-    st.caption(f"当前结构筛选：{structure_label} · 演示输入 {len(structure_view)} 条")
-    st.markdown('<div class="section-kicker">建议操作顺序</div>', unsafe_allow_html=True)
-    st.info("新建任务时在“验证队列”安排优先级；浏览历史数据时在“历史记录”查看案例。随后进入“路线分析”和“验证证据”。")
-    st.info(
-        f'特征版本 `{freeze["feature_version"]}` · Schema `{freeze["schema_sha256"]}` · '
-        "55项执行前数值特征 · 10米局部窗口"
-    )
+    st.caption("模型效果、数据覆盖和实验细节集中放在“验证证据”页，供需要核查技术依据时查看。")
 
 map_options = ["全部"] + sorted(evaluated["map_id"].astype(str).unique().tolist())
 with queue_tab:
@@ -729,8 +688,8 @@ with queue_tab:
         st.markdown('<div class="section-kicker">第一步：确定验证顺序</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">本任务：先验证哪几条路线？</h2>', unsafe_allow_html=True)
         st.caption("同一任务的全部输入路线先接受评估，再分为本轮优先验证与其余按计划验证。高风险不等于已经失败，低风险也不等于免检。")
     else:
-        st.markdown('<div class="section-kicker">历史材料 · 不是同一次任务</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">历史记录：可视化案例与冻结全集</h2>', unsafe_allow_html=True)
-        st.caption("可视化案例源自早期前端交付包的12条示例，后来加入3条通过边界完整性筛查的五轴路线。没有预先登记的代表性抽样方案；它们不能代表全量数据的风险或人工复核比例。")
+        st.markdown('<div class="section-kicker">历史材料 · 不是同一次任务</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">历史记录：查看全集，也可切换快速讲解示例</h2>', unsafe_allow_html=True)
+        st.caption("15条快速讲解示例源自早期前端交付包的12条路线，后来加入3条通过边界完整性筛查的五轴路线。没有预先登记的代表性抽样方案；它们不能代表全量数据的风险或人工复核比例。")
     filter_cols = st.columns(2)
     risk_options = ["全部", "高风险", "中风险", "低风险", "证据不足"]
     if not runtime["model_available"]:
@@ -756,6 +715,9 @@ with queue_tab:
         "mandatory_review": "预算外必须复核", "queue_reason": "入队原因", "geometry_state": "车体边界估算",
         "risk_reasons": "主要风险因素", "next_action": "下一步动作",
     })
+    display["车辆结构"] = display["车辆结构"].replace(
+        {"five_axis": "五轴", "six_axis": "六轴", "unknown": "结构未定"}
+    )
     score_title = "学习模型风险" if runtime["model_available"] else "规则预览"
     if active_task:
         total = len(filtered)
@@ -782,10 +744,10 @@ with queue_tab:
         history_cols[1].metric("结构待核", int(evaluated["vehicle_structure"].eq("unknown").sum()))
         history_cols[2].metric("模型与规则分歧", int(evaluated["decision_status"].str.contains("冲突").sum()))
         history_cols[3].metric("冻结监督记录", len(assets["frozen_cases"]))
-        st.caption(f"当前显示 {len(display)} 条历史记录；排序只方便浏览，不构成同任务 Top-K 实验。可视化15条没有经过代表性抽样，不能据此声称典型任务需要同样比例的人工复核。")
-        if history_scope == "可视化案例（15）":
+        st.caption(f"当前显示 {len(display)} 条历史记录；排序只方便浏览，不构成同任务 Top-K 实验。快速讲解15条没有经过代表性抽样，不能据此声称典型任务需要同样比例的人工复核。")
+        if history_scope == "快速讲解示例（15）":
             with st.expander(f"预览其余冻结记录目录（共 {len(assets['frozen_cases'])} 条）"):
-                st.caption("切换顶部“历史记录范围”可直接查看和分析全集。部署模型在这批记录上重训，全集评分不能当作独立测试成绩。多数记录没有随仓库提供的坐标资产，不能绘制动态空间图。")
+                st.caption("切换顶部“历史记录范围”可直接查看和分析全集。部署模型在这批记录上重训，全集评分不能当作独立测试成绩。全部记录可查看路线坐标；可靠边界和车型尺寸的覆盖仍须分别核验。")
                 library = assets["frozen_cases"].rename(columns={"sample_id":"追溯编号", "map_id":"地图", "route_id":"路线来源", "vehicle_structure":"车辆结构", "true_label":"历史标签", "route_length_m":"输入长度/m"})
                 st.dataframe(library, width="stretch", hide_index=True)
     st.caption("规则应力按冻结开发集参考分布计算，不会随本次上传批次变化，也不是失败概率。边界估算只在坐标语义校验通过且车辆尺寸可用时启用。当前模型/规则分差0.25的强制复核策略未经真实任务校准；复核比例不能当作产品收益。")
@@ -805,7 +767,8 @@ with detail_tab:
     else:
         candidate_ids = structure_view["sample_id"].astype(str).tolist()
         preferred = st.session_state.get("selected_sample_id", candidate_ids[0])
-        candidate_labels = {str(item["sample_id"]): f'{item["route_id"]} · {float(item["route_length_m"]):.0f} m · {item["vehicle_structure"]}'
+        structure_names = {"five_axis": "五轴", "six_axis": "六轴", "unknown": "结构未定"}
+        candidate_labels = {str(item["sample_id"]): f'{item["route_id"]} · {float(item["route_length_m"]):.0f} m · {structure_names.get(item["vehicle_structure"], "结构未定")}'
                             for _, item in structure_view.iterrows()}
         selected_id = st.selectbox(
             "选择候选路线", candidate_ids,
@@ -831,7 +794,7 @@ with detail_tab:
         with left:
             st.subheader(selected_id)
             st.write(f'地图 / 路线：`{row["map_id"]}` / `{row["route_id"]}`')
-            st.write(f'车辆结构：`{row["vehicle_structure"]}`；标签：{label_text(row["true_label"])}')
+            st.write(f'车辆结构：**{structure_names.get(row["vehicle_structure"], "结构未定")}**；标签：{label_text(row["true_label"])}')
             st.write(f'证据状态：**{row["evidence_status"]}**')
             st.write(f'验证优先级：**{row["validation_priority"]}**')
             st.write(f'建议动作：**{row["next_action"]}**')
@@ -958,6 +921,13 @@ with detail_tab:
         st.caption("任务原件和附件保存在本机 LocalAppData/PathGuard/tasks；验证时间线保存在 SQLite。上传或导出不会自动重训模型。")
 
 with evidence_tab:
+    st.markdown("### 数据与模型基础")
+    foundation_cols = st.columns(4)
+    foundation_cols[0].metric("冻结监督记录", freeze["final_samples"])
+    foundation_cols[1].metric("历史通过 / 失败", f'{freeze["passed"]} / {freeze["failed"]}')
+    foundation_cols[2].metric("执行前特征", freeze["feature_count"])
+    foundation_cols[3].metric("地图数量", freeze["map_count"])
+    st.caption(f'当前模型：{runtime["model_name"] if runtime["model_available"] else "未加载"}。部署模型在340条冻结记录上重训；历史留出实验使用当时的隔离预测，页面内对这340条再次评分仅供查看，不代表独立验证。')
     if active_task:
         st.markdown("### 本任务的验证反馈与排序对照")
         task_audit = evaluate_verified_task(evaluated, load_feedback(limit=10000), active_task)

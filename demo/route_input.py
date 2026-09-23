@@ -301,7 +301,8 @@ def render_evidence(st, geometry):
         legend=dict(orientation="h",yanchor="bottom",y=1.02,xanchor="left",x=0),
         margin=dict(l=20,r=20,t=78,b=20))
     fig.update_yaxes(scaleanchor="x",scaleratio=1)
-    st.plotly_chart(fig,use_container_width=True)
+    st.plotly_chart(fig,width="stretch",config={"displayModeBar":False,"scrollZoom":True})
+    st.caption("图表操作：拖动框选放大，滚轮缩放，双击图表恢复全图；上方“放大当前关注点”可快速定位。")
     st.caption("图例：路线实线为参考点轨迹；四条点线为车体四角轨迹；红色多边形为当前位置外廓；灰线为NPZ逐点边界；橙色菱形为当前尺寸下的最小余量位置。")
     front=length-reference
     st.write(f'{event["label"]}：**{event["value"]:.4g} {event["unit"]}**；路线里程 {event["s_m"]:.2f} m，原始点索引 {event["index"]}。')
