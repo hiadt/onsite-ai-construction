@@ -319,6 +319,25 @@ def render_evidence(st, geometry):
         confidence=boundary_rule.get("boundary_confidence_min")
         confidence_text=f'；边界置信度最小值 {confidence:.2f}' if confidence is not None else "；文件未提供逐点边界置信度"
         st.caption(boundary_rule["explanation"]+confidence_text+"。该结果是确定性几何规则，不是学习模型概率。")
+        if has_dimensions:
+            base_length=float(supplied["length_m"]); base_width=float(supplied["width_m"])
+            base_reference=float(supplied["reference_from_rear_m"])
+            base_rule=compute_boundary_rule(geometry,base_length,base_width,base_reference,review_margin)
+            if base_rule.get("available"):
+                st.markdown("#### 车辆配置对比")
+                compare_cols=st.columns(3)
+                compare_cols[0].metric("上传基准尺寸",f"{base_length:.1f} × {base_width:.1f} m")
+                compare_cols[1].metric("当前尺寸",f"{length:.1f} × {width:.1f} m")
+                delta=boundary_rule["minimum_margin_m"]-base_rule["minimum_margin_m"]
+                compare_cols[2].metric("最小余量变化",f"{delta:+.2f} m")
+                st.caption(f'基准最小余量 {base_rule["minimum_margin_m"]:.2f} m，位于 {base_rule["minimum_station_m"]:.1f} m；当前最小余量 {boundary_rule["minimum_margin_m"]:.2f} m，位于 {boundary_rule["minimum_station_m"]:.1f} m。两次计算沿同一条输入轨迹；新尺寸能否实际跟随该轨迹仍需规划或仿真验证。')
+                stations=np.asarray(calculation.get("station_m",[]),dtype=float) if (calculation:=geometry.get("calculation_geometry")) else np.array([])
+                if len(stations)==len(base_rule["residual_margin_m"]):
+                    stride=max(1,len(stations)//700)
+                    comparison=pd.DataFrame({"里程/m":stations[::stride],
+                        "基准余量/m":np.asarray(base_rule["residual_margin_m"])[::stride],
+                        "当前余量/m":np.asarray(boundary_rule["residual_margin_m"])[::stride]})
+                    st.line_chart(comparison.set_index("里程/m"),height=250)
     else:
         baseline=np.asarray(geometry.get("body_clearance_m",[]),dtype=float)
         baseline_text=f' 原配置最小车体净空为 {np.nanmin(baseline):.2f} m；改变尺寸后不能复用该数值。' if baseline.size else ""

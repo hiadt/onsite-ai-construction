@@ -20,9 +20,10 @@ class ProductRegressionTests(unittest.TestCase):
             self.assertAlmostEqual(single.iloc[0],batch.loc[i])
             np.testing.assert_allclose(p.iloc[0],parts.loc[i])
         expanded=pd.concat([self.sample,self.sample]*3,ignore_index=True)
-        np.testing.assert_allclose(compute_geometry_rule_risk(expanded)[0][:12],batch)
+        np.testing.assert_allclose(compute_geometry_rule_risk(expanded)[0][:len(self.sample)],batch)
     def test_conflict_priority_survives_and_unknown_refuses(self):
-        with patch('demo_logic.predict_failure_risk',return_value=np.ones(12)),patch('demo_logic.compute_geometry_rule_risk',return_value=(pd.Series(np.zeros(12)),pd.DataFrame({'曲率与变化':np.zeros(12)}))):
+        count=len(self.sample)
+        with patch('demo_logic.predict_failure_risk',return_value=np.ones(count)),patch('demo_logic.compute_geometry_rule_risk',return_value=(pd.Series(np.zeros(count)),pd.DataFrame({'曲率与变化':np.zeros(count)}))):
             result,_,state=evaluate_candidates(self.sample,self.contract,BASE/'models/pathguard_gate3_model.joblib')
         self.assertTrue(state['model_available'])
         known=result.vehicle_structure.ne('unknown')
@@ -66,12 +67,13 @@ class ProductRegressionTests(unittest.TestCase):
             compute_rigid_body_sweep(geometry,4,2,5)
     def test_adjustable_dimensions_change_boundary_rule(self):
         geometry={'centerline':[[0,0],[10,0]],'yaw_rad':[0,0],'station_m':[0,10],
-                  'left_boundary':[[0,3],[10,3]],'right_boundary':[[0,-3],[10,-3]]}
+                  'left_boundary':[[0,3],[10,3]],'right_boundary':[[0,-3],[10,-3]],
+                  'boundary_semantics_verified':True,'boundary_integrity_screen_passed':True}
         narrow=compute_boundary_rule(geometry,8,4,3,0.5)
         wide=compute_boundary_rule(geometry,8,8,3,0.5)
         self.assertTrue(narrow['available']);self.assertAlmostEqual(narrow['minimum_margin_m'],1.0)
-        self.assertEqual(narrow['state'],'局部横断面余量通过')
+        self.assertEqual(narrow['state'],'局部横断面估算余量充足')
         self.assertAlmostEqual(wide['minimum_margin_m'],-1.0)
-        self.assertEqual(wide['state'],'包络越界')
+        self.assertEqual(wide['state'],'局部外廓估算越界')
         self.assertEqual(wide['priority'],'P0 人工复核')
 if __name__=='__main__':unittest.main()

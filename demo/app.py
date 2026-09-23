@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -15,13 +16,17 @@ try:  # Works both with `streamlit run demo/app.py` and AppTest from repo root.
     from feature_explain import label_text
     from inference import FeatureValidationError, load_contract
     from route_input import compute_boundary_rule, parse_route, render_evidence
-    from feedback_store import load_feedback, save_feedback
+    from feedback_store import load_feedback, save_feedback, classify_disagreement, make_condition_key, set_training_review
+    from task_store import create_task, export_task, list_tasks, load_routes, save_attachment, save_assessment
+    from batch_evaluation import evaluate_verified_task
 except ModuleNotFoundError:  # pragma: no cover - exercised by Streamlit AppTest.
     from demo.demo_logic import apply_filters, evaluate_candidates, select_validation_queue
     from demo.feature_explain import label_text
     from demo.inference import FeatureValidationError, load_contract
     from demo.route_input import compute_boundary_rule, parse_route, render_evidence
-    from demo.feedback_store import load_feedback, save_feedback
+    from demo.feedback_store import load_feedback, save_feedback, classify_disagreement, make_condition_key, set_training_review
+    from demo.task_store import create_task, export_task, list_tasks, load_routes, save_attachment, save_assessment
+    from demo.batch_evaluation import evaluate_verified_task
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -114,8 +119,7 @@ st.markdown(
     html, body, [class*="css"] {font-family: Inter, "Microsoft YaHei", "PingFang SC", sans-serif;}
     .stApp {
       color:var(--pg-ink);
-      background:linear-gradient(180deg,rgba(4,18,31,.12) 0,rgba(244,248,251,.94) 34rem,#f4f8fb 44rem),
-        url("__HERO_IMAGE__") top center/100% auto no-repeat fixed,#f4f8fb;
+      background:#f4f8fb;
     }
     [data-testid="stHeader"] {background:rgba(5,24,39,.72);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.1);}
     [data-testid="stToolbar"] {color:white;}
@@ -264,6 +268,56 @@ def _svg_paths(geometry: dict[str, Any], focus_station: float | None = None) -> 
     return path(groups[0]), path(groups[1]), path(groups[2]), scale
 
 
+def effective_vehicle_config(geometry: dict[str, Any] | None) -> dict[str, Any]:
+    if not geometry:
+        return {}
+    source = dict(geometry.get("vehicle_parameters", {}))
+    token = str(geometry.get("source_sha256", ""))[:12]
+    if "length_" + token in st.session_state:
+        source["length_m"] = float(st.session_state["length_" + token])
+    if "width_" + token in st.session_state:
+        source["width_m"] = float(st.session_state["width_" + token])
+    if "reference_" + token in st.session_state and "length_m" in source:
+        source["reference_from_rear_m"] = float(source["length_m"]) * float(st.session_state["reference_" + token]) / 100.0
+    source["dimensions_confirmed"] = bool(st.session_state.get("use_dimensions_" + token, False))
+    if source["dimensions_confirmed"]:
+        source["dimension_source"] = "operator_confirmed_from_ui"
+    return source
+
+
+def render_full_route_context(st, geometry: dict[str, Any], boundary_rule: dict[str, Any] | None = None) -> None:
+    """Show where the animated local segment sits on the complete supplied route."""
+    import numpy as np
+    import plotly.graph_objects as go
+    center = np.asarray(geometry.get("centerline", []), dtype=float)
+    stations = np.asarray(geometry.get("station_m", []), dtype=float)
+    if len(center) < 2 or len(stations) != len(center):
+        return
+    events = geometry.get("events", [])
+    rule_index = None
+    if geometry.get("body_clearance_m") and len(geometry["body_clearance_m"]) == len(stations):
+        rule_index = int(np.argmin(np.asarray(geometry["body_clearance_m"], dtype=float)))
+    focus = (float(boundary_rule["minimum_station_m"]) if boundary_rule and boundary_rule.get("available")
+             else float(stations[rule_index]) if rule_index is not None else float(stations[len(stations)//2]))
+    local = (stations >= focus - 35) & (stations <= focus + 35)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=center[:,0], y=center[:,1], mode="lines", name="输入路线全程",
+                             line=dict(color="#9aacb7", width=3)))
+    if local.sum() >= 2:
+        fig.add_trace(go.Scatter(x=center[local,0], y=center[local,1], mode="lines", name="下方动画区段",
+                                 line=dict(color="#d35435", width=6)))
+    if events:
+        fig.add_trace(go.Scatter(x=[item["x_m"] for item in events], y=[item["y_m"] for item in events],
+                                 mode="markers", text=[item["label"] for item in events],
+                                 name="可定位工程指标", marker=dict(size=9, color="#e7a548")))
+    fig.update_layout(height=310, margin=dict(l=10,r=10,t=10,b=10),
+                      xaxis_title="x / m", yaxis_title="y / m", legend=dict(orientation="h"))
+    fig.update_yaxes(scaleanchor="x", scaleratio=1)
+    st.markdown("#### 输入路线全貌与局部位置")
+    st.caption(f"输入文件覆盖 {stations[-1]-stations[0]:.1f} m、原始 {geometry.get('point_count_original', len(center))} 个点；橙色区段为里程 {max(float(stations[0]),focus-35):.1f}—{min(float(stations[-1]),focus+35):.1f} m，对应下方局部动画。该文件是否代表完整工程任务路线，由数据提供方确认。")
+    st.plotly_chart(fig, use_container_width=True)
+
+
 def dynamic_envelope(row: pd.Series, route_geometries: dict[str, Any], boundary_rule: dict[str, Any] | None = None) -> None:
     """Animate a meter-scaled rigid-body proxy along the selected real route segment."""
     structure = str(row.get("vehicle_structure", "unknown"))
@@ -387,16 +441,16 @@ if site_page == "产品介绍":
         '<div class="audience-card"><h4>一个风险分数无法支持工程决策</h4><p>工程师还需要知道风险发生在哪里、涉及哪个指标，以及换路线、限速或补充数据能否解决。</p></div>'
         '</div>', unsafe_allow_html=True)
     st.markdown('<div class="section-kicker">PathGuard如何工作</div><div class="flow-strip">'
-        '<div class="flow-step"><b>① 导入候选路线</b>读取执行前路线和车型结构</div>'
+        '<div class="flow-step"><b>① 建立工程任务</b>说明场景版本、车辆与输入候选</div>'
         '<div class="flow-step"><b>② 形成优先队列</b>模型排序，固定规则交叉检查</div>'
         '<div class="flow-step"><b>③ 定位工程原因</b>查看风险指标、边界余量和证据等级</div>'
-        '<div class="flow-step"><b>④ 安排验证动作</b>人工复核、补测、仿真或客户共创</div>'
+        '<div class="flow-step"><b>④ 留存验证结果</b>记录仿真或现场结论与适用条件</div>'
         '</div>', unsafe_allow_html=True)
     st.markdown('<div class="section-kicker">客户最终得到什么</div>', unsafe_allow_html=True)
     st.markdown('<div class="value-grid">'
         '<div class="value-card"><h4>一张先后有序的路线清单</h4><p>按现有模型排序和证据状态组织复核顺序；是否减少漏检，需要在真实候选批次中继续验证。</p></div>'
         '<div class="value-card"><h4>一张能落到位置的解释卡</h4><p>展示风险原因、最小边界余量、影响部位和尺寸变化后的结果。</p></div>'
-        '<div class="value-card"><h4>一套可回流的验证记录</h4><p>把人工、仿真和实车结论留作下一轮校准证据。</p></div>'
+        '<div class="value-card"><h4>一套可审核的验证记录</h4><p>保留原件、条件和多次结果；审核后形成训练候选数据。</p></div>'
         '</div>', unsafe_allow_html=True)
     st.info("PathGuard用于验证前的风险排序与复核安排。最终安全结论仍由闭环仿真、人工复核或实车测试给出。")
     st.button("打开风险工作台", on_click=lambda: st.session_state.update(site_page="风险工作台"))
@@ -405,35 +459,81 @@ if site_page == "产品介绍":
 st.markdown('<section class="page-head"><h1>风险工作台</h1><p>先在候选队列中确定验证优先级，再进入路线分析查看通俗结论、专业指标和尺寸联动边界结果；最后在验证依据中核对数据与模型证据。</p></section>', unsafe_allow_html=True)
 st.markdown('<div class="notice">工作台输出用于验证资源安排。高风险代表优先复核，低风险不代表免检；证据不足时系统会明确拒绝确定判断。</div>', unsafe_allow_html=True)
 
-with st.sidebar:
-    st.header("输入与筛选")
-    route_uploads = st.file_uploader('上传原始路线 NPZ（自动提取特征）', type=['npz'], accept_multiple_files=True)
-    config_upload = st.file_uploader('车辆配置 JSON（可选）', type=['json'])
-    with st.expander('下载原始路线输入示例'):
-        for name in ['real_route.npz', 'vehicle_config.json']:
-            st.download_button('下载 '+name, (DEMO_DIR/'examples'/name).read_bytes(), file_name=name)
-        st.caption('配置声明车型、车长、车宽和参考点。尺寸用于扫掠与边界规则，不进入55维学习模型。')
+with st.expander("① 任务与输入 · 选择历史案例或建立新任务", expanded=True):
+    st.header("工程任务与输入")
+    task_mode = st.radio("工作入口", ["历史案例库", "新建评估任务", "已保存任务"],
+                         horizontal=True, key="task_mode",
+                         on_change=lambda: st.session_state.pop("active_task_id", None))
+    tasks = list_tasks()
+    active_task = None
+    route_uploads = None
+    config_upload = None
+    upload = None
+    if task_mode == "新建评估任务":
+        st.caption("同一任务中的候选路线应使用相同的场景版本和车辆配置；系统不会从地图编号猜测它们可直接比较。")
+        task_title = st.text_input("任务名称", placeholder="例如：东侧运输线方案复核")
+        task_scene = st.text_input("场景 / 地图名称", placeholder="例如：矿区东侧道路")
+        environment_version = st.text_input("环境版本 / 日期", placeholder="例如：2026-09-23测绘版")
+        intake_status = st.radio("输入状态", ["待评估", "已有验证记录"], horizontal=True)
+        route_uploads = st.file_uploader('候选路线 NPZ（可多选）', type=['npz'], accept_multiple_files=True)
+        config_upload = st.file_uploader('车辆配置 JSON', type=['json'])
+        with st.expander('下载路线与配置示例'):
+            for name in ['real_route.npz', 'vehicle_config.json']:
+                st.download_button('下载 '+name, (DEMO_DIR/'examples'/name).read_bytes(), file_name=name)
+        st.caption("已有验证结果在路线详情中逐次登记；是否用于训练需单独审核。")
+        if st.button("保存任务并评估", type="primary"):
+            try:
+                if not route_uploads:
+                    raise ValueError("请上传至少一条候选路线。")
+                config = json.load(config_upload) if config_upload else {}
+                # Validate every file against the frozen feature extractor before persisting.
+                for uploaded_route in route_uploads:
+                    parse_route(uploaded_route.getvalue(), uploaded_route.name, config)
+                active_task = create_task(
+                    title=task_title, scene=task_scene, environment_version=environment_version,
+                    intake_status=intake_status, vehicle_config=config,
+                    routes=[(item.name, item.getvalue()) for item in route_uploads],
+                    feature_version=contract["feature_version"], schema_sha256=contract["schema_sha256"],
+                    model_sha256=hashlib.sha256(MODEL_PATH.read_bytes()).hexdigest() if MODEL_PATH.exists() else "",
+                )
+                st.session_state["active_task_id"] = active_task["task_id"]
+            except (ValueError, TypeError, OSError, json.JSONDecodeError) as error:
+                st.error(f"任务未保存：{error}")
+        if active_task is None:
+            active_task = next((item for item in list_tasks() if item["task_id"] == st.session_state.get("active_task_id")), None)
+    elif task_mode == "已保存任务":
+        if tasks:
+            selected_task_id = st.selectbox("选择任务", [item["task_id"] for item in tasks],
+                                            format_func=lambda item_id: next(item["title"] for item in tasks if item["task_id"] == item_id))
+            active_task = next(item for item in tasks if item["task_id"] == selected_task_id)
+        else:
+            st.info("本机尚无保存的任务。")
+    else:
+        st.caption("历史案例来自冻结数据；不同编号不代表同一任务的候选方案。")
+        upload = st.file_uploader("上传执行前特征 CSV", type=["csv"],
+                                  help="必须包含冻结契约规定的全部55项数值特征。")
     uploaded_geometry = {}
-    upload = st.file_uploader(
-        "上传执行前特征 CSV", type=["csv"], help="必须包含冻结契约规定的全部55项数值特征。"
-    )
-    if route_uploads:
+    if active_task is not None:
         try:
-            config = json.load(config_upload) if config_upload else {}
+            config = dict(active_task["vehicle_config"])
+            config["map_id"] = active_task["scene"]
             frames = []
-            for route_file in route_uploads:
-                frame, key, geometry = parse_route(route_file.getvalue(), route_file.name, config)
+            for route_name, payload in load_routes(active_task):
+                frame, key, geometry = parse_route(payload, route_name, config)
                 frames.append(frame)
                 if geometry:
                     uploaded_geometry[key] = geometry
             input_frame = pd.concat(frames, ignore_index=True).drop_duplicates('sample_id')
-            st.caption(f'已自动提取 {len(input_frame)} 条路线的55维特征；无配置时按结构未定处理。')
+            st.caption(f'任务「{active_task["title"]}」：{len(input_frame)} 条输入候选；场景版本 {active_task["environment_version"]}。')
         except Exception as error:
-            st.error(f'原始路线不能处理：{error}')
+            st.error(f'已保存任务无法复现：{error}')
             st.stop()
+    elif task_mode != "历史案例库":
+        st.info("请创建或选择任务后开展评估。")
+        st.stop()
     elif upload is None:
         input_frame = sample_frame.copy()
-        st.caption("当前使用：仓库内离线派生演示输入")
+        st.caption("当前使用：历史案例库；样本之间不预设为同一候选批次。")
     else:
         try:
             input_frame = pd.read_csv(upload, encoding="utf-8-sig")
@@ -513,6 +613,13 @@ evaluated.loc[unknown_forced, "mandatory_review_reason"] = "车型结构未确�
 evaluated.loc[conflict_forced & ~unknown_forced, "mandatory_review_reason"] = "模型与冻结规则不一致"
 evaluated.loc[priority_forced & ~unknown_forced & ~conflict_forced, "mandatory_review_reason"] = "进入P0风险等级"
 evaluated.loc[geometry_forced, "mandatory_review_reason"] = "局部外廓估算越过语义校验边界"
+if active_task:
+    save_assessment(active_task, evaluated, runtime.get("model_name", "模型未加载"))
+
+if active_task:
+    st.info(f'当前任务：{active_task["title"]} · 场景 {active_task["scene"]} · 环境 {active_task["environment_version"]} · {len(evaluated)} 条候选 · 输入状态 {active_task["intake_status"]}。本任务内的路线按同一申报条件比较，验证结果逐次记录。')
+else:
+    st.info("当前为历史案例库。每个编号是一条来源记录；局部图只是该记录中的放大区段。不同编号不默认属于同一工程任务。")
 
 if runtime["model_available"]:
     st.success(f'学习模型已加载：{runtime["model_name"]}；55维特征、版本与Schema校验通过。')
@@ -537,25 +644,25 @@ with overview_tab:
     st.markdown('<div class="section-kicker">操作导览</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">从候选路线到验证动作，只保留工程师需要作出的决定</h2>', unsafe_allow_html=True)
     st.markdown(
         '<div class="value-grid">'
-        '<div class="value-card"><h4>路线很多，验证资源有限</h4><p>把候选路线按风险和证据强弱排队，先处理最值得复核的路线。</p></div>'
-        '<div class="value-card"><h4>结果要能解释</h4><p>不仅给出分数，还指出曲率、转向变化、净空等工程原因。</p></div>'
+        '<div class="value-card"><h4>路线很多，验证资源有限</h4><p>在同一任务的候选中安排复核顺序；历史案例单独查看。</p></div>'
+        '<div class="value-card"><h4>结果要能解释</h4><p>展示整条路线及曲率、转向变化、净空等可定位关注点。</p></div>'
         '<div class="value-card"><h4>不确定性也要被看见</h4><p>区分真实标签、指标风险和代理排序，避免把数据不足误判成安全。</p></div>'
         '</div>', unsafe_allow_html=True,
     )
     st.markdown('<div class="flow-strip">'
-        '<div class="flow-step"><b>① 输入候选路线</b>执行前特征与车辆结构</div>'
+        '<div class="flow-step"><b>① 建立任务</b>场景、车型、版本与候选输入</div>'
         '<div class="flow-step"><b>② AI + 规则排序</b>识别高风险候选</div>'
         '<div class="flow-step"><b>③ 解释风险原因</b>告诉工程师为什么</div>'
-        '<div class="flow-step"><b>④ 安排下一步</b>补测、复核或共创</div>'
+        '<div class="flow-step"><b>④ 验证与回流</b>逐次保存结果，复核争议后审核训练资格</div>'
         '</div>', unsafe_allow_html=True)
     st.markdown('<div class="judge-card"><b>一句话结果</b><p>PathGuard 不替车辆做控制决策，而是把“先测哪条路线、为什么先测、下一步怎么验证”变成可追溯的工程队列。</p></div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-kicker">同样的验证名额，优先找出更多失败路线</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-kicker">冻结模型的历史留出实验</div>', unsafe_allow_html=True)
     budget_cols = st.columns(3)
     for col, key in zip(budget_cols, ("10", "20", "34")):
         item = assets["test"]["top_k"][key]
         col.metric(f"Top-{key}", f'{item["failures_captured"]} 条失败捕获',
                    f'排序 {item["capture_rate"]:.1%} · 随机 {item["random_expected_capture_rate"]:.1%}')
-    st.caption("这组结果来自 5 张未参与开发的地图；它衡量的是有限验证名额下的排序价值，不是安全通过率。")
+    st.caption("这组结果来自历史留出地图，与当前新任务的结果分开；同任务候选批次的优选收益仍需进一步验证。")
     st.markdown('<div class="section-kicker">三种真实工程决策</div>', unsafe_allow_html=True)
     queue_score = "model_risk" if runtime["model_available"] else "rule_risk"
     ranked = evaluated.sort_values(queue_score, ascending=False)
@@ -621,12 +728,12 @@ with queue_tab:
     filtered = apply_filters(evaluated, active_structure, risk_filter, map_filter, search)
     queue = select_validation_queue(filtered, top_selection, runtime["model_available"]).reset_index(drop=True)
     display_columns = [
-        "sample_id", "map_id", "vehicle_structure", "model_risk", "rule_risk",
+        "route_id", "route_length_m", "sample_id", "map_id", "vehicle_structure", "model_risk", "rule_risk",
         "risk_level", "validation_priority", "mandatory_review", "queue_reason",
         "geometry_state", "decision_status", "risk_reasons", "next_action",
     ]
     display = queue[display_columns].rename(columns={
-        "sample_id": "样本编号", "map_id": "地图编号", "vehicle_structure": "车辆结构",
+        "route_id": "候选路线", "route_length_m": "输入长度/m", "sample_id": "追溯编号", "map_id": "场景", "vehicle_structure": "车辆结构",
         "model_risk": "主排序风险", "rule_risk": "规则风险",
         "risk_level": "风险等级", "validation_priority": "验证优先级", "decision_status": "一致性状态",
         "mandatory_review": "预算外必须复核", "queue_reason": "入队原因", "geometry_state": "车体边界估算",
@@ -654,16 +761,21 @@ with detail_tab:
     else:
         candidate_ids = structure_view["sample_id"].astype(str).tolist()
         preferred = st.session_state.get("selected_sample_id", candidate_ids[0])
+        candidate_labels = {str(item["sample_id"]): f'{item["route_id"]} · {float(item["route_length_m"]):.0f} m · {item["vehicle_structure"]}'
+                            for _, item in structure_view.iterrows()}
         selected_id = st.selectbox(
             "选择候选路线", candidate_ids,
             index=candidate_ids.index(preferred) if preferred in candidate_ids else 0,
+            format_func=lambda item_id: candidate_labels[item_id],
         )
         selected_index = evaluated.index[evaluated["sample_id"].astype(str) == selected_id][0]
         row = evaluated.loc[selected_index]
         components = rule_components.loc[selected_index].sort_values(ascending=False)
         geometry = route_geometries.get(selected_id)
         geometry_rule = geometry_results.get(selected_id, {})
+        st.caption(f'当前输入：{row["route_id"]}，文件覆盖 {float(row["route_length_m"]):.1f} m；追溯编号 {selected_id}。工程关注点是同一输入路线上的位置，不是另外切出的候选路线。')
         if geometry and 'events' in geometry:
+            render_full_route_context(st, geometry, geometry_rule)
             st.markdown('<div class="section-kicker">先看通俗结论</div>', unsafe_allow_html=True)
             dynamic_envelope(row, {selected_id: geometry}, geometry_rule)
             st.markdown('<div class="section-kicker">再看米制几何与专业证据</div>', unsafe_allow_html=True)
@@ -712,51 +824,107 @@ with detail_tab:
         ], columns=["执行前指标", "数值", "单位"])
         st.dataframe(key_metrics, width="stretch", hide_index=True)
         st.markdown('<div class="section-kicker">验证结果回流</div>', unsafe_allow_html=True)
-        st.caption("提交后保存在本机 SQLite 历史中，并记录路线哈希、模型/特征版本、车辆配置指纹和当时的判断依据。只有本表提交的验证结果会成为反馈，不会把已有训练标签误当成新反馈。")
+        st.caption("平台评估是预测记录；人工、闭环仿真和实车测试是独立验证记录。可信度按条件是否一致、结论是否核对、证据能否复查分层展示，不把测试方式换算成任意百分比。每次记录不覆盖旧结论。")
         with st.form(f"feedback_{selected_id}"):
             feedback_cols = st.columns(3)
             with feedback_cols[0]:
                 feedback_result = st.selectbox("验证结果", ["待验证", "通过", "失败", "数据不足"], key=f"result_{selected_id}")
             with feedback_cols[1]:
-                feedback_method = st.selectbox("验证方式", ["人工复核", "闭环仿真", "实车测试", "客户共创"], key=f"method_{selected_id}")
+                feedback_method = st.selectbox("验证方式", ["人工复核", "闭环仿真", "实车/现场测试", "其他测试平台"], key=f"method_{selected_id}")
             with feedback_cols[2]:
-                feedback_note = st.text_input("工程备注", placeholder="例如：左侧净空不足，需补充边界信息", key=f"note_{selected_id}")
+                severity = st.selectbox("事件严重程度", ["未分级", "一般", "严重"], key=f"severity_{selected_id}")
+            condition_cols = st.columns(2)
+            with condition_cols[0]:
+                validation_environment = st.text_input("验证环境版本", value=active_task["environment_version"] if active_task else "历史条件未确认",
+                                                       key=f"environment_{selected_id}")
+                condition_consistency = st.selectbox("与本次评估条件", ["与本次评估一致", "存在变化", "未核对"], key=f"condition_{selected_id}")
+            with condition_cols[1]:
+                route_version = st.text_input("路线版本", value="原始上传" if active_task else "历史版本未确认",
+                                              key=f"route_version_{selected_id}")
+                evidence_completeness = st.selectbox("证据完整性", ["未核对", "有报告或日志", "仅口头结论"], key=f"evidence_{selected_id}")
+            review_status = st.selectbox("结论复核状态", ["提交者填写", "已核对", "争议待复核"], key=f"review_{selected_id}")
+            feedback_note = st.text_area("工程备注与条件变化", placeholder="例如：满载、低附着路面；左侧边界已更新", key=f"note_{selected_id}")
+            evidence_file = st.file_uploader("验证报告或日志（可选；保存到本机任务证据包）",
+                                             type=["pdf", "png", "jpg", "csv", "txt", "json", "log", "zip"],
+                                             key=f"attachment_{selected_id}") if active_task else None
             submitted = st.form_submit_button("保存验证结果")
         if submitted:
-            geometry_params = geometry.get("vehicle_parameters", {}) if geometry else {}
-            record_id = save_feedback({
-                "sample_id": selected_id,
-                "route_sha256": row.get("route_file_sha256", ""),
-                "map_id": row.get("map_id", ""),
-                "vehicle_structure": row.get("vehicle_structure", "unknown"),
-                "vehicle_config": geometry_params,
-                "feature_version": contract.get("feature_version", ""),
-                "schema_sha256": contract.get("schema_sha256", ""),
-                "model_name": runtime.get("model_name", "模型未加载"),
-                "model_risk": row.get("model_risk"),
-                "rule_risk": row.get("rule_risk"),
-                "risk_level": row.get("risk_level", ""),
-                "queue_reason": str(row.get("mandatory_review_reason", "")) or str(row.get("validation_priority", "")),
-                "geometry_state": geometry_rule.get("state", "未评估"),
-                "geometry_min_margin_m": geometry_rule.get("minimum_margin_m"),
-                "validation_result": feedback_result,
-                "validation_method": feedback_method,
-                "note": feedback_note or "",
-            })
-            st.success(f"已保存到本机验证历史（记录 {record_id}）。")
-        feedback_frame = load_feedback()
+            try:
+                evidence_ref = save_attachment(active_task, evidence_file.name, evidence_file.getvalue()) if active_task and evidence_file else ""
+                record_id = save_feedback({
+                    "task_id": active_task["task_id"] if active_task else "",
+                    "sample_id": selected_id, "route_sha256": row.get("route_file_sha256", ""),
+                    "map_id": row.get("map_id", ""), "vehicle_structure": row.get("vehicle_structure", "unknown"),
+                    "vehicle_config": effective_vehicle_config(geometry),
+                    "environment_version": validation_environment, "route_version": route_version,
+                    "severity": severity, "evidence_ref": evidence_ref,
+                    "evidence_completeness": evidence_completeness,
+                    "condition_consistency": condition_consistency, "review_status": review_status,
+                    "feature_version": contract.get("feature_version", ""),
+                    "schema_sha256": contract.get("schema_sha256", ""),
+                    "model_name": runtime.get("model_name", "模型未加载"),
+                    "model_risk": row.get("model_risk"), "rule_risk": row.get("rule_risk"),
+                    "risk_level": row.get("risk_level", ""),
+                    "queue_reason": str(row.get("mandatory_review_reason", "")) or str(row.get("validation_priority", "")),
+                    "geometry_state": geometry_rule.get("state", "未评估"),
+                    "geometry_min_margin_m": geometry_rule.get("minimum_margin_m"),
+                    "validation_result": feedback_result, "validation_method": feedback_method,
+                    "note": feedback_note or "",
+                })
+                st.success(f"验证记录 {record_id} 已保存；训练使用状态为待审核。")
+            except (ValueError, OSError) as error:
+                st.error(f"验证记录未保存：{error}")
+        all_feedback = load_feedback(limit=10000)
+        task_feedback = all_feedback[all_feedback["task_id"].fillna("") == active_task["task_id"]] if active_task else all_feedback[all_feedback["task_id"].fillna("") == ""]
+        feedback_frame = task_feedback[task_feedback["sample_id"].astype(str) == selected_id]
         if not feedback_frame.empty:
-            st.dataframe(feedback_frame, width="stretch", hide_index=True)
-            st.download_button(
-                "下载本机累计验证历史 CSV",
-                data=feedback_frame.to_csv(index=False).encode("utf-8-sig"),
-                file_name="pathguard_validation_feedback.csv",
-                mime="text/csv",
-                key=f"download_feedback_{selected_id}",
-            )
-        st.caption("历史文件位于用户 LocalAppData/PathGuard/validation_history.sqlite3；记录不会自动上传或改写训练数据。")
+            effective_config = effective_vehicle_config(geometry)
+            current_key = make_condition_key(row.get("route_file_sha256", ""),
+                                             active_task["environment_version"] if active_task else "历史条件未确认",
+                                             "原始上传" if active_task else "历史版本未确认", effective_config)
+            status = classify_disagreement(feedback_frame, row.get("model_risk"), current_key)
+            if "冲突" in status or "漏判" in status:
+                st.warning(status)
+            else:
+                st.info(status)
+            st.dataframe(feedback_frame[["id", "created_at_utc", "validation_method", "validation_result",
+                                        "severity", "environment_version", "route_version", "evidence_completeness",
+                                        "condition_consistency", "review_status", "evidence_level", "training_review", "note"]],
+                         width="stretch", hide_index=True)
+            review_cols = st.columns([2, 2, 1])
+            record_choice = review_cols[0].selectbox("选择记录审核", feedback_frame["id"].astype(int).tolist(),
+                                                      key=f"review_id_{selected_id}")
+            training_choice = review_cols[1].selectbox("训练数据审核", ["待审核", "可用于训练候选", "暂不采用"],
+                                                        key=f"training_status_{selected_id}")
+            if review_cols[2].button("更新审核", key=f"training_review_button_{selected_id}"):
+                try:
+                    set_training_review(record_choice, training_choice)
+                    st.success("审核状态已更新。")
+                except ValueError as error:
+                    st.error(str(error))
+        if active_task:
+            st.download_button("导出本任务证据包 ZIP", export_task(active_task, task_feedback.to_csv(index=False).encode("utf-8-sig")),
+                               file_name=f'pathguard_{active_task["task_id"]}.zip', mime="application/zip",
+                               key=f"export_task_{selected_id}")
+        approved = task_feedback[task_feedback["training_review"] == "可用于训练候选"]
+        if not approved.empty:
+            st.download_button("导出已审核训练候选记录 CSV", approved.to_csv(index=False).encode("utf-8-sig"),
+                               file_name="pathguard_training_candidates.csv", mime="text/csv",
+                               key=f"training_candidates_{selected_id}")
+        st.caption("任务原件和附件保存在本机 LocalAppData/PathGuard/tasks；验证时间线保存在 SQLite。上传或导出不会自动重训模型。")
 
 with evidence_tab:
+    if active_task:
+        st.markdown("### 本任务的验证反馈与排序对照")
+        task_audit = evaluate_verified_task(evaluated, load_feedback(limit=10000), active_task)
+        if task_audit["status"] == "描述性结果":
+            st.dataframe(pd.DataFrame(task_audit["rows"]), width="stretch", hide_index=True)
+            st.caption(f'同任务已核对候选 {task_audit["verified_candidates"]} 条、失败 {task_audit["failures"]} 条；'
+                       f'排除相互矛盾的候选 {task_audit["excluded_conflicts"]} 条。{task_audit["note"]}')
+        else:
+            st.info(f'{task_audit["status"]}：{task_audit["reason"]}')
+        st.divider()
+    st.markdown("### 冻结历史数据的独立验证依据")
     st.markdown('<div class="section-kicker">数据是否支持当前能力</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">验证证据：哪些结论已经有数据，哪些仍需补齐？</h2>', unsafe_allow_html=True)
     boundary = assets.get("boundary", {})
     if boundary:
