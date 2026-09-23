@@ -701,16 +701,20 @@ with queue_tab:
     filtered = apply_filters(evaluated, active_structure, risk_filter, map_filter, search)
     queue = (select_validation_queue(filtered, top_selection, runtime["model_available"])
              if active_task else filtered.sort_values("model_risk" if runtime["model_available"] else "rule_risk", ascending=False)).reset_index(drop=True)
-    if not active_task:
-        queue["queue_reason"] = "历史案例展示"
-    display_columns = [
-        "route_id", "route_length_m", "sample_id", "map_id", "vehicle_structure", "model_risk", "rule_risk",
-        "risk_level", "validation_priority", "mandatory_review", "queue_reason",
-        "geometry_state", "decision_status", "risk_reasons", "next_action",
-    ]
+    if active_task:
+        display_columns = [
+            "route_id", "route_length_m", "sample_id", "map_id", "vehicle_structure", "model_risk", "rule_risk",
+            "risk_level", "validation_priority", "mandatory_review", "queue_reason",
+            "geometry_state", "decision_status", "risk_reasons", "next_action",
+        ]
+    else:
+        display_columns = [
+            "route_id", "route_length_m", "sample_id", "map_id", "vehicle_structure", "true_label",
+            "model_risk", "rule_risk", "risk_level", "geometry_state", "decision_status", "risk_reasons",
+        ]
     display = queue[display_columns].rename(columns={
-        "route_id": "候选路线", "route_length_m": "输入长度/m", "sample_id": "追溯编号", "map_id": "场景", "vehicle_structure": "车辆结构",
-        "model_risk": "主排序风险", "rule_risk": "规则风险",
+        "route_id": "路线来源", "route_length_m": "输入长度/m", "sample_id": "追溯编号", "map_id": "场景", "vehicle_structure": "车辆结构",
+        "true_label": "历史结果", "model_risk": "主排序风险", "rule_risk": "规则风险",
         "risk_level": "风险等级", "validation_priority": "验证优先级", "decision_status": "一致性状态",
         "mandatory_review": "预算外必须复核", "queue_reason": "入队原因", "geometry_state": "车体边界估算",
         "risk_reasons": "主要风险因素", "next_action": "下一步动作",
@@ -718,6 +722,10 @@ with queue_tab:
     display["车辆结构"] = display["车辆结构"].replace(
         {"five_axis": "五轴", "six_axis": "六轴", "unknown": "结构未定"}
     )
+    if active_task:
+        display = display.rename(columns={"路线来源": "候选路线"})
+    else:
+        display["历史结果"] = display["历史结果"].map(label_text)
     score_title = "学习模型风险" if runtime["model_available"] else "规则预览"
     if active_task:
         total = len(filtered)
@@ -744,13 +752,16 @@ with queue_tab:
         history_cols[1].metric("结构待核", int(evaluated["vehicle_structure"].eq("unknown").sum()))
         history_cols[2].metric("模型与规则分歧", int(evaluated["decision_status"].str.contains("冲突").sum()))
         history_cols[3].metric("冻结监督记录", len(assets["frozen_cases"]))
-        st.caption(f"当前显示 {len(display)} 条历史记录；排序只方便浏览，不构成同任务 Top-K 实验。快速讲解15条没有经过代表性抽样，不能据此声称典型任务需要同样比例的人工复核。")
+        st.caption(f"当前显示 {len(display)} 条历史记录及原有通过/失败结果；排序只方便浏览，不构成同任务 Top-K 实验。部署模型在全量记录上重训，此处评分也不能作为独立预测成绩。快速讲解15条没有经过代表性抽样。")
         if history_scope == "快速讲解示例（15）":
             with st.expander(f"预览其余冻结记录目录（共 {len(assets['frozen_cases'])} 条）"):
                 st.caption("切换顶部“历史记录范围”可直接查看和分析全集。部署模型在这批记录上重训，全集评分不能当作独立测试成绩。全部记录可查看路线坐标；可靠边界和车型尺寸的覆盖仍须分别核验。")
                 library = assets["frozen_cases"].rename(columns={"sample_id":"追溯编号", "map_id":"地图", "route_id":"路线来源", "vehicle_structure":"车辆结构", "true_label":"历史标签", "route_length_m":"输入长度/m"})
                 st.dataframe(library, width="stretch", hide_index=True)
-    st.caption("规则应力按冻结开发集参考分布计算，不会随本次上传批次变化，也不是失败概率。边界估算只在坐标语义校验通过且车辆尺寸可用时启用。当前模型/规则分差0.25的强制复核策略未经真实任务校准；复核比例不能当作产品收益。")
+    if active_task:
+        st.caption("规则应力按冻结开发集参考分布计算，不会随本次上传批次变化，也不是失败概率。边界估算只在坐标语义校验通过且车辆尺寸可用时启用。当前模型/规则分差0.25的强制复核策略未经真实任务校准；复核比例不能当作产品收益。")
+    else:
+        st.caption("风险分数是已在这批记录上重训的模型对历史输入的展示输出，不得与原有通过/失败标签一起作为独立验证成绩。车辆尺寸与道路边界可信度请在路线详情核对。")
     queue_event = st.dataframe(
         display, width="stretch", hide_index=True, on_select="rerun",
         selection_mode="single-row", key="risk_queue_table",
@@ -780,6 +791,8 @@ with detail_tab:
         components = rule_components.loc[selected_index].sort_values(ascending=False)
         geometry = route_geometries.get(selected_id)
         geometry_rule = geometry_results.get(selected_id, {})
+        if not active_task:
+            st.info("这是一条已有历史结果的记录。页面风险分数用于展示当前模型如何处理输入，不是该记录的独立预测；“建议动作”是假设它作为新任务输入时的工作流建议。")
         st.caption(f'当前输入：{row["route_id"]}，文件覆盖 {float(row["route_length_m"]):.1f} m；追溯编号 {selected_id}。工程关注点是同一输入路线上的位置，不是另外切出的候选路线。')
         if geometry and 'events' in geometry:
             render_full_route_context(st, geometry, geometry_rule)
