@@ -214,10 +214,10 @@ def load_static_assets() -> tuple[dict[str, Any], dict[str, Any], pd.DataFrame]:
     assets["heldout_methods_v3"] = pd.read_csv(REPO_ROOT / "reports" / "final" / "tables" / "heldout_methods_v3.csv")
     contract = load_contract(CONTRACT_PATH)
     sample = pd.read_csv(SAMPLE_PATH, encoding="utf-8-sig")
-    assets["frozen_cases"] = pd.read_csv(
-        FROZEN_CASES_PATH,
-        usecols=["sample_id", "map_id", "route_id", "vehicle_structure", "true_label", "route_length_m"],
-    )
+    assets["frozen_features"] = pd.read_csv(FROZEN_CASES_PATH)
+    assets["frozen_cases"] = assets["frozen_features"][
+        ["sample_id", "map_id", "route_id", "vehicle_structure", "true_label", "route_length_m"]
+    ]
     return assets, contract, sample
 
 
@@ -514,7 +514,8 @@ with st.expander("① 任务与输入 · 选择历史案例或建立新任务", 
         else:
             st.info("本机尚无保存的任务。")
     else:
-        st.caption("历史案例来自冻结数据；不同编号不代表同一任务的候选方案。")
+        history_scope = st.radio("历史记录范围", ["可视化案例（15）", "冻结记录全集（340）"], horizontal=True)
+        st.caption("15条案例有可复现的路线坐标演示资产；其他冻结记录保留55项特征和历史标签，但当前仓库没有对应坐标资产。不同编号不代表同一任务的候选方案。")
         upload = st.file_uploader("上传执行前特征 CSV", type=["csv"],
                                   help="必须包含冻结契约规定的全部55项数值特征。")
     uploaded_geometry = {}
@@ -537,8 +538,9 @@ with st.expander("① 任务与输入 · 选择历史案例或建立新任务", 
         st.info("请创建或选择任务后开展评估。")
         st.stop()
     elif upload is None:
-        input_frame = sample_frame.copy()
-        st.caption("当前使用：历史案例库；样本之间不预设为同一候选批次。")
+        input_frame = (sample_frame if history_scope == "可视化案例（15）"
+                       else assets["frozen_features"]).copy()
+        st.caption(f"当前使用：{history_scope}；记录之间不预设为同一候选批次。")
     else:
         try:
             input_frame = pd.read_csv(upload, encoding="utf-8-sig")
@@ -627,7 +629,7 @@ if active_task:
     if len(evaluated) < 2:
         st.warning("当前只有一条输入路线：可以解释其风险，但无法比较候选方案或证明排序节省了复核工作量。请上传同场景、同配置的多条路线。")
 else:
-    st.info(f'当前是历史案例展示：从 {len(assets["frozen_cases"])} 条冻结监督记录中精选 {len(evaluated)} 条可讲解案例。它们不代表同一次规划生成的候选路线，不能用本页的复核占比估算日常工作量。')
+    st.info(f'当前是历史记录浏览：展示 {len(evaluated)} 条，冻结监督记录共 {len(assets["frozen_cases"])} 条；其中仅15条有随仓库提供的路线坐标演示资产。它们不代表同一次规划生成的候选路线，也不能用本页的复核占比估算日常工作量。')
 
 if runtime["model_available"]:
     st.success(f'学习模型已加载：{runtime["model_name"]}；55维特征、版本与Schema校验通过。')
@@ -645,7 +647,7 @@ structure_view = (
 )
 
 overview_tab, queue_tab, detail_tab, evidence_tab = st.tabs(
-    ["工作台导览", "验证队列" if active_task else "典型案例", "路线分析", "验证证据"]
+    ["工作台导览", "验证队列" if active_task else "历史记录", "路线分析", "验证证据"]
 )
 
 with overview_tab:
@@ -715,7 +717,7 @@ with overview_tab:
         vehicle_illustration("结构未定", 3, "结构未定，建议人工复核。")
     st.caption(f"当前结构筛选：{structure_label} · 演示输入 {len(structure_view)} 条")
     st.markdown('<div class="section-kicker">建议操作顺序</div>', unsafe_allow_html=True)
-    st.info("新建任务时在“验证队列”安排优先级；浏览历史数据时在“典型案例”查看解释。随后进入“路线分析”和“验证证据”。")
+    st.info("新建任务时在“验证队列”安排优先级；浏览历史数据时在“历史记录”查看案例。随后进入“路线分析”和“验证证据”。")
     st.info(
         f'特征版本 `{freeze["feature_version"]}` · Schema `{freeze["schema_sha256"]}` · '
         "55项执行前数值特征 · 10米局部窗口"
@@ -727,8 +729,8 @@ with queue_tab:
         st.markdown('<div class="section-kicker">第一步：确定验证顺序</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">本任务：先验证哪几条路线？</h2>', unsafe_allow_html=True)
         st.caption("同一任务的全部输入路线先接受评估，再分为本轮优先验证与其余按计划验证。高风险不等于已经失败，低风险也不等于免检。")
     else:
-        st.markdown('<div class="section-kicker">历史材料 · 不是同一次任务</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">典型案例：看清系统会如何解释</h2>', unsafe_allow_html=True)
-        st.caption("以下15条为特意挑选的历史案例，包含高风险、模型规则分歧及车型证据不足等情况；不能把这里的人工复核比例当作真实任务的平均值。")
+        st.markdown('<div class="section-kicker">历史材料 · 不是同一次任务</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">历史记录：可视化案例与冻结全集</h2>', unsafe_allow_html=True)
+        st.caption("可视化案例源自早期前端交付包的12条示例，后来加入3条通过边界完整性筛查的五轴路线。没有预先登记的代表性抽样方案；它们不能代表全量数据的风险或人工复核比例。")
     filter_cols = st.columns(2)
     risk_options = ["全部", "高风险", "中风险", "低风险", "证据不足"]
     if not runtime["model_available"]:
@@ -776,15 +778,16 @@ with queue_tab:
                          width="stretch", hide_index=True)
     else:
         history_cols = st.columns(4)
-        history_cols[0].metric("精选讲解案例", len(evaluated))
+        history_cols[0].metric("当前浏览记录", len(evaluated))
         history_cols[1].metric("结构待核", int(evaluated["vehicle_structure"].eq("unknown").sum()))
         history_cols[2].metric("模型与规则分歧", int(evaluated["decision_status"].str.contains("冲突").sum()))
         history_cols[3].metric("冻结监督记录", len(assets["frozen_cases"]))
-        st.caption(f"当前显示 {len(display)} 条精选案例，来自 {len(assets['frozen_cases'])} 条冻结记录；排序只方便浏览，不构成同任务 Top-K 实验。当前样例专门覆盖棘手情况，因此大量路线出现复核建议是预期现象；它不代表全量数据的复核比例。")
-        with st.expander(f"查看冻结案例目录（{len(assets['frozen_cases'])} 条记录）"):
-            st.caption("目录只展示来源、结构和历史标签；部署模型在这批记录上重训，不能把目录内评分当作独立测试成绩。多数记录没有可公开复现的原始路线坐标，因此动态空间图只对精选案例中的可用路线展示。")
-            library = assets["frozen_cases"].rename(columns={"sample_id":"追溯编号", "map_id":"地图", "route_id":"路线来源", "vehicle_structure":"车辆结构", "true_label":"历史标签", "route_length_m":"输入长度/m"})
-            st.dataframe(library, width="stretch", hide_index=True)
+        st.caption(f"当前显示 {len(display)} 条历史记录；排序只方便浏览，不构成同任务 Top-K 实验。可视化15条没有经过代表性抽样，不能据此声称典型任务需要同样比例的人工复核。")
+        if history_scope == "可视化案例（15）":
+            with st.expander(f"预览其余冻结记录目录（共 {len(assets['frozen_cases'])} 条）"):
+                st.caption("切换顶部“历史记录范围”可直接查看和分析全集。部署模型在这批记录上重训，全集评分不能当作独立测试成绩。多数记录没有随仓库提供的坐标资产，不能绘制动态空间图。")
+                library = assets["frozen_cases"].rename(columns={"sample_id":"追溯编号", "map_id":"地图", "route_id":"路线来源", "vehicle_structure":"车辆结构", "true_label":"历史标签", "route_length_m":"输入长度/m"})
+                st.dataframe(library, width="stretch", hide_index=True)
     st.caption("规则应力按冻结开发集参考分布计算，不会随本次上传批次变化，也不是失败概率。边界估算只在坐标语义校验通过且车辆尺寸可用时启用。当前模型/规则分差0.25的强制复核策略未经真实任务校准；复核比例不能当作产品收益。")
     queue_event = st.dataframe(
         display, width="stretch", hide_index=True, on_select="rerun",
