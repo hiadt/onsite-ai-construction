@@ -111,7 +111,7 @@ def compute_boundary_rule(geometry, length_m, width_m, reference_from_rear_m, re
     minimum=float(residual[minimum_index])
     affected_side="左侧" if left_margin[minimum_index]<=right_margin[minimum_index] else "右侧"
     if minimum<0:
-        state="局部外廓估算越界"; priority="P0 人工复核"; action="优先复核对应位置；核实车辆参考点、边界和外廓后再安排仿真"
+        state="局部外廓估算越界"; priority="P0 几何核查"; action="核对车辆参考点、道路边界和尺寸，优先安排闭环仿真"
     elif minimum<float(review_margin_m):
         state="局部余量低于复核阈值"; priority="P1 优先补测"; action="复核低余量区间，确认边界更新和定位误差后再验证"
     else:
@@ -256,10 +256,11 @@ def render_evidence(st, geometry):
     xy=np.asarray(geometry["centerline"])
     retained=np.asarray(geometry.get("point_indices",range(len(xy))))
     dimensions_enabled=st.checkbox(
-        "确认使用当前车长、车宽和参考点计算边界余量",
+        ("试算假设尺寸下的边界余量（仅供演示）" if supplied.get("dimension_source")=="illustrative_demo_values"
+         else "确认使用当前车长、车宽和参考点计算边界余量"),
         value=has_dimensions,
         key="use_dimensions_"+token,
-        help="未启用时仍可查看条件性车体扫掠图，但不输出尺寸联动边界结论。",
+        help="演示尺寸只用于条件性试算，不证明真实车型可用；未启用时仍可查看车体扫掠图。",
     )
     boundary_rule=(compute_boundary_rule(geometry,length,width,reference,review_margin)
                    if dimensions_enabled else {"available":False,"reason":"车辆尺寸尚未确认。"})
@@ -297,12 +298,12 @@ def render_evidence(st, geometry):
     if zoom:
         fig.update_xaxes(range=[event["x_m"]-15,event["x_m"]+15])
         fig.update_yaxes(range=[event["y_m"]-15,event["y_m"]+15])
-    fig.update_layout(xaxis_title="x / m",yaxis_title="y / m",height=430,
+    fig.update_layout(xaxis_title="横向坐标 / 米",yaxis_title="纵向坐标 / 米",height=430,
         legend=dict(orientation="h",yanchor="bottom",y=1.02,xanchor="left",x=0),
-        margin=dict(l=20,r=20,t=78,b=20))
+        margin=dict(l=20,r=20,t=78,b=20),dragmode=False,hovermode=False)
     fig.update_yaxes(scaleanchor="x",scaleratio=1)
-    st.plotly_chart(fig,width="stretch",config={"displayModeBar":False,"scrollZoom":True})
-    st.caption("图表操作：拖动框选放大，滚轮缩放，双击图表恢复全图；上方“放大当前关注点”可快速定位。")
+    st.plotly_chart(fig,width="stretch",config={"displayModeBar":False,"staticPlot":True})
+    st.caption("上方选择关注点，并用“放大当前关注点”切换视图。图表已关闭拖动和滚轮缩放，避免误触；重新取消勾选即可返回全程。")
     st.caption("图例：路线实线为参考点轨迹；四条点线为车体四角轨迹；红色多边形为当前位置外廓；灰线为NPZ逐点边界；橙色菱形为当前尺寸下的最小余量位置。")
     front=length-reference
     st.write(f'{event["label"]}：**{event["value"]:.4g} {event["unit"]}**；路线里程 {event["s_m"]:.2f} m，原始点索引 {event["index"]}。')
@@ -312,10 +313,12 @@ def render_evidence(st, geometry):
         metric_cols[0].metric("最小剩余余量",f'{boundary_rule["minimum_margin_m"]:.2f} m',boundary_rule["affected_side"])
         metric_cols[1].metric("越界区间",f'{boundary_rule["violation_length_m"]:.1f} m',f'{boundary_rule["violation_point_count"]} 个显示点')
         metric_cols[2].metric("低余量区间",f'{boundary_rule["low_margin_length_m"]:.1f} m',f'阈值 {review_margin:.1f} m')
-        metric_cols[3].metric("尺寸联动规则",boundary_rule["state"],boundary_rule["priority"])
+        scenario_only=supplied.get("dimension_source")=="illustrative_demo_values"
+        metric_cols[3].metric("尺寸联动规则",boundary_rule["state"],"假设场景，不入任务队列" if scenario_only else boundary_rule["priority"])
         message=f'{boundary_rule["state"]}：{boundary_rule["action"]}。最小余量位于 {boundary_rule["minimum_station_m"]:.2f} m，靠近{boundary_rule["affected_side"]}边界。'
-        if boundary_rule["state"]=="包络越界": st.error(message)
-        elif boundary_rule["state"]=="边界余量不足": st.warning(message)
+        if scenario_only: st.warning("假设尺寸试算，仅展示尺寸敏感性；真实车型结论须核对车辆配置。"+message)
+        elif boundary_rule["state"]=="局部外廓估算越界": st.error(message)
+        elif boundary_rule["state"]=="局部余量低于复核阈值": st.warning(message)
         else: st.success(message)
         confidence=boundary_rule.get("boundary_confidence_min")
         confidence_text=f'；边界置信度最小值 {confidence:.2f}' if confidence is not None else "；文件未提供逐点边界置信度"

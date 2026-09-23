@@ -153,6 +153,12 @@ def apply_filters(
             + " "
             + filtered["route_id"].astype(str)
             + " "
+            + filtered["map_id"].astype(str)
+            + " "
+            + filtered.get("display_route", pd.Series("", index=filtered.index)).astype(str)
+            + " "
+            + filtered.get("display_scene", pd.Series("", index=filtered.index)).astype(str)
+            + " "
             + filtered["route_file_sha256"].astype(str)
         ).str.lower()
         filtered = filtered[haystack.str.contains(needle, regex=False)]
@@ -167,6 +173,11 @@ def select_top_k(frame: pd.DataFrame, selection: str, model_available: bool) -> 
     else:
         count = min(int(selection.split()[-1]), len(ordered))
     return ordered.head(count)
+
+
+def requires_geometry_check(rule: dict[str, Any]) -> bool:
+    """Hypothetical vehicle dimensions never trigger an operational queue exception."""
+    return bool(rule.get("available")) and rule.get("state") == "局部外廓估算越界" and not rule.get("scenario_only", False)
 
 
 def select_validation_queue(frame: pd.DataFrame, selection: str, model_available: bool) -> pd.DataFrame:

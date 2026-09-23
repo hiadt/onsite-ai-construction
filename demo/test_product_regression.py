@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 import numpy as np
 import pandas as pd
-from demo_logic import evaluate_candidates
+from demo_logic import evaluate_candidates, requires_geometry_check
 from inference import load_contract
 from rule_baseline import compute_geometry_rule_risk
 from route_input import parse_route, compute_boundary_rule, compute_rigid_body_sweep
@@ -78,5 +78,7 @@ class ProductRegressionTests(unittest.TestCase):
         self.assertEqual(narrow['state'],'局部横断面估算余量充足')
         self.assertAlmostEqual(wide['minimum_margin_m'],-1.0)
         self.assertEqual(wide['state'],'局部外廓估算越界')
-        self.assertEqual(wide['priority'],'P0 人工复核')
+        self.assertEqual(wide['priority'],'P0 几何核查')
+        self.assertTrue(requires_geometry_check(wide))
+        self.assertFalse(requires_geometry_check({**wide,'scenario_only':True}))
 if __name__=='__main__':unittest.main()
