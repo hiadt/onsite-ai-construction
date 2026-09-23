@@ -35,7 +35,7 @@ def evidence_status(row: pd.Series) -> str:
     label_status = str(row.get("label_status", ""))
     feature_source = str(row.get("feature_source", ""))
     if structure == "unknown":
-        return "结构未定，建议人工复核"
+        return "结构未定，待补车型资料"
     label = str(row.get("true_label", "")).strip()
     has_label = label in {"0", "0.0", "1", "1.0"}
     if has_label and label_status in {"labeled", "final"}:
@@ -49,30 +49,26 @@ def evidence_status(row: pd.Series) -> str:
 
 def next_action(score: float, row: pd.Series, model_available: bool) -> str:
     if str(row.get("vehicle_structure", "unknown")) == "unknown":
-        return "人工复核"
+        return "补齐车型配置后重新评估"
     if not model_available:
-        return "人工复核"
-    if score >= 0.80 and not str(row.get("true_label", "")).strip():
-        return "优先补测"
+        return "学习模型不可用，人工确定验证顺序"
     if score >= 0.70:
-        return "优先仿真复核"
+        return "优先安排闭环仿真验证"
     if score >= 0.45:
-        return "人工复核"
-    if not str(row.get("true_label", "")).strip():
-        return "客户共创确认"
-    return "暂不优先处理"
+        return "按计划安排仿真验证"
+    return "常规计划验证"
 
 
 def validation_priority(score: float, structure: str, model_available: bool) -> str:
     if structure == "unknown":
-        return "P0 人工复核"
+        return "资料待补"
     if not model_available:
         return "规则预览"
     if score >= 0.70:
-        return "P0"
+        return "P0 优先验证"
     if score >= 0.45:
-        return "P1"
-    return "P2"
+        return "P1 计划验证"
+    return "P2 常规验证"
 
 
 def label_text(value: Any) -> str:

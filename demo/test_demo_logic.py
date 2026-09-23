@@ -89,7 +89,7 @@ class DemoLogicTests(unittest.TestCase):
         self.assertTrue(six_axis["vehicle_structure"].eq("six_axis").all())
         unknown = apply_filters(result, "unknown", "全部", "全部", "")
         self.assertEqual(len(unknown), 4)
-        self.assertTrue(unknown["next_action"].eq("人工复核").all())
+        self.assertTrue(unknown["next_action"].eq("补齐车型配置后重新评估").all())
         top = select_top_k(result, "Top 34", state["model_available"])
         self.assertEqual(len(top), len(self.sample))
         self.assertEqual(len(select_top_k(result, "Top 10", True)), 10)

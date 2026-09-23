@@ -21,14 +21,17 @@ class ProductRegressionTests(unittest.TestCase):
             np.testing.assert_allclose(p.iloc[0],parts.loc[i])
         expanded=pd.concat([self.sample,self.sample]*3,ignore_index=True)
         np.testing.assert_allclose(compute_geometry_rule_risk(expanded)[0][:len(self.sample)],batch)
-    def test_conflict_priority_survives_and_unknown_refuses(self):
+    def test_uncalibrated_score_difference_does_not_force_manual_review(self):
         count=len(self.sample)
         with patch('demo_logic.predict_failure_risk',return_value=np.ones(count)),patch('demo_logic.compute_geometry_rule_risk',return_value=(pd.Series(np.zeros(count)),pd.DataFrame({'曲率与变化':np.zeros(count)}))):
             result,_,state=evaluate_candidates(self.sample,self.contract,BASE/'models/pathguard_gate3_model.joblib')
         self.assertTrue(state['model_available'])
         known=result.vehicle_structure.ne('unknown')
-        self.assertTrue(result.loc[known,'validation_priority'].eq('P0 人工复核').all())
+        self.assertTrue(result.loc[known,'validation_priority'].eq('P0 优先验证').all())
+        self.assertTrue(result.loc[known,'next_action'].eq('优先安排闭环仿真验证').all())
+        self.assertTrue(result.loc[known,'decision_status'].eq('学习模型排序；工程规则独立提示').all())
         self.assertTrue(result.loc[~known,'risk_level'].eq('证据不足').all())
+        self.assertTrue(result.loc[~known,'validation_priority'].eq('资料待补').all())
     def test_real_upload_and_location(self):
         payload=(BASE/'examples/real_route.npz').read_bytes()
         config=json.loads((BASE/'examples/vehicle_config.json').read_text())

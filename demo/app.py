@@ -624,14 +624,12 @@ evaluated["geometry_state"] = geometry_states
 evaluated["geometry_min_margin_m"] = geometry_margins
 geometry_forced = evaluated["geometry_state"].eq("局部外廓估算越界")
 unknown_forced = evaluated["vehicle_structure"].eq("unknown")
-conflict_forced = evaluated["decision_status"].isin(["模型/规则冲突，人工复核", "证据不足，拒绝确定结论"])
-priority_forced = evaluated["validation_priority"].astype(str).str.startswith("P0")
-evaluated["mandatory_review"] = geometry_forced | unknown_forced | conflict_forced | priority_forced
+evaluated["mandatory_review"] = geometry_forced | unknown_forced
 evaluated["mandatory_review_reason"] = ""
-evaluated.loc[unknown_forced, "mandatory_review_reason"] = "车型结构未确认"
-evaluated.loc[conflict_forced & ~unknown_forced, "mandatory_review_reason"] = "模型与冻结规则不一致"
-evaluated.loc[priority_forced & ~unknown_forced & ~conflict_forced, "mandatory_review_reason"] = "进入P0风险等级"
-evaluated.loc[geometry_forced, "mandatory_review_reason"] = "局部外廓估算越过语义校验边界"
+evaluated.loc[unknown_forced, "mandatory_review_reason"] = "先补齐车型配置"
+evaluated.loc[geometry_forced, "mandatory_review_reason"] = "经核验边界下的车体估算越界"
+evaluated.loc[geometry_forced, "next_action"] = "核对边界与车辆配置，优先安排仿真验证"
+evaluated.loc[geometry_forced, "validation_priority"] = "P0 几何核查"
 if active_task:
     save_assessment(active_task, evaluated, runtime.get("model_name", "模型未加载"))
 
@@ -715,8 +713,8 @@ with queue_tab:
     display = queue[display_columns].rename(columns={
         "route_id": "路线来源", "route_length_m": "输入长度/m", "sample_id": "追溯编号", "map_id": "场景", "vehicle_structure": "车辆结构",
         "true_label": "历史结果", "model_risk": "主排序风险", "rule_risk": "规则风险",
-        "risk_level": "风险等级", "validation_priority": "验证优先级", "decision_status": "一致性状态",
-        "mandatory_review": "预算外必须复核", "queue_reason": "入队原因", "geometry_state": "车体边界估算",
+        "risk_level": "风险等级", "validation_priority": "验证优先级", "decision_status": "证据提示",
+        "mandatory_review": "预算外单列处理", "queue_reason": "入队原因", "geometry_state": "车体边界估算",
         "risk_reasons": "主要风险因素", "next_action": "下一步动作",
     })
     display["车辆结构"] = display["车辆结构"].replace(
@@ -733,13 +731,19 @@ with queue_tab:
         planned_count = total - len(queue)
         status_cols = st.columns(4)
         status_cols[0].metric("当前输入路线", total)
-        status_cols[1].metric("规则要求重点核查", mandatory_count)
+        status_cols[1].metric("补资料或几何核查", mandatory_count)
         status_cols[2].metric("本轮队列", len(queue))
         status_cols[3].metric("其余按计划验证", planned_count)
         st.caption(
-            f"先纳入必须核查项，再按{score_title}补足 {top_selection} 常规名额。"
-            "这些是工作流状态，不是通过/失败结论；若全部入队，就表示当前规则未能节约本轮复核名额。"
+            f"先单列资料待补和经核验的几何越界项，再按{score_title}补足 {top_selection} 常规名额。"
+            "入队是验证安排，不代表必须逐条由人工先审，更不代表通过/失败结论。"
         )
+        deferred_high = filtered.loc[
+            filtered["risk_level"].eq("高风险")
+            & ~filtered["sample_id"].astype(str).isin(queue["sample_id"].astype(str))
+        ]
+        if not deferred_high.empty:
+            st.warning(f"本轮名额之外仍有 {len(deferred_high)} 条模型高分路线。它们不是已通过路线；请增加验证名额或在下一轮安排验证。")
         with st.expander(f"查看筛选范围内全部 {total} 条输入路线及其去向"):
             all_routes = filtered[["route_id", "map_id", "vehicle_structure", "risk_level", "next_action"]].copy()
             all_routes["队列去向"] = ["本轮优先验证" if item in set(queue["sample_id"].astype(str)) else "其余按计划验证"
@@ -750,7 +754,7 @@ with queue_tab:
         history_cols = st.columns(4)
         history_cols[0].metric("当前浏览记录", len(evaluated))
         history_cols[1].metric("结构待核", int(evaluated["vehicle_structure"].eq("unknown").sum()))
-        history_cols[2].metric("模型与规则分歧", int(evaluated["decision_status"].str.contains("冲突").sum()))
+        history_cols[2].metric("车型结构已确认", int(evaluated["vehicle_structure"].ne("unknown").sum()))
         history_cols[3].metric("冻结监督记录", len(assets["frozen_cases"]))
         st.caption(f"当前显示 {len(display)} 条历史记录及原有通过/失败结果；排序只方便浏览，不构成同任务 Top-K 实验。部署模型在全量记录上重训，此处评分也不能作为独立预测成绩。快速讲解15条没有经过代表性抽样。")
         if history_scope == "快速讲解示例（15）":
@@ -759,7 +763,7 @@ with queue_tab:
                 library = assets["frozen_cases"].rename(columns={"sample_id":"追溯编号", "map_id":"地图", "route_id":"路线来源", "vehicle_structure":"车辆结构", "true_label":"历史标签", "route_length_m":"输入长度/m"})
                 st.dataframe(library, width="stretch", hide_index=True)
     if active_task:
-        st.caption("规则应力按冻结开发集参考分布计算，不会随本次上传批次变化，也不是失败概率。边界估算只在坐标语义校验通过且车辆尺寸可用时启用。当前模型/规则分差0.25的强制复核策略未经真实任务校准；复核比例不能当作产品收益。")
+        st.caption("规则应力按冻结开发集参考分布计算，不会随本次上传批次变化，也不是失败概率。模型分数与规则应力不在同一校准尺度，不按数值差强制人工复核。只有车型资料待补或经核验边界下的外廓估算越界会单列处理。")
     else:
         st.caption("风险分数是已在这批记录上重训的模型对历史输入的展示输出，不得与原有通过/失败标签一起作为独立验证成绩。车辆尺寸与道路边界可信度请在路线详情核对。")
     queue_event = st.dataframe(
@@ -817,7 +821,7 @@ with detail_tab:
                 st.caption(geometry_rule["explanation"])
             else:
                 st.write(f'尺寸联动估算：**不提供结论**（{geometry_rule.get("reason", "缺少可信边界证据")}）')
-            st.caption('规则提示来自开发集固定参考分布，不是学习模型的特征归因；模型/规则差值0.25是待验证的人工复核策略阈值。')
+            st.caption('规则提示来自开发集固定参考分布，不是学习模型的特征归因；两种分数未校准到同一尺度，不用分数差触发人工复核。')
         with right:
             if runtime["model_available"]:
                 st.metric("主排序风险", f'{float(row["model_risk"]):.3f}', row["risk_level"])
@@ -1055,7 +1059,7 @@ with evidence_tab:
         f'model = {runtime["model_name"] if runtime["model_available"] else "未加载"}\n'
         f'feature_version = {contract["feature_version"]}\n'
         f'schema_sha256 = {contract["schema_sha256"]}\n'
-        'queue_score = model_failure_risk\nrule_check = geometry_rule_risk\nconflict => manual_review',
+        '主排序 = 学习模型风险分数\n工程规则 = 独立应力提示\n补资料与核验几何越界 = 预算外单列',
         language="text",
     )
     st.caption("PathGuard只安排候选路线验证优先级；最终结论仍需闭环仿真、人工复核或实车验证。")
