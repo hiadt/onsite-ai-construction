@@ -57,7 +57,7 @@ def image_data_uri(path: Path) -> str:
 
 hero_image_uri = image_data_uri(HERO_IMAGE_PATH)
 
-st.set_page_config(page_title="PathGuard 路线风险决策", page_icon="🛡️", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="PathGuard 轨迹风险分析与验证决策", page_icon="🛡️", layout="wide", initial_sidebar_state="collapsed")
 st.markdown(
     """
     <style>
@@ -523,7 +523,7 @@ def percent(value: float) -> str:
 
 
 brand_col, nav_col = st.columns([1.5, 2], vertical_alignment="center")
-brand_col.markdown('<div class="site-brand">PATHGUARD<small>工程车辆路线验证决策</small></div>', unsafe_allow_html=True)
+brand_col.markdown('<div class="site-brand">PATHGUARD<small>多轴工程车辆轨迹风险分析</small></div>', unsafe_allow_html=True)
 st.session_state.setdefault("site_page", "首页")
 with nav_col:
     nav_home, nav_intro, nav_work = st.columns(3, gap="small")
@@ -537,43 +537,46 @@ if site_page == "首页":
     st.markdown(
         '''<section class="hero" style="min-height:min(73vh,720px);">
           <div class="hero-kicker">欢迎来到 PATHGUARD</div>
-          <h1>让每一条工程车辆候选路线，<br/>都有清楚的验证顺序。</h1>
-          <p>在投入闭环仿真和现场测试之前，先看哪条值得优先验证、风险提示出现在哪里，再决定下一步怎么做。</p>
-          <div class="hero-badges"><span>候选路线排序</span><span>位置与原因解释</span><span>验证结果留存</span></div>
+          <h1>从规划轨迹到实际执行，<br/>让工程风险看得见。</h1>
+          <p>看清车辆偏离路线的地方，理解车身占用的变化，把分析结果变成下一轮验证的依据。</p>
+          <div class="hero-badges"><span>路线风险分析</span><span>执行偏差实录</span><span>车身空间解释</span><span>验证结果闭环</span></div>
         </section>''', unsafe_allow_html=True)
     action_cols = st.columns([1,1,2.6])
     action_cols[0].button("了解 PathGuard", use_container_width=True, on_click=lambda: st.session_state.update(site_page="产品介绍"))
     action_cols[1].button("体验路线评估", type="primary", use_container_width=True, on_click=lambda: st.session_state.update(site_page="风险工作台"))
-    st.markdown('<div class="home-entry">面向规划工程师、测试团队与工程项目交付人员 <span>了解产品 → 建立任务 → 查看路线建议</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="home-entry">为多轴工程车辆的规划、测试与交付团队而建 <span>看见问题 → 理解原因 → 安排验证</span></div>', unsafe_allow_html=True)
     st.stop()
 
 if site_page == "产品介绍":
     st.markdown('''<section class="intro-hero"><small>产品介绍 / 从路线到行动</small>
-      <h1>路线不只是一个分数。<br/>工程师需要知道先验证什么。</h1>
-      <p>PathGuard 把同一任务的候选路线放到一个工作台：先给出验证顺序，再指出值得关注的位置和原因，最后留存仿真或现场的真实结果。</p></section>''', unsafe_allow_html=True)
+      <h1>路线规划好了，<br/>车辆执行时会发生什么？</h1>
+      <p>转弯时的偏移、车尾占用的变化、不同平台给出的结果——PathGuard 把这些问题放回具体路线，让工程师看得清、查得到、能验证。</p></section>''', unsafe_allow_html=True)
     st.markdown('''<section class="product-section"><small>01 / 它解决哪个环节</small>
-      <h2>路线已经生成。接下来，先验证哪一条？</h2>
-      <p>规划器给出候选方案后，团队仍需安排仿真、查看失败位置并核对车辆与道路条件。PathGuard服务于这一段验证决策流程。</p></section>''', unsafe_allow_html=True)
+      <h2>规划给出方案，工程验证确认表现。</h2>
+      <p>车辆实际运动可能偏离参考线。对于长车身车辆，方向偏一点，前后端的空间占用也会变化。PathGuard 连接路线文件、执行记录和车辆几何，帮助团队找到需要检查的路段。</p></section>''', unsafe_allow_html=True)
     st.markdown('''<section class="product-section"><small>02 / 一次任务如何完成</small>
       <h2>三步，从输入到可执行的下一步。</h2></section>
       <div class="story-grid">
-        <div class="story-card"><em>STEP 01 · 输入</em><h3>建立同一场景的路线任务</h3><p>导入候选路线和车辆配置，写清环境版本。每条路线保留原始文件，方便以后复查。</p></div>
-        <div class="story-card"><em>STEP 02 · 判断</em><h3>先看验证顺序，再看具体路段</h3><p>模型提供排序，工程规则单独提示关注点；有可信边界时，可查看车身外廓与边界的估算余量。</p></div>
-        <div class="story-card"><em>STEP 03 · 验证</em><h3>把仿真与现场结果接回路线</h3><p>记录验证方式、条件变化和结果。相互矛盾的结论单独标出，不自动改写训练标签。</p></div>
+        <div class="story-card"><em>第一步 · 找到关注点</em><h3>把路线放进同一个任务</h3><p>导入候选路线和车辆配置。历史学习提供检查顺序，工程指标指出值得关注的转弯、速度变化和余量。</p></div>
+        <div class="story-card"><em>第二步 · 看清空间变化</em><h3>从一条线看到整个车身</h3><p>查看局部车身扫掠；边界与配置具备条件时，试算余量。历史执行实录还可以直接对照计划与实际的偏差。</p></div>
+        <div class="story-card"><em>第三步 · 留下验证依据</em><h3>让每次测试都能被复用</h3><p>把仿真或现场结果接回任务，保留环境与版本。不一致的结果进入复核，已核对记录可作为后续训练候选。</p></div>
       </div>''', unsafe_allow_html=True)
     st.markdown('''<section class="product-section"><small>03 / 工程师最终拿到什么</small>
-      <h2>交付一套能执行的验证安排。</h2></section>
-      <div class="outcome-panel"><div><h3>一条路线，一张清楚的解释卡</h3>
-      <p>先看“现在建议做什么”，再查看路线形状、风险发生的位置和支撑这一判断的工程指标。</p></div>
-      <ul><li>本轮优先验证还是按计划验证</li><li>风险提示对应哪一段输入路线</li><li>哪些边界与车辆参数已确认</li><li>仿真或现场结果是否支持原判断</li></ul></div>''', unsafe_allow_html=True)
+      <h2>带着具体问题，进入下一轮测试。</h2></section>
+      <div class="outcome-panel"><div><h3>位置、数值、条件和下一步动作</h3>
+      <p>从“这条路线值得关注”继续看到“哪一段、什么现象、还要核对什么”，让规划、车辆与测试同事围绕同一份证据协作。</p></div>
+      <ul><li>先检查哪条候选路线</li><li>计划与实际在哪里发生偏离</li><li>车长与车宽怎样影响空间占用</li><li>验证结果对应哪一版条件</li></ul></div>''', unsafe_allow_html=True)
+    st.markdown('''<section class="product-section"><small>04 / 可以直接体验</small>
+      <h2>用真实运行记录，看懂执行差距。</h2>
+      <p>工作台的“执行偏差实录”已核对两次历史平台运行。你可以选择山路或坡道，查看计划与实际轨迹、偏差变化和假设尺寸下的车身占用。也可以导入自己的路线文件，建立新的评估任务。</p></section>''', unsafe_allow_html=True)
     with st.expander("适用边界与当前能力", expanded=False):
-        st.write("当前是执行前风险排序与验证记录原型。历史数据可用于展示路线与指标，但没有真实候选批次编号，不能据此证明节时效果。只有通过完整边界检查的路线可输出条件性的车身余量估算；最终结论仍由仿真或现场测试确认。")
+        st.write("当前版本将路线级历史失败排序、独立工程规则、条件性车身几何和已核对的执行实录组织在一个工作台中。实录是历史平台观测，尺寸交互是几何试算，现有模型不预测逐时刻跟踪误差。历史数据没有真实候选批次编号，节时收益需要新任务试点验证；具有完整边界和有效配置的路线才能进一步估算空间余量。")
     st.button("进入风险工作台", on_click=lambda: st.session_state.update(site_page="风险工作台"))
     st.stop()
 
 assets, contract, sample_frame = load_static_assets()
 freeze = assets["freeze"]
-st.markdown('<section class="page-head"><h1>风险工作台</h1><p>导入同一任务的候选路线，查看验证顺序与具体位置，再记录仿真或现场结果。也可以先从历史路线开始体验。</p></section>', unsafe_allow_html=True)
+st.markdown('<section class="page-head"><h1>风险工作台</h1><p>分析候选路线、查看车身空间、核对执行偏差，再把验证结果接回任务。首次体验可先查看历史路线和执行偏差实录。</p></section>', unsafe_allow_html=True)
 
 with st.expander("选择工作方式 · 体验历史路线或建立自己的任务", expanded=True):
     st.header("从哪里开始？")
