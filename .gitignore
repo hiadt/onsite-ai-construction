@@ -6,6 +6,7 @@
 *.pth
 *.pt
 *.zip
+!demo/examples/recording_demo.zip
 *.rar
 *.7z
 
@@ -22,6 +23,7 @@ __pycache__/
 *.pyc
 *.log
 .pytest_cache/
+.venv/
 .ipynb_checkpoints/
 
 # 本机配置与凭据

@@ -180,17 +180,17 @@ def requires_geometry_check(rule: dict[str, Any]) -> bool:
     return bool(rule.get("available")) and rule.get("state") == "局部外廓估算越界" and not rule.get("scenario_only", False)
 
 
-def select_validation_queue(frame: pd.DataFrame, selection: str, model_available: bool) -> pd.DataFrame:
+def select_validation_queue(frame: pd.DataFrame, selection: str | int | float, model_available: bool) -> pd.DataFrame:
     """Keep evidence completion and verified geometry exceptions outside Top-K."""
     if frame.empty:
         return frame.assign(mandatory_review=pd.Series(dtype=bool), queue_reason=pd.Series(dtype=str))
     score_column = "model_risk" if model_available else "rule_risk"
     ordered = frame.sort_values(score_column, ascending=False, kind="mergesort").copy()
     mandatory = ordered.get("mandatory_review", pd.Series(False, index=ordered.index)).fillna(False).astype(bool)
-    if selection == "Top 10%":
+    if isinstance(selection, str) and selection == "Top 10%":
         count = max(1, int(len(ordered) * 0.1 + 0.9999))
     else:
-        count = min(int(selection.split()[-1]), len(ordered))
+        count = min(int(selection) if isinstance(selection, (int, float)) else int(selection.split()[-1]), len(ordered))
     ordinary = ordered.loc[~mandatory].head(count).copy()
     forced = ordered.loc[mandatory].copy()
     ordinary["mandatory_review"] = False

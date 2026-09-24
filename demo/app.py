@@ -47,7 +47,7 @@ MODEL_PATH = DEMO_DIR / "models" / "pathguard_gate3_model.joblib"
 CONTRACT_PATH = DATA_DIR / "feature_contract_v2.json"
 SAMPLE_PATH = DATA_DIR / "sample_input.csv"
 FROZEN_CASES_PATH = DATA_DIR / "modeling_features_final.csv"
-HERO_IMAGE_PATH = DEMO_DIR / "assets" / "pathguard-heavy-haul-hero.png"
+HERO_IMAGE_PATH = DEMO_DIR / "assets" / "pathguard-user-hero.png"
 
 
 def image_data_uri(path: Path) -> str:
@@ -157,16 +157,18 @@ st.markdown(
     .hero:after {content:"";position:absolute;inset:auto 0 0;height:5px;background:linear-gradient(90deg,var(--pg-teal),var(--pg-amber),transparent 78%);}
     .hero-kicker {display:inline-flex;align-items:center;gap:.55rem;color:#a9eeee;font-weight:700;font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;margin-bottom:.8rem;}
     .hero-kicker:before {content:"";width:28px;height:2px;background:var(--pg-amber);}
-    .hero h1 {margin:0;color:#fff;font-size:clamp(2.6rem,5vw,4.7rem);line-height:1.08;letter-spacing:-.045em;text-shadow:0 8px 30px rgba(0,0,0,.25);max-width:940px;}
+    .hero h1 {margin:0;color:#fff;font-size:clamp(2.4rem,4.5vw,4.3rem);font-weight:650;line-height:1.16;letter-spacing:0;text-shadow:0 8px 30px rgba(0,0,0,.25);max-width:1000px;}
     .hero p {max-width:650px;margin:1.05rem 0 1.35rem;color:#dff4f5;font-size:clamp(1rem,1.55vw,1.32rem);line-height:1.7;opacity:.95;}
     .hero-badges {display:flex;flex-wrap:wrap;gap:.55rem;}
     .hero-badges span {padding:.42rem .72rem;border:1px solid rgba(171,235,235,.25);border-radius:999px;background:rgba(6,31,48,.58);backdrop-filter:blur(8px);color:#e8ffff;font-size:.78rem;}
     .site-brand {padding:.25rem 0;color:#123b5d;font-size:1.16rem;font-weight:850;letter-spacing:.06em;}
+    .workbench-strip {display:flex;align-items:baseline;gap:.8rem;padding:1.1rem 1.35rem;margin:.35rem 0 1rem;border:1px solid #cfe2e7;border-radius:16px;background:linear-gradient(120deg,rgba(7,31,48,.94),rgba(7,103,111,.88)),url("__HERO_IMAGE__") center/cover;color:#fff;box-shadow:0 14px 32px rgba(9,45,67,.12);}
+    .workbench-strip strong {font-size:1.35rem;}.workbench-strip span {color:#d8f1f2;font-size:.92rem;}
     .site-brand small {display:block;color:#5a7180;font-size:.67rem;font-weight:600;letter-spacing:.12em;}
     .home-entry {display:flex;justify-content:space-between;align-items:center;gap:1rem;border-top:1px solid #dce7ed;padding:.75rem 0 0;margin-top:.7rem;color:#526675;font-size:.9rem;}
-    .intro-hero {padding:3.8rem clamp(1.5rem,5vw,5rem);border-radius:26px;color:white;background:linear-gradient(115deg,#09283e,#0c6370);margin:.4rem 0 2.2rem;}
+    .intro-hero {padding:3.8rem clamp(1.5rem,5vw,5rem);border-radius:26px;color:white;background:linear-gradient(115deg,rgba(7,30,48,.93),rgba(9,99,110,.78)),url("__HERO_IMAGE__") center/cover;margin:.4rem 0 2.2rem;}
     .intro-hero small {color:#a9eeee;font-size:.78rem;font-weight:700;letter-spacing:.15em;}
-    .intro-hero h1 {font-size:clamp(2.4rem,4vw,4rem);line-height:1.15;max-width:840px;margin:.6rem 0 1rem;color:#fff;}
+    .intro-hero h1 {font-size:clamp(2.2rem,3.5vw,3.4rem);line-height:1.22;max-width:1100px;margin:.6rem 0 1rem;color:#fff;font-weight:650;}
     .intro-hero p {font-size:1.15rem;line-height:1.8;color:#e0f2f4;max-width:760px;margin:0;}
     .product-section {margin:2.5rem 0 1rem;}
     .product-section>small {font-size:.77rem;font-weight:750;letter-spacing:.12em;color:#087782;}
@@ -184,7 +186,7 @@ st.markdown(
     .route-map-card b {display:block;color:#143b54;font-size:1rem;}.route-map-card span {color:#6b8190;font-size:.82rem;}
     .route-map-card svg {display:block;width:100%;height:350px;background:#f7fafb;border-radius:12px;margin:.65rem 0;}
     .route-map-card small {font-size:.78rem;color:#526675;}.route-map-card .orange-line {color:#e26c43;}
-    [data-testid="stPlotlyChart"] .modebar {display:none!important;}
+    [data-testid="stPlotlyChart"] .modebar {display:flex!important;}
     .notice {padding:.92rem 1.1rem;border:1px solid #f0d7b6;border-left:4px solid var(--pg-amber);background:rgba(255,249,239,.96);box-shadow:0 8px 28px rgba(98,66,24,.06);border-radius:12px;color:#6d4919;margin:.45rem 0 1.35rem;}
     [data-testid="stTabs"] [data-baseweb="tab-list"] {
       gap:.5rem;padding:.45rem;background:rgba(255,255,255,.92);border:1px solid var(--pg-line);border-radius:16px;
@@ -383,8 +385,6 @@ def render_full_route_context(st, geometry: dict[str, Any], boundary_rule: dict[
     start_x, start_y = full_point(center[0])
     end_x, end_y = full_point(center[-1])
     close_x, close_y = close_point(center[local][len(center[local]) // 2])
-    st.markdown("#### 这段关注位置在路线哪里？")
-    st.caption(f"左图保留输入文件的全程形状；橙色标出里程 {max(float(stations[0]),focus-35):.1f}—{min(float(stations[-1]),focus+35):.1f} 米。右图把同一段单独放大，方便查看弯道；两图均保持米制横纵比例，不响应拖动或滚轮，避免误触。")
     left, right = st.columns(2)
     map_style = '''<style>html,body{margin:0;font-family:Inter,"Microsoft YaHei","PingFang SC",sans-serif;color:#143b54;}
       .route-map-card{background:#fff;border:1px solid #d9e5ec;border-radius:16px;padding:14px;box-sizing:border-box;}
@@ -405,7 +405,6 @@ def render_full_route_context(st, geometry: dict[str, Any], boundary_rule: dict[
         <path d="{close_path}" fill="none" stroke="#e26c43" stroke-width="5" stroke-linecap="round"/>
         <circle cx="{close_x:.1f}" cy="{close_y:.1f}" r="6" fill="#0a7180"/>
       </svg><small>● 当前路段中点；此图显示路线形状，不推断障碍物</small></div>''', height=440, scrolling=False)
-    st.caption("图中“全程”指输入文件包含的完整点列；是否覆盖真实工程任务的完整道路，由数据提供方确认。")
 
 
 def dynamic_envelope(row: pd.Series, route_geometries: dict[str, Any], boundary_rule: dict[str, Any] | None = None) -> None:
@@ -448,7 +447,7 @@ def dynamic_envelope(row: pd.Series, route_geometries: dict[str, Any], boundary_
     body_width = width * meter_scale
     body_x = -reference * meter_scale
     geometry_badge = f'输入路线局部视图 · {geometry["point_count_original"]}原始点 / {geometry["point_count_display"]}显示点'
-    geometry_note = "车身沿输入路线的一段原始坐标动态移动；矩形按当前车长、车宽绘制，颜色不表示风险概率。"
+    geometry_note = "车身沿输入路线的一段原始坐标动态移动；矩形按当前车长、车宽绘制。"
     if dimensions_are_assumed:
         geometry_note += " 当前尺寸为演示假设值，需确认车辆配置后才能用于工程判断。"
     level = str(row.get("risk_level", "待判定"))
@@ -473,9 +472,12 @@ def dynamic_envelope(row: pd.Series, route_geometries: dict[str, Any], boundary_
     scenario_prefix = "假设尺寸试算：" if rule.get("scenario_only") else "当前尺寸下"
     margin_summary = (f'{scenario_prefix}局部最小估算余量 {float(rule["minimum_margin_m"]):.2f} 米，'
                       f'{html.escape(str(rule["affected_side"]))}，里程 {float(rule["minimum_station_m"]):.1f} 米。'
-                      if rule.get("available") else "尚无通过完整检查的道路边界；当前只显示路线和条件性车身示意。")
+                      if rule.get("available") else (
+                          "边界点列已通过筛查；请在下方几何设置中启用尺寸试算，查看局部余量。"
+                          if geometry.get("boundary_integrity_screen_passed")
+                          else "尚无通过完整检查的道路边界；当前只显示路线和条件性车身示意。"))
     svg = f'''<div class="envelope-card">
-      <div class="envelope-title"><strong>这条路线现在建议怎么处理？</strong><span>{structure_label} · {geometry_badge}</span></div>
+      <div class="envelope-title"><strong>路线关注点与建议动作</strong><span>{structure_label} · {geometry_badge}</span></div>
       <div class="risk-summary">
         <div class="risk-box primary"><b>当前建议</b><span>{result}</span></div>
         <div class="risk-box"><b>排序含义</b><span>{consequence}</span></div>
@@ -524,65 +526,55 @@ def percent(value: float) -> str:
     return f"{float(value):.1%}"
 
 
-brand_col, nav_col = st.columns([1.5, 2], vertical_alignment="center")
-brand_col.markdown('<div class="site-brand">PATHGUARD<small>多轴工程车辆轨迹风险分析</small></div>', unsafe_allow_html=True)
 st.session_state.setdefault("site_page", "首页")
-with nav_col:
-    nav_home, nav_intro, nav_work = st.columns(3, gap="small")
-    for target, column in (("首页", nav_home), ("产品介绍", nav_intro), ("风险工作台", nav_work)):
-        if column.button(target, type="primary" if st.session_state["site_page"] == target else "secondary",
-                         use_container_width=True, key="nav_" + target):
-            st.session_state["site_page"] = target
 site_page = st.session_state["site_page"]
+if site_page == "首页":
+    st.markdown('<div class="site-brand">PATHGUARD</div>', unsafe_allow_html=True)
+else:
+    brand_col, nav_col = st.columns([1.5, 2], vertical_alignment="center")
+    brand_col.markdown('<div class="site-brand">PATHGUARD</div>', unsafe_allow_html=True)
+    with nav_col:
+        nav_home, nav_intro, nav_work = st.columns(3, gap="small")
+        for target, column in (("首页", nav_home), ("产品介绍", nav_intro), ("风险工作台", nav_work)):
+            if column.button(target, type="primary" if site_page == target else "secondary",
+                             use_container_width=True, key="nav_" + target):
+                st.session_state["site_page"] = target
+                st.rerun()
 
 if site_page == "首页":
     st.markdown(
         '''<section class="hero" style="min-height:min(73vh,720px);">
           <div class="hero-kicker">欢迎来到 PATHGUARD</div>
-          <h1>从规划轨迹到实际执行，<br/>让工程风险看得见。</h1>
-          <p>看清车辆偏离路线的地方，理解车身占用的变化，把分析结果变成下一轮验证的依据。</p>
-          <div class="hero-badges"><span>路线风险分析</span><span>执行偏差实录</span><span>车身空间解释</span><span>验证结果闭环</span></div>
+          <h1>从规划轨迹到实际执行，<br/>让工程风险看得见！</h1>
         </section>''', unsafe_allow_html=True)
-    action_cols = st.columns([1,1,2.6])
-    action_cols[0].button("了解 PathGuard", use_container_width=True, on_click=lambda: st.session_state.update(site_page="产品介绍"))
-    action_cols[1].button("体验路线评估", type="primary", use_container_width=True, on_click=lambda: st.session_state.update(site_page="风险工作台"))
-    st.markdown('<div class="home-entry">为多轴工程车辆的规划、测试与交付团队而建 <span>看见问题 → 理解原因 → 安排验证</span></div>', unsafe_allow_html=True)
+    action_cols = st.columns([1, 1, 2.6])
+    action_cols[0].button("了解 PathGuard", use_container_width=True,
+                          on_click=lambda: st.session_state.update(site_page="产品介绍"))
+    action_cols[1].button("体验路线评估", type="primary", use_container_width=True,
+                          on_click=lambda: st.session_state.update(site_page="风险工作台"))
     st.stop()
 
 if site_page == "产品介绍":
-    st.markdown('''<section class="intro-hero"><small>产品介绍 / 从路线到行动</small>
-      <h1>路线规划好了，<br/>车辆执行时会发生什么？</h1>
-      <p>转弯时的偏移、车尾占用的变化、不同平台给出的结果——PathGuard 把这些问题放回具体路线，让工程师看得清、查得到、能验证。</p></section>''', unsafe_allow_html=True)
-    st.markdown('''<section class="product-section"><small>01 / 它解决哪个环节</small>
-      <h2>规划给出方案，工程验证确认表现。</h2>
-      <p>车辆实际运动可能偏离参考线。对于长车身车辆，方向偏一点，前后端的空间占用也会变化。PathGuard 连接路线文件、执行记录和车辆几何，帮助团队找到需要检查的路段。</p></section>''', unsafe_allow_html=True)
-    st.markdown('''<section class="product-section"><small>02 / 一次任务如何完成</small>
-      <h2>三步，从输入到可执行的下一步。</h2></section>
+    st.markdown('''<section class="intro-hero"><small>PATHGUARD / 工程决策工具</small>
+      <h1>把路线风险，变成可执行的验证清单。</h1>
+      <p>PathGuard 将候选路线、车辆空间、执行记录与验证结果放在同一条工作链路中，帮助团队先找到值得检查的位置，再决定下一步怎么验证。</p></section>''', unsafe_allow_html=True)
+    st.markdown('''<section class="product-section"><small>产品价值</small>
+      <h2>从一条路线，到一份可复查的工程判断。</h2>
       <div class="story-grid">
-        <div class="story-card"><em>第一步 · 找到关注点</em><h3>把路线放进同一个任务</h3><p>导入候选路线和车辆配置。历史学习提供检查顺序，工程指标指出值得关注的转弯、速度变化和余量。</p></div>
-        <div class="story-card"><em>第二步 · 看清空间变化</em><h3>从一条线看到整个车身</h3><p>查看局部车身扫掠；边界与配置具备条件时，试算余量。历史执行实录还可以直接对照计划与实际的偏差。</p></div>
-        <div class="story-card"><em>第三步 · 留下验证依据</em><h3>让每次测试都能被复用</h3><p>把仿真或现场结果接回任务，保留环境与版本。不一致的结果进入复核，已核对记录可作为后续训练候选。</p></div>
-      </div>''', unsafe_allow_html=True)
-    st.markdown('''<section class="product-section"><small>03 / 工程师最终拿到什么</small>
-      <h2>带着具体问题，进入下一轮测试。</h2></section>
-      <div class="outcome-panel"><div><h3>位置、数值、条件和下一步动作</h3>
-      <p>从“这条路线值得关注”继续看到“哪一段、什么现象、还要核对什么”，让规划、车辆与测试同事围绕同一份证据协作。</p></div>
-      <ul><li>先检查哪条候选路线</li><li>计划与实际在哪里发生偏离</li><li>车长与车宽怎样影响空间占用</li><li>验证结果对应哪一版条件</li></ul></div>''', unsafe_allow_html=True)
-    st.markdown('''<section class="product-section"><small>04 / 可以直接体验</small>
-      <h2>用真实运行记录，看懂执行差距。</h2>
-      <p>工作台的“执行偏差实录”已核对两次历史平台运行。你可以选择山路或坡道，查看计划与实际轨迹、偏差变化和假设尺寸下的车身占用。也可以导入自己的路线文件，建立新的评估任务。</p></section>''', unsafe_allow_html=True)
-    with st.expander("适用边界与当前能力", expanded=False):
-        st.write("当前版本将路线级历史失败排序、独立工程规则、条件性车身几何和已核对的执行实录组织在一个工作台中。实录是历史平台观测，尺寸交互是几何试算，现有模型不预测逐时刻跟踪误差。历史数据没有真实候选批次编号，节时收益需要新任务试点验证；具有完整边界和有效配置的路线才能进一步估算空间余量。")
-    st.button("进入风险工作台", on_click=lambda: st.session_state.update(site_page="风险工作台"))
+        <div class="story-card"><em>输入</em><h3>统一接入路线与配置</h3><p>导入 NPZ、CSV 和车辆配置，保留任务、场景、版本与原始文件关系，减少反复整理。</p></div>
+        <div class="story-card"><em>分析</em><h3>定位风险与车身空间</h3><p>用路线级排序和独立几何规则安排检查顺序，在全程图与关注点局部图之间切换。</p></div>
+        <div class="story-card"><em>闭环</em><h3>把验证结果带回任务</h3><p>登记人工、仿真或现场结果，记录条件和证据状态，让后续复核有依据可查。</p></div>
+      </div></section>''', unsafe_allow_html=True)
+    st.markdown('''<section class="outcome-panel"><div><small>一个工作台完成三件事</small><h3>先排优先级，再看位置，最后安排验证。</h3><p>系统输出的是检查顺序与证据线索，工程师仍可结合边界、车辆参数和现场条件作最终判断。</p></div><ul><li>候选路线优先级</li><li>车身扫掠与关注位置</li><li>执行偏差实录</li><li>验证记录与证据包</li></ul></section>''', unsafe_allow_html=True)
+    st.button("进入风险工作台", type="primary", on_click=lambda: st.session_state.update(site_page="风险工作台"))
     st.stop()
 
 assets, contract, sample_frame = load_static_assets()
 freeze = assets["freeze"]
-st.markdown('<section class="page-head"><h1>风险工作台</h1><p>分析候选路线、查看车身空间、核对执行偏差，再把验证结果接回任务。首次体验可先查看历史路线和执行偏差实录。</p></section>', unsafe_allow_html=True)
+st.markdown('<section class="workbench-strip"><strong>风险工作台</strong><span> — 选择路线，查看关注位置与验证依据。</span></section>', unsafe_allow_html=True)
 
-with st.expander("选择工作方式 · 体验历史路线或建立自己的任务", expanded=True):
-    st.header("从哪里开始？")
-    task_mode = st.radio("工作入口", ["体验历史路线", "新建评估任务", "已保存任务"],
+with st.expander("输入与任务", expanded=False):
+    task_mode = st.radio("工作入口", ["浏览已验证案例", "新建评估任务", "已保存任务"],
                          horizontal=True, key="task_mode",
                          on_change=lambda: st.session_state.pop("active_task_id", None))
     tasks = list_tasks()
@@ -601,6 +593,11 @@ with st.expander("选择工作方式 · 体验历史路线或建立自己的任�
         with st.expander('下载路线与配置示例'):
             for name in ['real_route.npz', 'vehicle_config.json']:
                 st.download_button('下载 '+name, (DEMO_DIR/'examples'/name).read_bytes(), file_name=name)
+            recording_pack = DEMO_DIR / 'examples' / 'recording_demo.zip'
+            if recording_pack.exists():
+                st.download_button('下载完整自制演练包（12条候选路线）', recording_pack.read_bytes(),
+                                   file_name='PathGuard自制文件演示包.zip', mime='application/zip')
+                st.caption('解压后多选路线NPZ，另上传车辆JSON。包内含同一道路的12条合成路线、异常输入和待验证附件；用于体验完整流程，不作为真实测试标签。')
         st.caption("已有验证结果在路线详情中逐次登记；是否用于训练需单独审核。")
         if st.button("保存任务并评估", type="primary"):
             try:
@@ -630,10 +627,10 @@ with st.expander("选择工作方式 · 体验历史路线或建立自己的任�
         else:
             st.info("本机尚无保存的任务。")
     else:
-        history_scope = st.radio("浏览范围", ["全部历史路线（340）", "讲解示例（15）"], horizontal=True)
-        st.caption("历史记录适合体验路线分析。它们来自不同测试条件，不能当作同一次任务的候选方案直接比较。")
-        upload = st.file_uploader("上传执行前特征 CSV", type=["csv"],
-                                  help="必须包含冻结契约规定的全部55项数值特征。")
+        history_scope = st.radio("浏览范围", ["全部案例（340）", "快速浏览（15）"], horizontal=True)
+        with st.expander("导入执行前特征 CSV", expanded=False):
+            upload = st.file_uploader("上传执行前特征 CSV", type=["csv"],
+                                      help="必须包含冻结契约规定的全部55项数值特征。")
     uploaded_geometry = {}
     if active_task is not None:
         try:
@@ -650,13 +647,12 @@ with st.expander("选择工作方式 · 体验历史路线或建立自己的任�
         except Exception as error:
             st.error(f'已保存任务无法复现：{error}')
             st.stop()
-    elif task_mode != "体验历史路线":
+    elif task_mode != "浏览已验证案例":
         st.info("请创建或选择任务后开展评估。")
         st.stop()
     elif upload is None:
-        input_frame = (sample_frame if history_scope == "讲解示例（15）"
+        input_frame = (sample_frame if history_scope == "快速浏览（15）"
                        else assets["frozen_features"]).copy()
-        st.caption(f"当前浏览：{history_scope}。选择任何一条可查看完整路线与局部关注点。")
     else:
         try:
             input_frame = pd.read_csv(upload, encoding="utf-8-sig")
@@ -666,10 +662,12 @@ with st.expander("选择工作方式 · 体验历史路线或建立自己的任�
             st.stop()
     structure_label = st.radio("车辆结构", ["全部", "五轴", "六轴", "结构未定"], horizontal=True)
     structure_map = {"全部": "all", "五轴": "five_axis", "六轴": "six_axis", "结构未定": "unknown"}
-    top_selection = (st.selectbox("常规优先验证名额", ["Top 10", "Top 20", "Top 34"],
-                                  format_func=lambda value: f'优先 {value.split()[-1]} 条')
-                     if task_mode != "体验历史路线" else "历史浏览")
-    search = st.text_input("搜索路线或场景", placeholder="例如：历史路线 023 或 场景 07")
+    if task_mode != "浏览已验证案例":
+        top_selection = st.number_input("常规优先验证名额", min_value=1, max_value=100000,
+                                        value=10, step=1, key="top_selection_count")
+    else:
+        top_selection = "案例浏览"
+    search = st.text_input("搜索路线或场景", placeholder="例如：案例 023 或 场景 07")
 
 try:
     evaluated, rule_components, runtime = evaluate_candidates(input_frame, contract, MODEL_PATH)
@@ -738,6 +736,8 @@ evaluated["geometry_min_margin_m"] = geometry_margins
 geometry_forced = pd.Series(
     [requires_geometry_check(geometry_results[str(sid)]) for sid in evaluated["sample_id"]], index=evaluated.index
 )
+if active_task and isinstance(top_selection, (int, float)) and top_selection > len(evaluated):
+    st.warning(f"优先验证名额 {int(top_selection)} 条超过当前任务的 {len(evaluated)} 条样本，将按全部样本处理。")
 unknown_forced = evaluated["vehicle_structure"].eq("unknown")
 evaluated["mandatory_review"] = geometry_forced | unknown_forced
 evaluated["mandatory_review_reason"] = ""
@@ -748,19 +748,11 @@ evaluated.loc[geometry_forced, "validation_priority"] = "P0 几何核查"
 if active_task:
     save_assessment(active_task, evaluated, runtime.get("model_name", "模型未加载"))
 
-if active_task:
-    st.info(f'当前任务：{active_task["title"]} · 场景 {active_task["scene"]} · 环境 {active_task["environment_version"]} · {len(evaluated)} 条候选 · 输入状态 {active_task["intake_status"]}。本任务内的路线按同一申报条件比较，验证结果逐次记录。')
-    if len(evaluated) < 2:
-        st.warning("当前只有一条输入路线：可以解释其风险，但无法比较候选方案或证明排序节省了复核工作量。请上传同场景、同配置的多条路线。")
-else:
-    st.info(f'当前是历史记录浏览：展示 {len(evaluated)} 条，冻结监督记录共 {len(assets["frozen_cases"])} 条；全部可逐条查看动态路线。它们不代表同一次规划生成的候选路线，也不能用本页的复核占比估算日常工作量。')
+if active_task and len(evaluated) < 2:
+    st.warning("当前只有一条输入路线，排序结果仅用于单条路线解释。")
 
-if runtime["model_available"]:
-    st.success("当前使用学习模型为路线排序，工程规则单独提示需要核查的情况。模型版本与输入格式已经核对。")
-else:
-    st.warning("当前为规则预览：冻结模型与本机运行时版本不一致，系统已安全回退，不影响界面与流程演示。")
-    with st.expander("查看技术状态"):
-        st.caption(runtime["model_error"])
+if not runtime["model_available"]:
+    st.warning("当前为规则预览，模型文件未加载。")
 
 active_structure = structure_map[structure_label]
 structure_view = (
@@ -769,43 +761,20 @@ structure_view = (
     else evaluated[evaluated["vehicle_structure"] == active_structure]
 )
 
-overview_tab, queue_tab, detail_tab, tracking_tab, evidence_tab = st.tabs(
-    ["任务概览" if active_task else "浏览导览", "验证顺序" if active_task else "历史路线", "路线详情", "执行偏差实录", "专业依据"]
+queue_tab, detail_tab, tracking_tab = st.tabs(
+    ["验证顺序" if active_task else "已验证案例", "路线详情", "执行偏差实录"]
 )
 
 with tracking_tab:
     render_tracking_evidence()
 
-with overview_tab:
-    if active_task:
-        st.markdown('<div class="section-kicker">当前工程任务</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">先确定验证顺序，再看每条路线为什么值得关注</h2>', unsafe_allow_html=True)
-        status_cols = st.columns(3)
-        status_cols[0].metric("本任务候选路线", len(evaluated))
-        status_cols[1].metric("当前筛选后", len(structure_view))
-        status_cols[2].metric("有路线坐标可解释", len(route_geometries))
-        st.info(f'任务「{active_task["title"]}」使用场景「{active_task["scene"]}」、环境版本「{active_task["environment_version"]}」。先到“验证顺序”查看建议，再在“路线详情”查看位置、指标并登记验证结果。')
-    else:
-        st.markdown('<div class="section-kicker">历史记录浏览</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">选择一条历史路线，看清风险提示来自哪里</h2>', unsafe_allow_html=True)
-        status_cols = st.columns(3)
-        status_cols[0].metric("当前浏览记录", len(evaluated))
-        status_cols[1].metric("冻结记录总数", len(assets["frozen_cases"]))
-        status_cols[2].metric("有路线坐标可解释", len(route_geometries))
-        st.info("历史路线可逐条查看已知结果、路线位置与工程提示；它们不是同一次规划任务的候选批次。要比较自己的路线，请在顶部选择“新建评估任务”。")
-    st.markdown('<div class="flow-strip">'
-        '<div class="flow-step"><b>① 看路线清单</b>了解当前输入与优先级</div>'
-        '<div class="flow-step"><b>② 看具体位置</b>查看路线、车辆外廓和关注点</div>'
-        '<div class="flow-step"><b>③ 定下一步动作</b>记录人工、仿真或现场验证结论</div>'
-        '</div>', unsafe_allow_html=True)
-    st.caption("模型实验和数据覆盖放在“专业依据”中，日常使用无需先阅读技术报告。")
-
 map_options = ["全部"] + sorted(evaluated["map_id"].astype(str).unique().tolist())
 with queue_tab:
     if active_task:
-        st.markdown('<div class="section-kicker">第一步：确定验证顺序</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">本任务：先验证哪几条路线？</h2>', unsafe_allow_html=True)
-        st.caption("同一任务的全部输入路线先接受评估，再分为本轮优先验证与其余按计划验证。高风险不等于已经失败，低风险也不等于免检。")
+        st.markdown('<div class="section-kicker">验证顺序</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">本任务优先验证队列</h2>', unsafe_allow_html=True)
+        st.caption("同一任务的路线将在统一条件下排序，优先验证名额可按任务规模调整。")
     else:
-        st.markdown('<div class="section-kicker">历史路线浏览</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">选一条路线，看看系统如何解释。</h2>', unsafe_allow_html=True)
-        st.caption("这里是不同测试条件下的历史路线，不是同一次规划任务的备选方案。15条讲解示例方便展示不同界面能力，不代表数据总体分布。")
+        st.markdown('<div class="section-kicker">案例浏览</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">已验证案例</h2>', unsafe_allow_html=True)
     filter_cols = st.columns(2)
     risk_options = ["全部", "高风险", "中风险", "低风险", "证据不足"]
     if not runtime["model_available"]:
@@ -863,18 +832,10 @@ with queue_tab:
             st.dataframe(all_routes.rename(columns={"display_route":"路线", "display_scene":"场景", "vehicle_structure":"车型", "risk_level":"关注等级", "next_action":"建议动作"}),
                          width="stretch", hide_index=True)
     else:
-        history_cols = st.columns(4)
-        history_cols[0].metric("当前浏览记录", len(evaluated))
-        history_cols[1].metric("结构待核", int(evaluated["vehicle_structure"].eq("unknown").sum()))
-        history_cols[2].metric("车型结构已确认", int(evaluated["vehicle_structure"].ne("unknown").sum()))
-        history_cols[3].metric("冻结监督记录", len(assets["frozen_cases"]))
-        st.caption(f"当前显示 {len(display)} 条历史路线及已有结果。列表先显示车型可确认的路线，再按模型分数方便浏览；这不是同任务排序实验，也不能用已重训模型的展示分数计算独立预测成绩。")
-        if history_scope == "讲解示例（15）":
-            st.caption("需要查看其余路线时，在顶部把浏览范围切换为“全部历史路线（340）”。")
+        if history_scope == "快速浏览（15）":
+            st.caption("当前显示 15 条快速浏览案例，可在输入与任务中切换全部案例。")
     if active_task:
         st.caption("规则应力按冻结开发集参考分布计算，不会随本次上传批次变化，也不是失败概率。模型分数与规则应力不在同一校准尺度，不按数值差强制人工复核。只有车型资料待补或经核验边界下的外廓估算越界会单列处理。")
-    else:
-        st.caption("风险分数是已在这批记录上重训的模型对历史输入的展示输出，不得与原有通过/失败标签一起作为独立验证成绩。车辆尺寸与道路边界可信度请在路线详情核对。")
     queue_event = st.dataframe(
         display, width="stretch", hide_index=True, on_select="rerun",
         selection_mode="single-row", key="risk_queue_table",
@@ -889,7 +850,7 @@ with queue_tab:
         st.caption("已选中该路线；切换到“路线详情”查看位置、原因和下一步动作。")
 
 with detail_tab:
-    st.markdown('<div class="section-kicker">路线详情</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">先看建议，再看这条路线的具体位置。</h2>', unsafe_allow_html=True)
+    st.markdown('<div class="section-kicker">路线详情</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">关注位置全图示意</h2>', unsafe_allow_html=True)
     if structure_view.empty:
         st.info("当前车辆结构筛选下没有候选路线；请切换结构或上传对应数据。")
     else:
@@ -912,14 +873,14 @@ with detail_tab:
         geometry = route_geometries.get(selected_id)
         geometry_rule = geometry_results.get(selected_id, {})
         if not active_task:
-            st.info("这是一条已有历史结果的记录。页面风险分数用于展示当前模型如何处理输入，不是该记录的独立预测；“建议动作”是假设它作为新任务输入时的工作流建议。")
+            st.info("这是一条已有历史结果的记录。页面风险分数用于展示当前模型如何处理输入。")
         st.caption(f'正在查看：{row["display_route"]} · {row["display_scene"]} · 文件覆盖 {float(row["route_length_m"]):.1f} 米。下方各关注点都位于这一条输入路线，不是拆分出的新路线。')
         if geometry and 'events' in geometry:
             dynamic_envelope(row, {selected_id: geometry}, geometry_rule)
             render_full_route_context(st, geometry, geometry_rule)
         else:
             dynamic_envelope(row, {})
-        with st.expander("专业指标、几何设置与原始追溯信息", expanded=False):
+        with st.expander("几何设置与详细指标", expanded=False):
             render_evidence(st, geometry)
             left, right = st.columns([1, 1])
             with left:
@@ -935,7 +896,6 @@ with detail_tab:
                     st.caption(geometry_rule["explanation"])
                 else:
                     st.write(f'尺寸联动估算：**不提供结论**（{geometry_rule.get("reason", "缺少可信边界证据")}）')
-                st.caption('规则提示来自开发集固定参考分布，不是学习模型的特征归因；两种分数未校准到同一尺度，不用分数差触发人工复核。')
             with right:
                 if runtime["model_available"]:
                     st.metric("主排序风险", f'{float(row["model_risk"]):.3f}', row["risk_level"])
@@ -961,14 +921,9 @@ with detail_tab:
                 ("10米窗口最大平均转向变化", row["window10m_max_mean_abs_steer_change_radpm"], "rad/m"),
             ], columns=["执行前指标", "数值", "单位"])
             st.dataframe(key_metrics, width="stretch", hide_index=True)
-            with st.expander("查看原始编号与来源文件（用于数据追溯）", expanded=False):
-                st.write(f'数据追溯编号：`{selected_id}`')
-                st.write(f'原始路线标识：`{row["route_id"]}`；原始场景标识：`{row["map_id"]}`')
-                st.caption("这些编号用于回查原始文件和验证记录，不作为客户选择路线的主要名称。")
         st.markdown('<div class="section-kicker">验证结果回流</div>', unsafe_allow_html=True)
         st.caption("已有仿真或现场结果时，可在此登记；没有结果时无需填写。")
         with st.expander("登记验证结果或查看已有记录", expanded=False):
-            st.caption("平台评估是预测记录；人工、闭环仿真和实车测试是独立验证记录。可信度按条件是否一致、结论是否核对、证据能否复查分层展示，不把测试方式换算成任意百分比。每次记录不覆盖旧结论。")
             with st.form(f"feedback_{selected_id}"):
                 feedback_cols = st.columns(3)
                 with feedback_cols[0]:
@@ -1055,140 +1010,3 @@ with detail_tab:
                 st.download_button("导出已审核训练候选记录 CSV", approved.to_csv(index=False).encode("utf-8-sig"),
                                    file_name="pathguard_training_candidates.csv", mime="text/csv",
                                    key=f"training_candidates_{selected_id}")
-            st.caption("任务原件和附件保存在本机 LocalAppData/PathGuard/tasks；验证时间线保存在 SQLite。上传或导出不会自动重训模型。")
-
-with evidence_tab:
-    st.markdown('<div class="section-kicker">专业依据</div><h2>这些建议建立在什么证据上？</h2>', unsafe_allow_html=True)
-    st.markdown('<div class="story-grid">'
-        '<div class="story-card"><em>路线数据</em><h3>340条历史路线可逐条回看</h3><p>每条都可追溯到原始坐标和已知结果；不同路线不一定来自同一规划批次。</p></div>'
-        '<div class="story-card"><em>空间边界</em><h3>3条路线支持条件性余量估算</h3><p>只有通过完整边界筛查的路线才会显示尺寸变化后的边界余量；其余路线仍可查看轨迹与关注点。</p></div>'
-        '<div class="story-card"><em>工程验证</em><h3>真实任务收益需要继续检验</h3><p>留出地图实验提供离线依据；节省多少工时和真实批次的严重失效捕获仍需试点确认。</p></div>'
-        '</div>', unsafe_allow_html=True)
-    st.caption("模型排序、工程规则和几何边界分别提供证据；分数不是现场失效概率，也不能替代闭环仿真或实车验证。")
-    render_technical_principles(st, REPO_ROOT)
-    with st.expander("查看完整技术附录：数据覆盖、离线指标与实验限制", expanded=False):
-        st.markdown("### 数据与模型基础")
-        foundation_cols = st.columns(4)
-        foundation_cols[0].metric("冻结监督记录", freeze["final_samples"])
-        foundation_cols[1].metric("历史通过 / 失败", f'{freeze["passed"]} / {freeze["failed"]}')
-        foundation_cols[2].metric("执行前特征", freeze["feature_count"])
-        foundation_cols[3].metric("地图数量", freeze["map_count"])
-        st.caption(f'当前模型：{runtime["model_name"] if runtime["model_available"] else "未加载"}。部署模型在340条冻结记录上重训；历史留出实验使用当时的隔离预测，页面内对这340条再次评分仅供查看，不代表独立验证。')
-        if active_task:
-            st.markdown("### 本任务的验证反馈与排序对照")
-            task_audit = evaluate_verified_task(evaluated, load_feedback(limit=10000), active_task)
-            if task_audit["status"] == "描述性结果":
-                st.dataframe(pd.DataFrame(task_audit["rows"]), width="stretch", hide_index=True)
-                st.caption(f'同任务已核对候选 {task_audit["verified_candidates"]} 条、失败 {task_audit["failures"]} 条；'
-                           f'排除相互矛盾的候选 {task_audit["excluded_conflicts"]} 条。{task_audit["note"]}')
-            else:
-                st.info(f'{task_audit["status"]}：{task_audit["reason"]}')
-            st.divider()
-        st.markdown("### 冻结历史数据的独立验证依据")
-        st.markdown('<div class="section-kicker">数据是否支持当前能力</div><h2 style="margin:.1rem 0 .25rem;color:#173f59;">验证证据：哪些结论已经有数据，哪些仍需补齐？</h2>', unsafe_allow_html=True)
-        boundary = assets.get("boundary", {})
-        if boundary:
-            boundary_cols = st.columns(5)
-            boundary_cols[0].metric("冻结NPZ可读取",f'{boundary["readable_npz"]} / {boundary["frozen_samples"]}')
-            boundary_cols[1].metric("含完整边界坐标",boundary["full_boundary_samples"])
-            boundary_cols[2].metric("距离语义校验通过",boundary["verified_boundary_semantics_samples"])
-            boundary_cols[3].metric("完整点列筛查通过",assets.get("boundary_integrity",{}).get("orientation_and_continuity_screen_pass",0))
-            boundary_cols[4].metric("含原配置车体净空",boundary["body_clearance_samples"])
-            st.caption("距离语义只检查边界点到中心线的距离是否复现净空字段（误差≤1e-5m）。继续通过左右方向、次序和连续性筛查的只有3条；这仍不证明走廊无自交或完成连续碰撞检测。")
-            coverage=pd.DataFrame(boundary["coverage_by_structure"])
-            coverage["integrity_screen_passed"] = coverage["vehicle_structure"].map({"five_axis":3,"six_axis":0,"unknown":0}).fillna(0).astype(int)
-            coverage=coverage[["vehicle_structure","samples","has_full_boundary","boundary_distance_semantics_verified","integrity_screen_passed","has_body_clearance","has_vehicle_profile_id"]].rename(columns={
-                "vehicle_structure":"车辆结构","samples":"冻结样本","has_full_boundary":"完整边界","boundary_distance_semantics_verified":"距离语义通过","integrity_screen_passed":"完整点列筛查通过","has_body_clearance":"原配置车体净空","has_vehicle_profile_id":"车型配置ID"})
-            st.dataframe(coverage,width="stretch",hide_index=True)
-            st.subheader("空间特征实验状态")
-            st.warning("旧实验预测文件中，55维基线和空间增广模型的逐条分数完全相同，且地图内预测恒定。因此旧实验不能回答空间特征是否有效；不将其并入训练模型。需先记录真实候选批次ID并重做独立对照。")
-            st.divider()
-        st.subheader('留出地图：模型、规则与混合排序对照')
-        method_frame = assets["heldout_methods_v3"].copy()
-        method_names = {
-            "learning_model":"55维学习模型",
-            "frozen_geometry_rule":"冻结开发集规则",
-            "naive_uncalibrated_50_50_hybrid":"未校准50:50混合（仅对照）",
-            "minimum_clearance":"最小静态净空",
-        }
-        method_frame["method_label"] = method_frame["method"].map(method_names)
-        shown = method_frame[["method_label","budget","captured_failures","precision_at_k","failure_capture_rate","roc_auc_failure","pr_auc_failure","random_expected_captured"]]
-        st.dataframe(shown.rename(columns={
-            "method_label":"方法","budget":"验证预算","captured_failures":"捕获失败数",
-            "precision_at_k":"入选失败比例","failure_capture_rate":"全部失败覆盖率",
-            "roc_auc_failure":"失败ROC-AUC","pr_auc_failure":"失败PR-AUC",
-            "random_expected_captured":"随机期望失败数",
-        }),hide_index=True)
-        st.caption("66条、5张已留出的地图；这是已检查留出集的事后重排，不是新独立验证。50:50分数混合未校准、未接入产品，也未据此选阈值。没有规划器调用ID，因此全局Top-K不等于同一次任务挑路线。")
-        batch = assets.get("batch_proxy", {})
-        if batch:
-            st.markdown("#### 同地图、同确认车型的批次代理分析")
-            proxy_rows=[]
-            for item in batch["results"]:
-                proxy_rows.append({
-                    "方法":method_names.get(item["method"],item["method"]),
-                    "代理组内20%名额捕获失败期望":item["expected_failures_captured_tie_aware"],
-                    "组内失败捕获率":item["capture_rate"],
-                    "相同名额随机期望":item["random_expected_failures_captured_same_group_budgets"],
-                })
-            st.dataframe(pd.DataFrame(proxy_rows),hide_index=True)
-            st.warning(f"只有{batch['proxy_groups_with_at_least_two_candidates']}个地图×车型代理组，共{batch['proxy_candidates_in_eligible_groups']}条候选；该预算的随机期望高于各排序结果。缺少真实 planner_run_id/candidate_batch_id，当前不能证明模型带来同批挑选增益。")
-        test = assets["test"]
-        oof = assets["oof"]["overall"]
-        audit = assets["audit"]
-        st.subheader("离线地图分组验证")
-        st.caption("以下结果均来自离线地图分组验证，不是实车验证结果，也不构成安全认证。")
-        cols = st.columns(4)
-        cols[0].metric("独立测试失败 PR-AUC", f'{test["pr_auc_failure"]:.4f}')
-        cols[1].metric("独立测试失败 ROC-AUC", f'{test["roc_auc_failure"]:.4f}')
-        cols[2].metric("全量OOF失败 PR-AUC", f'{oof["pr_auc_failure"]:.4f}')
-        cols[3].metric("全量OOF失败 ROC-AUC", f'{oof["roc_auc_failure"]:.4f}')
-
-        top_rows: list[dict[str, str | int]] = []
-        for k in ("10", "20", "34"):
-            test_item = test["top_k"][k]
-            oof_item = assets["oof"]["top_k"][k]
-            top_rows.append({
-                "队列": f"Top-{k}",
-                "独立测试捕获失败数": test_item["failures_captured"],
-                "独立测试失败捕获率": percent(test_item["capture_rate"]),
-                "全量OOF捕获失败数": oof_item["failures_captured"],
-                "全量OOF失败捕获率": percent(oof_item["capture_rate"]),
-            })
-        st.dataframe(pd.DataFrame(top_rows), width="stretch", hide_index=True)
-        st.caption("Top-K捕获率分母为对应离线验证集合中的失败样本数。")
-
-        st.subheader("历史60次规则 / 模型地图分组审计")
-        st.caption('历史审计采用旧规则定义；不作为本次固定开发集参考规则的验证结果。本次规则结果见上方同预算对比。')
-        audit_rows = []
-        for weight, item in audit["summary_by_model_weight"].items():
-            audit_rows.append({
-                "模型权重": float(weight),
-                "失败PR-AUC均值": item["pr_auc_failure"]["mean"],
-                "失败PR-AUC P10–P90": f'{item["pr_auc_failure"]["p10"]:.3f}–{item["pr_auc_failure"]["p90"]:.3f}',
-                "Top-10捕获率均值": item["top_10_capture"]["mean"],
-                "Top-20捕获率均值": item["top_20_capture"]["mean"],
-                "Top-34捕获率均值": item["top_34_capture"]["mean"],
-            })
-        st.dataframe(pd.DataFrame(audit_rows), width="stretch", hide_index=True)
-        st.caption(
-            f'审计共 {audit["n_splits"]} 次地图分组；按平均失败PR-AUC观察到的最佳模型权重为 '
-            f'{audit["best_weight_by_mean_pr_auc"]:.2f}。页面主排序使用学习模型，规则作为独立工程交叉校验。'
-        )
-
-        with st.expander("独立测试失效机理证据卡"):
-            for card in assets["mechanisms"]:
-                st.markdown(
-                    f'**{card["sample_id"]}** · `{card["map_id"]}` · `{card["vehicle_structure"]}` · '
-                    f'失败风险 {float(card["failure_risk"]):.3f} · {label_text(card["true_label"])}'
-                )
-                st.dataframe(pd.DataFrame(card["reasons"]), width="stretch", hide_index=True)
-
-        st.code(
-            f'model = {runtime["model_name"] if runtime["model_available"] else "未加载"}\n'
-            f'feature_version = {contract["feature_version"]}\n'
-            f'schema_sha256 = {contract["schema_sha256"]}\n'
-            '主排序 = 学习模型风险分数\n工程规则 = 独立应力提示\n补资料与核验几何越界 = 预算外单列',
-            language="text",
-        )
-        st.caption("PathGuard只安排候选路线验证优先级；最终结论仍需闭环仿真、人工复核或实车验证。")

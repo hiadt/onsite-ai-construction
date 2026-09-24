@@ -10,7 +10,7 @@ def test_customer_labels_keep_distinct_routes_with_same_map_code():
         "map_id": ["map_023", "map_023"],
     })
     shown = add_display_labels(frame, historical=True, frozen_ids=["sample_a", "sample_b"])
-    assert shown["display_route"].tolist() == ["历史路线 002", "历史路线 001"]
+    assert shown["display_route"].tolist() == ["案例 002", "案例 001"]
     assert shown["display_scene"].tolist() == ["场景 23", "场景 23"]
     assert shown["sample_id"].tolist() == ["sample_b", "sample_a"]
 

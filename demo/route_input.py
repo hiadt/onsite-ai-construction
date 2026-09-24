@@ -294,17 +294,15 @@ def render_evidence(st, geometry):
         bp=boundary_rule["minimum_index"]
         fig.add_trace(go.Scatter(x=[xy[bp,0]],y=[xy[bp,1]],mode="markers",
             marker=dict(size=15,color="#ff9d2e",symbol="diamond"),name="尺寸联动最小余量"))
-    zoom=st.checkbox("放大当前关注点",key="zoom_"+geometry["source_sha256"][:12])
+    zoom=st.toggle("放大当前关注点",value=False,key="zoom_"+geometry["source_sha256"][:12])
     if zoom:
         fig.update_xaxes(range=[event["x_m"]-15,event["x_m"]+15])
         fig.update_yaxes(range=[event["y_m"]-15,event["y_m"]+15])
     fig.update_layout(xaxis_title="横向坐标 / 米",yaxis_title="纵向坐标 / 米",height=430,
         legend=dict(orientation="h",yanchor="bottom",y=1.02,xanchor="left",x=0),
-        margin=dict(l=20,r=20,t=78,b=20),dragmode=False,hovermode=False)
+        margin=dict(l=20,r=20,t=78,b=20),dragmode="pan",hovermode="closest")
     fig.update_yaxes(scaleanchor="x",scaleratio=1)
-    st.plotly_chart(fig,width="stretch",config={"displayModeBar":False,"staticPlot":True})
-    st.caption("上方选择关注点，并用“放大当前关注点”切换视图。图表已关闭拖动和滚轮缩放，避免误触；重新取消勾选即可返回全程。")
-    st.caption("图例：路线实线为参考点轨迹；四条点线为车体四角轨迹；红色多边形为当前位置外廓；灰线为NPZ逐点边界；橙色菱形为当前尺寸下的最小余量位置。")
+    st.plotly_chart(fig,use_container_width=True,config={"displayModeBar":True,"scrollZoom":True,"displaylogo":False})
     front=length-reference
     st.write(f'{event["label"]}：**{event["value"]:.4g} {event["unit"]}**；路线里程 {event["s_m"]:.2f} m，原始点索引 {event["index"]}。')
     st.caption(f"几何设置：参考点前方 {front:.2f} m、后方 {reference:.2f} m、半宽 {width/2:.2f} m。")
@@ -346,5 +344,3 @@ def render_evidence(st, geometry):
         baseline=np.asarray(geometry.get("body_clearance_m",[]),dtype=float)
         baseline_text=f' 原配置最小车体净空为 {np.nanmin(baseline):.2f} m；改变尺寸后不能复用该数值。' if baseline.size else ""
         st.info(boundary_rule["reason"]+baseline_text+" 当前仅展示扫掠包络，并将尺寸联动规则标记为证据不足。")
-    st.info("决策链：冻结55维模型负责历史失败风险排序；可调尺寸几何规则负责边界越界与低余量检查。几何越界触发P0复核，但不会伪改学习模型概率。")
-    st.caption("四条角点轨迹和红色车体外廓按米制坐标及逐点航向角重算。它们是刚性矩形几何扫掠，不包含铰接、轮胎侧偏、悬架、载荷转移或制动动力学。"+geometry["coordinate_note"])

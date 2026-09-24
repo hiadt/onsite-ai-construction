@@ -34,7 +34,7 @@ def scene_name(raw: object) -> str:
 
 def route_name(raw: object, number: int, *, historical: bool) -> str:
     if historical:
-        return f"历史路线 {number:03d}"
+        return f"案例 {number:03d}"
     stem = Path(str(raw or "")).stem.strip()
     if not stem or re.fullmatch(r"map_\d+", stem):
         return f"候选路线 {number:02d}"

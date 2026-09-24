@@ -10,7 +10,7 @@
 
 当前成果基于历史数据回顾性验证，不代表实车验证结果，也不构成安全认证。模型排序、固定工程规则与真实边界几何估算是三种不同证据，不能互相替代。
 
-当前唯一口径见 [V5结果口径](docs/final/PathGuard结果口径_v5.md)。项目书见 [Word技术深化版](docs/final/PathGuard项目书正式版_v5.docx)、[PDF](docs/final/PathGuard项目书正式版_v5.pdf) 和 [源稿](docs/final/PathGuard项目书正式版_v5.md)。[宣传与操作讲解](docs/final/PathGuard宣传与演示稿_v4.md) 与 [答辩问答](docs/final/答辩问题与统一口径.md) 保留V4产品叙事；技术定义以V5为准。
+当前唯一技术口径见 [V5结果口径](docs/final/PathGuard结果口径_v5.md)。最新界面对应的项目书见 [前端同步修订版](docs/final/PathGuard项目书_前端同步修订版.docx)，演示流程见 [前端录制稿 V8](docs/final/PathGuard前端录制稿_v8.md)。[Word技术深化版](docs/final/PathGuard项目书正式版_v5.docx)、[PDF](docs/final/PathGuard项目书正式版_v5.pdf) 和 [源稿](docs/final/PathGuard项目书正式版_v5.md) 保留 V5 技术论证；技术定义以 V5 结果口径为准。
 
 冻结数据340条（139通过、201失败）、55项特征、25地图；五轴99、六轴79、结构未定162。另有两次原始核对的平台执行实录共8202帧，支持计划/实际对照与偏差解释。模型实验、平台实录和条件性几何是不同证据，详细数值见V5项目书。
 
@@ -41,6 +41,6 @@
 
 ## 数学模型与算法说明
 
-V5项目书含27组公式与五幅重绘技术图。前端“专业依据 → 算法原理与系统架构”可按需展开。[公式、工件参数与实现追溯](docs/final/technical_v5/README.md)。
+V5项目书含27组公式与五幅重绘技术图。算法原理与系统架构保留在项目书和[技术追溯文档](docs/final/technical_v5/README.md)，前端不单列“专业依据”。
 
 论文风格图集：[7幅组合图及图注](docs/final/scientific_figures/图集说明与图注.md)，含16个子图、PNG/SVG/PDF、数据哈希与绘图脚本。
