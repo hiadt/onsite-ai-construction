@@ -116,4 +116,3 @@ for c in captions:
  html += [f'<article><h2>{c["title"]}</h2><img src="figures/{c["name"]}.png"><p>{c["caption"]}</p><small>建议位置：{c["placement"]} · <a href="figures/{c["name"]}.svg">SVG</a> · <a href="figures/{c["name"]}.pdf">PDF</a></small></article>']
 (ROOT/'图集说明与图注.md').write_text('\n\n'.join(md),encoding='utf-8');(ROOT/'科研图集预览.html').write_text('\n'.join(html),encoding='utf-8')
 print('Created',len(captions),'figures')
-
