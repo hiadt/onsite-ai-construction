@@ -13,6 +13,10 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as st_components
+try:
+    from tracking_evidence import render_tracking_evidence
+except ModuleNotFoundError:
+    from demo.tracking_evidence import render_tracking_evidence
 
 try:  # Works both with `streamlit run demo/app.py` and AppTest from repo root.
     from demo_logic import apply_filters, evaluate_candidates, requires_geometry_check, select_validation_queue
@@ -760,9 +764,12 @@ structure_view = (
     else evaluated[evaluated["vehicle_structure"] == active_structure]
 )
 
-overview_tab, queue_tab, detail_tab, evidence_tab = st.tabs(
-    ["任务概览" if active_task else "浏览导览", "验证顺序" if active_task else "历史路线", "路线详情", "专业依据"]
+overview_tab, queue_tab, detail_tab, tracking_tab, evidence_tab = st.tabs(
+    ["任务概览" if active_task else "浏览导览", "验证顺序" if active_task else "历史路线", "路线详情", "执行偏差实录", "专业依据"]
 )
+
+with tracking_tab:
+    render_tracking_evidence()
 
 with overview_tab:
     if active_task:

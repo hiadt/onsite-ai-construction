@@ -1,0 +1,50 @@
+[
+  {
+    "archive": "platform_runs/B_validation/mounarea_1/round_000/replay/replay.json",
+    "map": "mounarea_1",
+    "status": "accepted_measured_tracking",
+    "stats": {
+      "frames": 4974,
+      "max_lateral_m": 1.2120627227987861,
+      "p95_lateral_m": 0.8427607971660274,
+      "max_heading_deg": 10.02010237541154,
+      "reference_alignment_p95_m": 3.975360621180336e-05,
+      "recorded_lateral_agreement_p95_m": 0.005414106277457974,
+      "recorded_heading_agreement_p95_deg": 0.24683921436843334
+    },
+    "route_sha256": "d7ccac224bb6a4f32652eb0fbf5d6e65cb37c7fec6e1a789c8b1c2319df05fa7",
+    "telemetry_sha256": "e7f8174967a18d80d2923c113f9b4dd985a7f8fb791da45c3ab5b5bf15b2a00d"
+  },
+  {
+    "archive": "platform_runs/B_validation/overpass_2/round_001/replay/replay.json",
+    "map": "overpass_2",
+    "status": "excluded",
+    "reason": "replay differs from original telemetry: progress_s_m"
+  },
+  {
+    "archive": "platform_runs/B_validation/ramp_1/round_000/replay/replay.json",
+    "map": "ramp_1",
+    "status": "accepted_measured_tracking",
+    "stats": {
+      "frames": 3228,
+      "max_lateral_m": 0.4076646075585128,
+      "p95_lateral_m": 0.3366401674111336,
+      "max_heading_deg": 6.265666929186689,
+      "reference_alignment_p95_m": 3.4959556963872546e-05,
+      "recorded_lateral_agreement_p95_m": 0.003509326664339597,
+      "recorded_heading_agreement_p95_deg": 0.12907650399461046
+    },
+    "route_sha256": "ba62e96011ce4f85028c8f4f2a919f9434611d2aa771e1b28ca9fdf9533832ce",
+    "telemetry_sha256": "ba37d449a892dc9fe544334c9bcf5db0507b65eb2bef2be132917dd6174268fa"
+  },
+  {
+    "archive": "platform_runs/B_validation_v3/mounarea_1/round_000/replay/replay.json",
+    "map": "mounarea_1",
+    "status": "duplicate_same_run"
+  },
+  {
+    "archive": "platform_runs/B_validation_v3/overpass_2/round_000/replay/replay.json",
+    "map": "overpass_2",
+    "status": "duplicate_same_run"
+  }
+]

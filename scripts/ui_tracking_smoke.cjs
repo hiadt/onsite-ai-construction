@@ -1,0 +1,27 @@
+const {chromium}=require('playwright');
+(async()=>{
+ const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+ const page=await browser.newPage({viewport:{width:1440,height:1000}});const errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:8522/');
+ await page.getByText('风险工作台',{exact:true}).first().click();
+ await page.getByRole('tab',{name:'执行偏差实录',exact:true}).click();
+ await page.getByText('规划路线与实际执行，相差在哪里？',{exact:true}).waitFor();
+ await page.getByText('规划路线与实际执行，相差在哪里？',{exact:true}).evaluate(e=>e.scrollIntoView({block:'start'}));
+ await page.waitForTimeout(2200);
+ await page.screenshot({path:'D:/Codex_output/PathGuard执行偏差证据补充/执行偏差实录.png'});
+ await page.getByText('同样的偏差，为什么长车身需要更多关注？',{exact:true}).evaluate(e=>e.scrollIntoView({block:'start'}));
+ await page.screenshot({path:'D:/Codex_output/PathGuard执行偏差证据补充/偏差与车身占用.png'});
+ const length=page.locator('[data-testid="stSlider"]').filter({has:page.getByText('假设车长 / 米',{exact:true})}).getByRole('slider');
+ await length.focus();await length.press('ArrowLeft');await page.waitForTimeout(4000);
+ await page.getByText('原跟踪模型能直接接入吗？',{exact:true}).evaluate(e=>e.scrollIntoView({block:'start'}));
+ await page.getByText('查看重新计算的整图留出结果',{exact:true}).click();
+ await page.screenshot({path:'D:/Codex_output/PathGuard执行偏差证据补充/影子模型复验.png'});
+ const select=page.locator('[data-testid="stSelectbox"]').filter({has:page.getByText('选择历史执行案例',{exact:true})}).getByRole('combobox');
+ await select.fill('坡道');await page.getByText('坡道历史运行：较小偏差对照',{exact:true}).last().click();
+ await page.waitForTimeout(4000);
+ if(!await page.getByText('0.408 米',{exact:true}).count())errors.push('second case metric missing');
+ if(await page.locator('[data-testid="stException"]').count())errors.push('Streamlit exception');
+ console.log(JSON.stringify({errors,visibleModebars:await page.locator('.modebar:visible').count()}));
+ await browser.close();if(errors.length)process.exitCode=1;
+})().catch(e=>{console.error(e);process.exit(1)});
