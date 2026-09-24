@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="872.39952pt" height="353.99952pt" viewBox="0 0 872.39952 353.99952" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-09-24T21:59:11.952504</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.9.4, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 353.99952 
+L 872.39952 353.99952 
+L 872.39952 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 49.079063 312.744207 
+L 405.319291 312.744207 
+L 405.319291 23.591875 
+L 49.079063 23.591875 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_1">
+    <g id="xtick_1">
+     <g id="line2d_1">
+      <defs>
+       <path id="m2b22158419" d="M 0 0 
+L 0 3.5 
+" style="stroke: #000000; stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#m2b22158419" x="111.536765" y="312.744207" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_1">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="111.536765" y="328.537332" transform="rotate(-0 111.536765 328.537332)">五轴</text>
+     </g>
+    </g>
+    <g id="xtick_2">
+     <g id="line2d_2">
+      <g>
+       <use xlink:href="#m2b22158419" x="227.199177" y="312.744207" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_2">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="227.199177" y="328.537332" transform="rotate(-0 227.199177 328.537332)">六轴</text>
+     </g>
+    </g>
+    <g id="xtick_3">
+     <g id="line2d_3">
+      <g>
+       <use xlink:href="#m2b22158419" x="342.861589" y="312.744207" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_3">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="342.861589" y="328.537332" transform="rotate(-0 342.861589 328.537332)">结构未定</text>
+     </g>
+    </g>
+   </g>
+   <g id="matplotlib.axis_2">
+    <g id="ytick_1">
+     <g id="line2d_4">
+      <path d="M 49.079063 312.744207 
+L 405.319291 312.744207 
+" clip-path="url(#p52990d7ee6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.17; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_5">
+      <defs>
+       <path id="mb1f1a975d5" d="M 0 0 
+L -3.5 0 
+" style="stroke: #000000; stroke-width: 0.8"/>
+      </defs>
+      <g>
+       <use xlink:href="#mb1f1a975d5" x="49.079063" y="312.744207" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_4">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: end" x="42.079063" y="317.14077" transform="rotate(-0 42.079063 317.14077)">0</text>
+     </g>
+    </g>
+    <g id="ytick_2">
+     <g id="line2d_6">
+      <path d="M 49.079063 273.669568 
+L 405.319291 273.669568 
+" clip-path="url(#p52990d7ee6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.17; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_7">
+      <g>
+       <use xlink:href="#mb1f1a975d5" x="49.079063" y="273.669568" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_5">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: end" x="42.079063" y="278.06613" transform="rotate(-0 42.079063 278.06613)">25</text>
+     </g>
+    </g>
+    <g id="ytick_3">
+     <g id="line2d_8">
+      <path d="M 49.079063 234.594928 
+L 405.319291 234.594928 
+" clip-path="url(#p52990d7ee6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.17; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_9">
+      <g>
+       <use xlink:href="#mb1f1a975d5" x="49.079063" y="234.594928" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_6">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: end" x="42.079063" y="238.991491" transform="rotate(-0 42.079063 238.991491)">50</text>
+     </g>
+    </g>
+    <g id="ytick_4">
+     <g id="line2d_10">
+      <path d="M 49.079063 195.520289 
+L 405.319291 195.520289 
+" clip-path="url(#p52990d7ee6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.17; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_11">
+      <g>
+       <use xlink:href="#mb1f1a975d5" x="49.079063" y="195.520289" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_7">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: end" x="42.079063" y="199.916851" transform="rotate(-0 42.079063 199.916851)">75</text>
+     </g>
+    </g>
+    <g id="ytick_5">
+     <g id="line2d_12">
+      <path d="M 49.079063 156.445649 
+L 405.319291 156.445649 
+" clip-path="url(#p52990d7ee6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.17; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_13">
+      <g>
+       <use xlink:href="#mb1f1a975d5" x="49.079063" y="156.445649" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_8">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: end" x="42.079063" y="160.842212" transform="rotate(-0 42.079063 160.842212)">100</text>
+     </g>
+    </g>
+    <g id="ytick_6">
+     <g id="line2d_14">
+      <path d="M 49.079063 117.37101 
+L 405.319291 117.37101 
+" clip-path="url(#p52990d7ee6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.17; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_15">
+      <g>
+       <use xlink:href="#mb1f1a975d5" x="49.079063" y="117.37101" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_9">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: end" x="42.079063" y="121.767572" transform="rotate(-0 42.079063 121.767572)">125</text>
+     </g>
+    </g>
+    <g id="ytick_7">
+     <g id="line2d_16">
+      <path d="M 49.079063 78.29637 
+L 405.319291 78.29637 
+" clip-path="url(#p52990d7ee6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.17; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_17">
+      <g>
+       <use xlink:href="#mb1f1a975d5" x="49.079063" y="78.29637" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_10">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: end" x="42.079063" y="82.692933" transform="rotate(-0 42.079063 82.692933)">150</text>
+     </g>
+    </g>
+    <g id="ytick_8">
+     <g id="line2d_18">
+      <path d="M 49.079063 39.221731 
+L 405.319291 39.221731 
+" clip-path="url(#p52990d7ee6)" style="fill: none; stroke: #b0b0b0; stroke-opacity: 0.17; stroke-width: 0.8; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_19">
+      <g>
+       <use xlink:href="#mb1f1a975d5" x="49.079063" y="39.221731" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_11">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: end" x="42.079063" y="43.618293" transform="rotate(-0 42.079063 43.618293)">175</text>
+     </g>
+    </g>
+    <g id="text_12">
+     <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="15.993125" y="168.168041" transform="rotate(-90 15.993125 168.168041)">样本数</text>
+    </g>
+   </g>
+   <g id="patch_3">
+    <path d="M 65.2718 312.744207 
+L 157.80173 312.744207 
+L 157.80173 158.008635 
+L 65.2718 158.008635 
+z
+" clip-path="url(#p52990d7ee6)" style="fill: #0f4d92; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 180.934212 312.744207 
+L 273.464142 312.744207 
+L 273.464142 189.268347 
+L 180.934212 189.268347 
+z
+" clip-path="url(#p52990d7ee6)" style="fill: #42949e; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 296.596624 312.744207 
+L 389.126554 312.744207 
+L 389.126554 59.540543 
+L 296.596624 59.540543 
+z
+" clip-path="url(#p52990d7ee6)" style="fill: #a4adb5; stroke: #ffffff; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 49.079063 312.744207 
+L 49.079063 23.591875 
+" style="fill: none; stroke: #000000; stroke-width: 1.1; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 49.079062 312.744207 
+L 405.319291 312.744207 
+" style="fill: none; stroke: #000000; stroke-width: 1.1; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_13">
+    <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="111.536765" y="153.319678" transform="rotate(-0 111.536765 153.319678)">99</text>
+   </g>
+   <g id="text_14">
+    <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="227.199177" y="184.57939" transform="rotate(-0 227.199177 184.57939)">79</text>
+   </g>
+   <g id="text_15">
+    <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="342.861589" y="54.851587" transform="rotate(-0 342.861589 54.851587)">162</text>
+   </g>
+   <g id="text_16">
+    <text style="font: 700 13px 'Microsoft YaHei'; text-anchor: middle" x="227.199177" y="17.591875" transform="rotate(-0 227.199177 17.591875)">A  冻结样本结构</text>
+   </g>
+  </g>
+  <g id="axes_2">
+   <g id="patch_8">
+    <path d="M 508.959291 312.744207 
+L 865.19952 312.744207 
+L 865.19952 23.591875 
+L 508.959291 23.591875 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 508.959291 36.735163 
+L 823.561052 36.735163 
+L 823.561052 92.075322 
+L 508.959291 92.075322 
+z
+" clip-path="url(#p12d6daf719)" style="fill: #0f4d92"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 508.959291 105.910362 
+L 572.804943 105.910362 
+L 572.804943 161.250521 
+L 508.959291 161.250521 
+z
+" clip-path="url(#p12d6daf719)" style="fill: #42949e"/>
+   </g>
+   <g id="patch_11">
+    <path d="M 508.959291 175.085561 
+L 533.017073 175.085561 
+L 533.017073 230.42572 
+L 508.959291 230.42572 
+z
+" clip-path="url(#p12d6daf719)" style="fill: #7fbfc5"/>
+   </g>
+   <g id="patch_12">
+    <path d="M 508.959291 244.26076 
+L 511.735189 244.26076 
+L 511.735189 299.60092 
+L 508.959291 299.60092 
+z
+" clip-path="url(#p12d6daf719)" style="fill: #aadca9"/>
+   </g>
+   <g id="matplotlib.axis_3">
+    <g id="xtick_4">
+     <g id="line2d_20">
+      <g>
+       <use xlink:href="#m2b22158419" x="508.959291" y="312.744207" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_17">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="508.959291" y="328.537332" transform="rotate(-0 508.959291 328.537332)">0</text>
+     </g>
+    </g>
+    <g id="xtick_5">
+     <g id="line2d_21">
+      <g>
+       <use xlink:href="#m2b22158419" x="555.224256" y="312.744207" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_18">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="555.224256" y="328.537332" transform="rotate(-0 555.224256 328.537332)">50</text>
+     </g>
+    </g>
+    <g id="xtick_6">
+     <g id="line2d_22">
+      <g>
+       <use xlink:href="#m2b22158419" x="601.489221" y="312.744207" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_19">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="601.489221" y="328.537332" transform="rotate(-0 601.489221 328.537332)">100</text>
+     </g>
+    </g>
+    <g id="xtick_7">
+     <g id="line2d_23">
+      <g>
+       <use xlink:href="#m2b22158419" x="647.754186" y="312.744207" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_20">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="647.754186" y="328.537332" transform="rotate(-0 647.754186 328.537332)">150</text>
+     </g>
+    </g>
+    <g id="xtick_8">
+     <g id="line2d_24">
+      <g>
+       <use xlink:href="#m2b22158419" x="694.01915" y="312.744207" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_21">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="694.01915" y="328.537332" transform="rotate(-0 694.01915 328.537332)">200</text>
+     </g>
+    </g>
+    <g id="xtick_9">
+     <g id="line2d_25">
+      <g>
+       <use xlink:href="#m2b22158419" x="740.284115" y="312.744207" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_22">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="740.284115" y="328.537332" transform="rotate(-0 740.284115 328.537332)">250</text>
+     </g>
+    </g>
+    <g id="xtick_10">
+     <g id="line2d_26">
+      <g>
+       <use xlink:href="#m2b22158419" x="786.54908" y="312.744207" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_23">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="786.54908" y="328.537332" transform="rotate(-0 786.54908 328.537332)">300</text>
+     </g>
+    </g>
+    <g id="xtick_11">
+     <g id="line2d_27">
+      <g>
+       <use xlink:href="#m2b22158419" x="832.814045" y="312.744207" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_24">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="832.814045" y="328.537332" transform="rotate(-0 832.814045 328.537332)">350</text>
+     </g>
+    </g>
+    <g id="text_25">
+     <text style="font: 11px 'Microsoft YaHei'; text-anchor: middle" x="687.079406" y="344.064989" transform="rotate(-0 687.079406 344.064989)">满足该条件的样本数</text>
+    </g>
+   </g>
+   <g id="matplotlib.axis_4">
+    <g id="ytick_9">
+     <g id="line2d_28">
+      <g>
+       <use xlink:href="#mb1f1a975d5" x="508.959291" y="64.405243" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_26">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: end" x="501.959291" y="68.801805" transform="rotate(-0 501.959291 68.801805)">可读取路线</text>
+     </g>
+    </g>
+    <g id="ytick_10">
+     <g id="line2d_29">
+      <g>
+       <use xlink:href="#mb1f1a975d5" x="508.959291" y="133.580442" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_27">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: end" x="501.959291" y="137.977004" transform="rotate(-0 501.959291 137.977004)">完整左右边界</text>
+     </g>
+    </g>
+    <g id="ytick_11">
+     <g id="line2d_30">
+      <g>
+       <use xlink:href="#mb1f1a975d5" x="508.959291" y="202.755641" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_28">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: end" x="501.959291" y="207.152203" transform="rotate(-0 501.959291 207.152203)">距离语义通过</text>
+     </g>
+    </g>
+    <g id="ytick_12">
+     <g id="line2d_31">
+      <g>
+       <use xlink:href="#mb1f1a975d5" x="508.959291" y="271.93084" style="stroke: #000000; stroke-width: 0.8"/>
+      </g>
+     </g>
+     <g id="text_29">
+      <text style="font: 11px 'Microsoft YaHei'; text-anchor: end" x="501.959291" y="276.327402" transform="rotate(-0 501.959291 276.327402)">完整点列筛查通过</text>
+     </g>
+    </g>
+   </g>
+   <g id="patch_13">
+    <path d="M 508.959291 312.744207 
+L 508.959291 23.591875 
+" style="fill: none; stroke: #000000; stroke-width: 1.1; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_14">
+    <path d="M 508.959291 312.744207 
+L 865.19952 312.744207 
+" style="fill: none; stroke: #000000; stroke-width: 1.1; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="text_30">
+    <text style="font: 11px 'Microsoft YaHei'; text-anchor: start" x="827.262249" y="67.434539" transform="rotate(-0 827.262249 67.434539)">340</text>
+   </g>
+   <g id="text_31">
+    <text style="font: 11px 'Microsoft YaHei'; text-anchor: start" x="576.50614" y="136.609739" transform="rotate(-0 576.50614 136.609739)">69</text>
+   </g>
+   <g id="text_32">
+    <text style="font: 11px 'Microsoft YaHei'; text-anchor: start" x="536.71827" y="205.784938" transform="rotate(-0 536.71827 205.784938)">26</text>
+   </g>
+   <g id="text_33">
+    <text style="font: 11px 'Microsoft YaHei'; text-anchor: start" x="515.436386" y="274.960137" transform="rotate(-0 515.436386 274.960137)">3</text>
+   </g>
+   <g id="text_34">
+    <text style="font: 700 13px 'Microsoft YaHei'; text-anchor: middle" x="687.079406" y="17.591875" transform="rotate(-0 687.079406 17.591875)">B  空间分析证据逐级筛查</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p52990d7ee6">
+   <rect x="49.079063" y="23.591875" width="356.240229" height="289.152332"/>
+  </clipPath>
+  <clipPath id="p12d6daf719">
+   <rect x="508.959291" y="23.591875" width="356.240229" height="289.152332"/>
+  </clipPath>
+ </defs>
+</svg>

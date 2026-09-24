@@ -42,3 +42,6 @@
 ## 数学模型与算法说明
 
 V5项目书含27组公式与五幅重绘技术图。前端“专业依据 → 算法原理与系统架构”可按需展开。[公式、工件参数与实现追溯](docs/final/technical_v5/README.md)。
+
+论文风格图集：[7幅组合图及图注](docs/final/scientific_figures/图集说明与图注.md)，含16个子图、PNG/SVG/PDF、数据哈希与绘图脚本。
+
