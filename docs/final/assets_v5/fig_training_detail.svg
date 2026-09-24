@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1390" viewBox="0 0 1600 1390"><rect width="1600" height="1390" fill="white"/>
+<rect x="230" y="25" width="1140" height="185" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="254" y="79" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">冻结样本  340条 × 55维</text>
+<text x="254" y="132" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">特征仅来自执行前信息；标签由历史结果独立关联</text>
+<text x="254" y="176" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">地图分组，并兼顾样本比例与类别比例</text>
+<polyline points="800,210 800,255 440,255 440,300" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="440,300 433.3798881807529,284.34196310195097 446.62011181924703,284.34196310195097" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="800,255 1195,255 1195,300" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="1195,300 1188.379888180753,284.34196310195097 1201.620111819247,284.34196310195097" fill="#668894" stroke="#668894" stroke-width="3"/>
+<rect x="45" y="310" width="790" height="190" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="69" y="364" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">开发集  274条 / 20张地图</text>
+<text x="69" y="417" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">五折GroupKFold：逻辑回归 / ExtraTrees / HGB</text>
+<text x="69" y="461" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">按失败AP均值选择模型族；ROC作为次级比较</text>
+<rect x="925" y="310" width="630" height="190" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="949" y="364" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">历史留出  66条 / 5张地图</text>
+<text x="949" y="417" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">训练与测试地图不重叠</text>
+<text x="949" y="461" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">测试标签用于报告，不用于模型拟合</text>
+<polyline points="440,500 440,550" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="440,550 433.3798881807529,534.3419631019509 446.62011181924703,534.3419631019509" fill="#668894" stroke="#668894" stroke-width="3"/>
+<rect x="45" y="560" width="790" height="185" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="69" y="614" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">开发集再分组  基础拟合与校准</text>
+<text x="69" y="667" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">拟合HGB → 开发校准集sigmoid映射</text>
+<text x="69" y="711" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">校准集阈值扫描仅是历史阈值研究</text>
+<polyline points="835,650 1100,650 1100,755" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="1100,755 1093.379888180753,739.3419631019509 1106.620111819247,739.3419631019509" fill="#668894" stroke="#668894" stroke-width="3"/>
+<text x="1170" y="594" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">留出预测</text>
+<rect x="925" y="765" width="630" height="180" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="949" y="819" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">历史量化证据</text>
+<text x="949" y="872" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">AP / ROC / Top-K / 地图分组复核</text>
+<text x="949" y="916" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">用于评价新地图表现，保留逐样本分数</text>
+<polyline points="1235,500 1510,500 1510,750" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="1510,750 1503.379888180753,734.3419631019509 1516.620111819247,734.3419631019509" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="440,745 440,805" fill="none" stroke="#668894" stroke-width="3" stroke-dasharray="12 9"/>
+<polygon points="440,805 433.3798881807529,789.3419631019509 446.62011181924703,789.3419631019509" fill="#668894" stroke="#668894" stroke-width="3"/>
+<rect x="45" y="820" width="790" height="235" rx="12" fill="#E4F3EE" stroke="#94ACB5" stroke-width="2"/>
+<text x="69" y="874" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">部署工件  模型族确定后全量重拟合</text>
+<text x="69" y="927" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">使用全部340条冻结标签重新训练HGB</text>
+<text x="69" y="971" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">实际joblib没有包裹sigmoid校准器</text>
+<text x="69" y="1015" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">不得用其回放分数冒充历史留出分数</text>
+<polyline points="440,1055 440,1100" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="440,1100 433.3798881807529,1084.341963101951 446.62011181924703,1084.341963101951" fill="#668894" stroke="#668894" stroke-width="3"/>
+<rect x="45" y="1110" width="1510" height="180" rx="12" fill="#E4F3EE" stroke="#94ACB5" stroke-width="2"/>
+<text x="69" y="1164" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">在线新任务</text>
+<text x="69" y="1217" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">固定55维变换 → 工件契约检查 → 输出排序分值 → 保存评估快照</text>
+<text x="69" y="1261" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">新任务经验证后进入反馈池；不在用户点击评分时自动重训</text>
+<text x="45" y="1358" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="400">蓝色：离线评估    青色：当前部署    虚线：选择结果用于发布，而非复用留出预测</text>
+</svg>

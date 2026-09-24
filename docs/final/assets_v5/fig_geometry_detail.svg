@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1210" viewBox="0 0 1600 1210"><rect width="1600" height="1210" fill="white"/>
+<text x="45" y="47" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="32" font-weight="600">A  局部车身坐标与全局姿态变换</text>
+<polyline points="110,470 420,380 800,330 1180,315 1500,345" fill="none" stroke="#9AADB6" stroke-width="6"/>
+<polygon points="371.8224934200258,312.99932769105504 1201.0934114555525,179.17203413508838 1228.1775065799743,347.00067230894496 398.9065885444476,480.8279658649116" fill="#E4F3EE" stroke="#248B83" stroke-width="3"/>
+<polyline points="800,330 1315,245" fill="none" stroke="#248B83" stroke-width="3"/>
+<polygon points="1315,245 1300.6290277152682,254.08158331963483 1298.4729180800337,241.01809552968427" fill="#248B83" stroke="#248B83" stroke-width="3"/>
+<text x="1300" y="218" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="400">车身纵向</text>
+<polyline points="800,330 760,95" fill="none" stroke="#248B83" stroke-width="3"/>
+<polygon points="760,95 769.1536547609617,109.32517380408082 756.1011620054579,111.54687469863464" fill="#248B83" stroke="#248B83" stroke-width="3"/>
+<text x="805" y="123" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="400">车身横向</text>
+<polygon points="790,330 800,320 810,330 800,340" fill="#133847" stroke="#133847" stroke-width="3"/>
+<text x="805" y="376" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="400">参考点 p(i)</text>
+<text x="70" y="253" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="400">后端 −a</text>
+<polyline points="230,255 385.3645409822367,396.91364677798333" fill="none" stroke="#668894" stroke-width="3"/>
+<text x="1260" y="423" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="400">前端 L−a</text>
+<polyline points="1260,393 1214.6354590177634,263.08635322201667" fill="none" stroke="#668894" stroke-width="3"/>
+<text x="55" y="550" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="400">四角经旋转和平移得到外廓；每条边取4点，共16个周界采样点。</text>
+<polyline points="45,595 1555,595" fill="none" stroke="#B6C8CF" stroke-width="2"/>
+<text x="45" y="657" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="32" font-weight="600">B  局部截面余量的近似计算</text>
+<polyline points="105,745 1020,765" fill="none" stroke="#376E96" stroke-width="5"/>
+<text x="1100" y="765" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="400">左侧边界 b(L)</text>
+<polyline points="105,870 1020,890" fill="none" stroke="#9AADB6" stroke-width="5"/>
+<text x="1100" y="890" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="400">插值中心 p</text>
+<polyline points="105,1020 1020,1040" fill="none" stroke="#376E96" stroke-width="5"/>
+<text x="1100" y="1040" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="400">右侧边界 b(R)</text>
+<polyline points="705,880 708,760" fill="none" stroke="#BC672C" stroke-width="4"/>
+<polygon points="708,760 714.2267153521922,775.8185971540707 700.9906273451088,775.4876949538937" fill="#BC672C" stroke="#BC672C" stroke-width="3"/>
+<polygon points="535,805 890,820 890,945 535,930" fill="#E4F3EE" stroke="#248B83" stroke-width="3"/>
+<polyline points="600,807 600,755" fill="none" stroke="#BC672C" stroke-width="4"/>
+<polygon points="600,755 606.6201118192471,770.6580368980491 593.3798881807529,770.6580368980491" fill="#BC672C" stroke="#BC672C" stroke-width="3"/>
+<text x="105" y="835" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="400">周界点 q</text>
+<polyline points="285,833 535,805" fill="none" stroke="#668894" stroke-width="3"/>
+<text x="770" y="719" fill="#BC672C" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">剩余投影余量</text>
+<polyline points="840,731 600,779" fill="none" stroke="#BC672C" stroke-width="3"/>
+<text x="45" y="1119" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">截面里程由参考里程加车身纵向偏移近似，再插值中心线与两侧边界。</text>
+<text x="45" y="1168" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="400">本图为机制示意，无真实道路比例；局部截面近似不等于连续碰撞检测。</text>
+</svg>

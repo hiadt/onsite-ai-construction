@@ -1,0 +1,137 @@
+[
+  {
+    "id": "input",
+    "latex": "\\mathcal{T}_i=\\{s_j,p_j,z_j,\\kappa_j,v_j,c^L_j,c^R_j\\}_{j=1}^{N_i},\\quad x_i=\\Phi(\\mathcal{T}_i)\\in\\mathbb{R}^{55}",
+    "number": 1
+  },
+  {
+    "id": "gradient",
+    "latex": "D_s f_j=-\\frac{h_+ f_{j-1}}{h_-(h_-+h_+)}+\\frac{(h_+-h_-)f_j}{h_-h_+}+\\frac{h_- f_{j+1}}{h_+(h_-+h_+)}",
+    "number": 2
+  },
+  {
+    "id": "proxies",
+    "latex": "u_j=\\max_k|\\delta_{jk}|,\\quad g_j=D_s z_j,\\quad \\widehat{\\omega}_j=v_j\\kappa_j,\\quad a^{\\rm proxy}_{y,j}=v_j^2|\\kappa_j|",
+    "number": 3
+  },
+  {
+    "id": "window",
+    "latex": "a(j)=\\min\\{k:s_k\\ge s_j-10\\},\\quad P_j=\\sum_{k=1}^{j}f_k,\\quad \\bar f_j^{(10)}=\\frac{P_j-P_{a(j)-1}}{j-a(j)+1}",
+    "number": 4
+  },
+  {
+    "id": "input_old",
+    "latex": "x_i\\in\\mathbb{R}^{55},\\quad y_i\\in\\{0,1\\},\\quad r_i=\\widehat P(y_i=0\\mid x_i)",
+    "number": 5
+  },
+  {
+    "id": "boost",
+    "latex": "F_T(x)=F_0+\\eta\\sum_{t=1}^{T}h_t(x),\\quad p_{\\rm pass}(x)=\\frac{1}{1+e^{-F_T(x)}},\\quad r(x)=1-p_{\\rm pass}(x)",
+    "number": 6
+  },
+  {
+    "id": "loss",
+    "latex": "\\ell(y,F)=-y\\log p-(1-y)\\log(1-p),\\quad g=p-y,\\quad h=p(1-p)",
+    "number": 7
+  },
+  {
+    "id": "leaf",
+    "latex": "w_A=-\\frac{\\sum_{i\\in A}g_i}{\\sum_{i\\in A}h_i+\\lambda},\\quad F_t(x)=F_{t-1}(x)+\\eta w_{A_t(x)}",
+    "number": 8
+  },
+  {
+    "id": "gain",
+    "latex": "\\Delta\\mathcal{L}\\propto\\frac{G_L^2}{H_L+\\lambda}+\\frac{G_R^2}{H_R+\\lambda}-\\frac{(G_L+G_R)^2}{H_L+H_R+\\lambda}",
+    "number": 9
+  },
+  {
+    "id": "ecdf",
+    "latex": "\\widehat F_f^{\\rm mid}(x)=\\frac{\\#\\{v<x\\}+\\tfrac12\\#\\{v=x\\}}{M},\\quad M=274",
+    "number": 10
+  },
+  {
+    "id": "rule",
+    "latex": "S_g=\\frac{1}{|J_g|}\\sum_{f\\in J_g}s_f(x_f),\\quad s_f(x)=\\widehat F_f^{\\rm mid}(x)\\ \\mathrm{or}\\ 1-\\widehat F_f^{\\rm mid}(x),\\quad R=\\frac16\\sum_{g=1}^{6}S_g",
+    "number": 11
+  },
+  {
+    "id": "queue",
+    "latex": "Q=M\\cup\\operatorname{TopK}(C\\setminus M;r),\\quad |Q|=|M|+\\min(K,|C\\setminus M|)",
+    "number": 12
+  },
+  {
+    "id": "ey",
+    "latex": "e_y=(p_{act}-p_{ref})\\cdot[-\\sin\\psi_{ref},\\cos\\psi_{ref}]",
+    "number": 13
+  },
+  {
+    "id": "epsi",
+    "latex": "e_\\psi=\\operatorname{wrap}(\\psi_{act}-\\psi_{ref})",
+    "number": 14
+  },
+  {
+    "id": "nc",
+    "latex": "n_c=e_y+x_c\\sin e_\\psi+y_c\\cos e_\\psi",
+    "number": 15
+  },
+  {
+    "id": "corners",
+    "latex": "\\mathcal C=\\{(-a,-W/2),(-a,W/2),(L-a,W/2),(L-a,-W/2)\\},\\quad 0\\le a\\le L",
+    "number": 16
+  },
+  {
+    "id": "transform",
+    "latex": "q_{ij}=p_i+R(\\psi_i)c_j,\\quad R(\\psi)=\\begin{bmatrix}\\cos\\psi&-\\sin\\psi\\\\\\sin\\psi&\\cos\\psi\\end{bmatrix}",
+    "number": 17
+  },
+  {
+    "id": "semantics",
+    "latex": "E_d=\\max_i\\left\\{\\left|\\|b_i^L-p_i\\|-c_i^L\\right|,\\left|\\|b_i^R-p_i\\|-c_i^R\\right|\\right\\}\\le10^{-5}\\ \\mathrm m",
+    "number": 18
+  },
+  {
+    "id": "station",
+    "latex": "\\widetilde s_{ij}=\\operatorname{clip}(s_i+c_{jx},s_0,s_{N-1}),\\quad d^L=\\|b^L(\\widetilde s)-p(\\widetilde s)\\|,\\quad u^L=\\frac{b^L(\\widetilde s)-p(\\widetilde s)}{d^L}",
+    "number": 19
+  },
+  {
+    "id": "margin",
+    "latex": "m^L_{ij}=d^L-u^L\\cdot(q_{ij}-p(\\widetilde s_{ij})),\\quad m_i=\\min_j\\{m^L_{ij},m^R_{ij}\\}",
+    "number": 20
+  },
+  {
+    "id": "span",
+    "latex": "\\widehat L_\\tau=\\sum_{i=1}^{N-1}(s_{i+1}-s_i)\\,\\mathbf1\\{m_i<\\tau\\ \\lor\\ m_{i+1}<\\tau\\}",
+    "number": 21
+  },
+  {
+    "id": "sensitivity",
+    "latex": "\\frac{\\partial n_c}{\\partial e_y}=1,\\quad \\frac{\\partial n_c}{\\partial e_\\psi}=x_c\\cos e_\\psi-y_c\\sin e_\\psi,\\quad n_c\\approx e_y+y_c+x_c e_\\psi",
+    "number": 22
+  },
+  {
+    "id": "key",
+    "latex": "h_v=\\operatorname{SHA256}(\\operatorname{CanonicalJSON}(v)),\\quad k=\\operatorname{SHA256}(\\operatorname{JSON}(h_r,e_{ver},r_{ver},h_v))",
+    "number": 23
+  },
+  {
+    "id": "auc",
+    "latex": "\\mathrm{AUC}=\\frac{1}{n_1n_0}\\sum_{i:z_i=1}\\sum_{j:z_j=0}\\left[\\mathbf1(r_i>r_j)+\\tfrac12\\mathbf1(r_i=r_j)\\right]",
+    "number": 24
+  },
+  {
+    "id": "ap",
+    "latex": "\\mathrm{AP}=\\sum_t(\\mathrm{Recall}_t-\\mathrm{Recall}_{t-1})\\,\\mathrm{Precision}_t",
+    "number": 25
+  },
+  {
+    "id": "topk",
+    "latex": "\\mathrm{P@K}=\\frac{\\sum_{i\\in Q_K}z_i}{K},\\quad \\mathrm{Capture@K}=\\frac{\\sum_{i\\in Q_K}z_i}{F},\\quad E[F_{random}]=\\frac{KF}{N}",
+    "number": 26
+  },
+  {
+    "id": "ties",
+    "latex": "E[F_K]=F_++\\frac{K-n_+}{n_=}\\,F_=",
+    "number": 27
+  }
+]

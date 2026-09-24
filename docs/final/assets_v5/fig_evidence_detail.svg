@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1360" viewBox="0 0 1600 1360"><rect width="1600" height="1360" fill="white"/>
+<rect x="230" y="25" width="1140" height="185" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="254" y="79" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">追加一条验证记录</text>
+<text x="254" y="132" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">路线哈希 / 环境版本 / 路线版本 / 车辆配置 → 条件键</text>
+<text x="254" y="176" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">同时记录方法、结论、严重程度和证据引用</text>
+<polyline points="800,210 800,255" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="800,255 793.3798881807529,239.34196310195097 806.6201118192471,239.34196310195097" fill="#668894" stroke="#668894" stroke-width="3"/>
+<rect x="230" y="265" width="1140" height="185" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="254" y="319" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">是否同条件且有明确结果</text>
+<text x="254" y="372" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">条件一致 + 通过或失败 → 检查可比较记录</text>
+<text x="254" y="416" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">条件不同或待核对 → 分开展示，保留记录</text>
+<polyline points="800,450 800,475" fill="none" stroke="#668894" stroke-width="3"/>
+<rect x="45" y="515" width="720" height="200" rx="12" fill="#E4F3EE" stroke="#94ACB5" stroke-width="2"/>
+<text x="69" y="569" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">无相反结果且已核对</text>
+<text x="69" y="622" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">可由人工设置为训练候选</text>
+<text x="69" y="666" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">附件完整度另行标记，不自动认证</text>
+<rect x="835" y="515" width="720" height="200" rx="12" fill="#FCF2E4" stroke="#94ACB5" stroke-width="2"/>
+<text x="859" y="569" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">同条件出现通过与失败</text>
+<text x="859" y="622" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">提示冲突，训练审核回到待审核</text>
+<text x="859" y="666" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">拒绝生成单一训练候选结论</text>
+<polyline points="800,475 405,475 405,505" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="405,505 398.3798881807529,489.34196310195097 411.62011181924703,489.34196310195097" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="800,475 1195,475 1195,505" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="1195,505 1188.379888180753,489.34196310195097 1201.620111819247,489.34196310195097" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="405,715 405,775" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="405,775 398.3798881807529,759.3419631019509 411.62011181924703,759.3419631019509" fill="#668894" stroke="#668894" stroke-width="3"/>
+<rect x="45" y="785" width="720" height="190" rx="12" fill="#E4F3EE" stroke="#94ACB5" stroke-width="2"/>
+<text x="69" y="839" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">可用于训练候选</text>
+<text x="69" y="892" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">只改变治理状态，不改变模型参数</text>
+<text x="69" y="936" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">保留原评估快照和多次验证记录</text>
+<rect x="835" y="785" width="720" height="190" rx="12" fill="#FCF2E4" stroke="#94ACB5" stroke-width="2"/>
+<text x="859" y="839" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">人工复核原因</text>
+<text x="859" y="892" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">核对环境、车辆、单位、语义与证据</text>
+<text x="859" y="936" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">不同条件应拆开，同条件冲突需澄清</text>
+<polyline points="1195,715 1195,775" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="1195,775 1188.379888180753,759.3419631019509 1201.620111819247,759.3419631019509" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="405,975 405,1030" fill="none" stroke="#668894" stroke-width="3" stroke-dasharray="12 9"/>
+<polygon points="405,1030 398.3798881807529,1014.3419631019509 411.62011181924703,1014.3419631019509" fill="#668894" stroke="#668894" stroke-width="3"/>
+<rect x="45" y="1040" width="1510" height="195" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="69" y="1094" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">下一版本由离线流程发布</text>
+<text x="69" y="1147" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">数据去重与标签审核 → 按共同来源分组 → 模型对照与失败漏检评估</text>
+<text x="69" y="1191" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">满足准入条件后，冻结数据、特征契约、模型和报告；线上显式切换版本</text>
+<text x="45" y="1314" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">当前状态机在本地SQLite维护；虚线为需人工组织的后续训练与发布。</text>
+</svg>

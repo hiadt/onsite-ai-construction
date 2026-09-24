@@ -1,0 +1,54 @@
+{
+  "scope": "synthetic definition checks, not additional training or evaluation samples",
+  "checks": {
+    "nonuniform_gradient": "passed",
+    "trailing_10m_sample_mean": "passed",
+    "midrank_and_group_sizes": "passed",
+    "rigid_transform": "passed",
+    "straight_corridor_margin": "passed",
+    "ordinary_budget_plus_mandatory": "passed",
+    "deployed_model_identity": "passed"
+  },
+  "model_class": "HistGradientBoostingClassifier",
+  "parameters": {
+    "categorical_features": null,
+    "early_stopping": "auto",
+    "l2_regularization": 1.0,
+    "learning_rate": 0.04,
+    "loss": "auto",
+    "max_bins": 255,
+    "max_depth": null,
+    "max_iter": 250,
+    "max_leaf_nodes": 15,
+    "min_samples_leaf": 20,
+    "monotonic_cst": null,
+    "n_iter_no_change": 10,
+    "random_state": 20260922,
+    "scoring": "loss",
+    "tol": 1e-07,
+    "validation_fraction": 0.1,
+    "verbose": 0,
+    "warm_start": false
+  },
+  "n_iter": 250,
+  "early_stopping_active": false,
+  "artifact_metadata": {
+    "feature_version": "pathguard_preexec_v2.0.0",
+    "schema_sha256": "b365d5b00779cc9f1e2858e695f0063112d94771a2cbc611c734d1110983d334",
+    "failure_score_definition": "1 - predicted pass probability",
+    "selected_failure_risk_threshold": 0.4499999999999999
+  },
+  "source_sha256": {
+    "demo/inference.py": "f1400fbd1d564cc04830fa5d6df6281a022a89eb6873af43ea94abaa86916f0c",
+    "demo/rule_baseline.py": "7c91a17df3521171d69df2234227b2fc6e9ea7f1009c13d9f714357da024a71f",
+    "demo/demo_logic.py": "4e1c8bc6c35b34d32df0df3e0f3504c68244ad876ba460fda476844d71cba856",
+    "demo/route_input.py": "e898baac1a1ae127936a5a8b4a63fb2f24c09412e3f48676d90bba3bb288abb6",
+    "demo/geometry_integrity.py": "804cb7330e04eb8f89c19da2ea883152187ce59da69ce6432d1e3e991c8d4676",
+    "demo/feedback_store.py": "1f812dd4c62882fbc0f70c55c70fbdb48ae20e42683ea2248d59cacd4f509ede",
+    "demo/tracking_evidence.py": "71289483e5b9beaf41c083b1a9bd17ec735677df56f3325c6469e036b6fdc4c7",
+    "scripts/data_audit/extract_gate2_pre_execution_features_shanyu000.py": "42105c2c67e2fd8e1d989bdd1254ebb98bb42562a32241f15239f23225d32680",
+    "demo/models/pathguard_gate3_model.joblib": "df631a53fc6af52a23b1b037639bf114154d3f9deffcda8311b2625210a9e530",
+    "demo/data/feature_contract_v2.json": "87a1a4b1475c4f07b6688bdd3380874f76bb1c35e3cd210da05991eb7c4d90bb",
+    "reports/final/tables/heldout_methods_v3.csv": "b6514d3284c40b0c30105fed6d3a024411d79658a69b565a856df24ad131fd57"
+  }
+}

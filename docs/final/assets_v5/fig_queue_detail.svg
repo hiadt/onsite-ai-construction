@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1160" viewBox="0 0 1600 1160"><rect width="1600" height="1160" fill="white"/>
+<rect x="45" y="25" width="720" height="185" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="69" y="79" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">学习通道</text>
+<text x="69" y="132" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">55维 → HGB → 历史失败倾向</text>
+<text x="69" y="176" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">combined_risk当前等于model_risk</text>
+<rect x="835" y="25" width="720" height="185" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="859" y="79" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">规则解释通道</text>
+<text x="859" y="132" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">16项 → 固定274条参考分布</text>
+<text x="859" y="176" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">六组等权平均；不拆解模型概率</text>
+<polyline points="405,210 405,280" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="405,280 398.3798881807529,264.34196310195097 411.62011181924703,264.34196310195097" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="1195,210 1195,280" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="1195,280 1188.379888180753,264.34196310195097 1201.620111819247,264.34196310195097" fill="#668894" stroke="#668894" stroke-width="3"/>
+<rect x="45" y="290" width="720" height="180" rx="12" fill="#E4F3EE" stroke="#94ACB5" stroke-width="2"/>
+<text x="69" y="344" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">普通候选排序</text>
+<text x="69" y="397" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">模型可用：按模型分值降序</text>
+<text x="69" y="441" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">模型不可用：明确标注规则预览</text>
+<rect x="835" y="290" width="720" height="180" rx="12" fill="#E4F3EE" stroke="#94ACB5" stroke-width="2"/>
+<text x="859" y="344" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">工程原因与空间条件</text>
+<text x="859" y="397" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">曲率 / 转向 / 横摆 / 坡度 / 边界</text>
+<text x="859" y="441" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">实配几何异常独立核对；假设试算不触发</text>
+<polyline points="405,470 405,535" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="405,535 398.3798881807529,519.3419631019509 411.62011181924703,519.3419631019509" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="1195,470 1195,535" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="1195,535 1188.379888180753,519.3419631019509 1201.620111819247,519.3419631019509" fill="#668894" stroke="#668894" stroke-width="3"/>
+<rect x="45" y="545" width="720" height="190" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="69" y="599" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">普通预算  Top-K</text>
+<text x="69" y="652" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">先排除预算外事项，再取前K条</text>
+<text x="69" y="696" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">同分稳定排序，保留输入顺序</text>
+<rect x="835" y="545" width="720" height="190" rx="12" fill="#FCF2E4" stroke="#94ACB5" stroke-width="2"/>
+<text x="859" y="599" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">预算外事项  M</text>
+<text x="859" y="652" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">满足具体证据条件时单列</text>
+<text x="859" y="696" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">不占普通预算；原因单独显示</text>
+<polyline points="405,735 405,785 800,785 800,825" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="800,825 793.3798881807529,809.3419631019509 806.6201118192471,809.3419631019509" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="1195,735 1195,785 800,785" fill="none" stroke="#668894" stroke-width="3"/>
+<rect x="230" y="835" width="1140" height="190" rx="12" fill="#E4F3EE" stroke="#94ACB5" stroke-width="2"/>
+<text x="254" y="889" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">验证工作清单</text>
+<text x="254" y="942" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">输出总数可能大于K：先处理独立事项，再看普通候选</text>
+<text x="254" y="986" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">保留位置、依据、下一步动作；低分不自动等同于安全</text>
+<text x="45" y="1120" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="400">示例：12条候选 + 普通预算3条 + 预算外2条 → 最终5个工作项。</text>
+</svg>

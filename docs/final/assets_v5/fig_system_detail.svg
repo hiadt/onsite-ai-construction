@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1510" viewBox="0 0 1600 1510"><rect width="1600" height="1510" fill="white"/>
+<text x="45" y="47" fill="#44616D" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="600">01  输入契约与任务身份</text>
+<rect x="45" y="70" width="480" height="190" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="69" y="124" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">路线与车辆</text>
+<text x="69" y="177" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">NPZ点列 / 车辆JSON</text>
+<text x="69" y="221" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">里程、单位、配置指纹</text>
+<rect x="560" y="70" width="480" height="190" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="584" y="124" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">固定特征接口</text>
+<text x="584" y="177" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">55维CSV / Schema哈希</text>
+<text x="584" y="221" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">版本与列序校验</text>
+<rect x="1075" y="70" width="480" height="190" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="1099" y="124" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">实际执行证据</text>
+<text x="1099" y="177" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">遥测 / 参考路线 / 结果</text>
+<text x="1099" y="221" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">按里程配对并核对条件</text>
+<polyline points="525,165 555,165" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="555,165 539.3419631019509,171.62011181924706 539.3419631019509,158.37988818075294" fill="#668894" stroke="#668894" stroke-width="3"/>
+<rect x="45" y="390" width="325" height="270" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="69" y="444" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">历史学习</text>
+<text x="69" y="497" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">inference</text>
+<text x="69" y="541" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">HGB失败倾向</text>
+<text x="69" y="585" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">输入：55维</text>
+<rect x="440" y="390" width="325" height="270" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="464" y="444" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">工程规则</text>
+<text x="464" y="497" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">rule_baseline</text>
+<text x="464" y="541" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">六组分位数应力</text>
+<text x="464" y="585" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">输入：16项特征</text>
+<rect x="835" y="390" width="325" height="270" rx="12" fill="#E4F3EE" stroke="#94ACB5" stroke-width="2"/>
+<text x="859" y="444" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">空间计算</text>
+<text x="859" y="497" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">route_input</text>
+<text x="859" y="541" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">姿态变换与余量</text>
+<text x="859" y="585" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">完整边界有条件启用</text>
+<rect x="1230" y="390" width="325" height="270" rx="12" fill="#E4F3EE" stroke="#94ACB5" stroke-width="2"/>
+<text x="1254" y="444" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">执行重算</text>
+<text x="1254" y="497" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">tracking_evidence</text>
+<text x="1254" y="541" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">横向 / 航向偏差</text>
+<text x="1254" y="585" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">输入：已执行遥测</text>
+<polyline points="285,260 285,280 997,280 997,380" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="997,380 990.3798881807529,364.34196310195097 1003.6201118192471,364.34196310195097" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="800,260 800,310 205,310 205,380" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="205,380 198.37988818075294,364.34196310195097 211.62011181924706,364.34196310195097" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="800,310 600,310 600,380" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="600,380 593.3798881807529,364.34196310195097 606.6201118192471,364.34196310195097" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="1315,260 1390,260 1390,380" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="1390,380 1383.379888180753,364.34196310195097 1396.620111819247,364.34196310195097" fill="#668894" stroke="#668894" stroke-width="3"/>
+<rect x="45" y="755" width="720" height="210" rx="12" fill="#E4F3EE" stroke="#94ACB5" stroke-width="2"/>
+<text x="69" y="809" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">任务工作台  demo_logic / app</text>
+<text x="69" y="862" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">模型优先级 + 规则原因 + 局部空间位置</text>
+<text x="69" y="906" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">普通预算队列与预算外事项分别显示</text>
+<rect x="835" y="755" width="720" height="210" rx="12" fill="#E4F3EE" stroke="#94ACB5" stroke-width="2"/>
+<text x="859" y="809" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">验证证据  feedback_store</text>
+<text x="859" y="862" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">评估快照 / 条件键 / 附件引用 / 验证结果</text>
+<text x="859" y="906" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">多来源结果核对与冲突提示</text>
+<polyline points="205,660 205,750" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="205,750 198.37988818075294,734.3419631019509 211.62011181924706,734.3419631019509" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="600,660 600,750" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="600,750 593.3798881807529,734.3419631019509 606.6201118192471,734.3419631019509" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="997,660 997,750" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="997,750 990.3798881807529,734.3419631019509 1003.6201118192471,734.3419631019509" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="1390,660 1390,750" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="1390,750 1383.379888180753,734.3419631019509 1396.620111819247,734.3419631019509" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="765,860 830,860" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="830,860 814.3419631019509,866.6201118192471 814.3419631019509,853.3798881807529" fill="#668894" stroke="#668894" stroke-width="3"/>
+<text x="45" y="1039" fill="#44616D" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="600">固定工件与离线治理</text>
+<rect x="45" y="1065" width="720" height="220" rx="12" fill="#EAF2F8" stroke="#94ACB5" stroke-width="2"/>
+<text x="69" y="1119" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">固定发布工件</text>
+<text x="69" y="1172" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">feature_contract_v2.json / joblib</text>
+<text x="69" y="1216" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">rule_reference.json / 历史实验表</text>
+<text x="69" y="1260" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">在线只读；版本变更需要显式发布</text>
+<rect x="835" y="1065" width="720" height="220" rx="12" fill="#FCF2E4" stroke="#94ACB5" stroke-width="2"/>
+<text x="859" y="1119" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="34" font-weight="600">反馈与下一版数据</text>
+<text x="859" y="1172" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">本地SQLite追加验证记录</text>
+<text x="859" y="1216" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">人工审核 → 训练候选 → 数据冻结</text>
+<text x="859" y="1260" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400">离线比较通过后才发布下一版</text>
+<polyline points="1195,965 1195,1060" fill="none" stroke="#668894" stroke-width="3"/>
+<polygon points="1195,1060 1188.379888180753,1044.341963101951 1201.620111819247,1044.341963101951" fill="#668894" stroke="#668894" stroke-width="3"/>
+<polyline points="835,1190 770,1190" fill="none" stroke="#668894" stroke-width="3" stroke-dasharray="12 9"/>
+<polygon points="770,1190 785.6580368980491,1183.379888180753 785.6580368980491,1196.620111819247" fill="#668894" stroke="#668894" stroke-width="3"/>
+<text x="45" y="1380" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="400">四通道独立输出；展示点可以抽稀，空间计算使用完整点列。</text>
+<text x="45" y="1430" fill="#133847" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="400">实线：已有数据或调用路径    虚线：需要审核组织的版本迭代</text>
+</svg>

@@ -15,8 +15,10 @@ import streamlit as st
 import streamlit.components.v1 as st_components
 try:
     from tracking_evidence import render_tracking_evidence
+    from technical_principles import render_technical_principles
 except ModuleNotFoundError:
     from demo.tracking_evidence import render_tracking_evidence
+    from demo.technical_principles import render_technical_principles
 
 try:  # Works both with `streamlit run demo/app.py` and AppTest from repo root.
     from demo_logic import apply_filters, evaluate_candidates, requires_geometry_check, select_validation_queue
@@ -1063,6 +1065,7 @@ with evidence_tab:
         '<div class="story-card"><em>工程验证</em><h3>真实任务收益需要继续检验</h3><p>留出地图实验提供离线依据；节省多少工时和真实批次的严重失效捕获仍需试点确认。</p></div>'
         '</div>', unsafe_allow_html=True)
     st.caption("模型排序、工程规则和几何边界分别提供证据；分数不是现场失效概率，也不能替代闭环仿真或实车验证。")
+    render_technical_principles(st, REPO_ROOT)
     with st.expander("查看完整技术附录：数据覆盖、离线指标与实验限制", expanded=False):
         st.markdown("### 数据与模型基础")
         foundation_cols = st.columns(4)
