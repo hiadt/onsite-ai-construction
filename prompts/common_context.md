@@ -2,7 +2,7 @@
 
 PathGuard——多轴工程车辆轨迹风险分析与验证决策平台。
 主张：从规划轨迹到实际执行，让工程风险看得见。
-当前唯一口径：`docs/final/PathGuard结果口径_v4.md`。
+当前唯一口径：`docs/final/PathGuard结果口径.md`。
 
 ## 固定事实
 

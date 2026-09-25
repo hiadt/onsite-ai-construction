@@ -43,9 +43,9 @@
 
 ## 当前入口
 
-- `PathGuard项目书正式版_v5.docx`及同名源稿md。
+- `归档/项目书/PathGuard项目书正式版.docx`及同名源稿md。
 - `答辩问题与统一口径.md`。
-- `PathGuard宣传与演示稿_v4.md`。
+- `PathGuard宣传与演示稿.md`。
 - 指标：`reports/final/tables/heldout_methods_v3.csv`、`feature_group_ablation.csv`。
 - 实录：`reports/final/tracking_execution_audit.json`。
 
@@ -60,4 +60,4 @@
 - 空间计算使用16个周界点和局部截面近似；已输出里程、侧别和最小余量，未持久化最危险周界点的车头/车尾分类。
 - 队列普通预算K之外可有独立事项M；最终队列可超过K。
 
-完整原理和实现追溯见 `PathGuard项目书正式版_v5.md` 与 `technical_v5/`。
+完整原理和实现追溯见 `归档/项目书/PathGuard项目书正式版.md` 与 `technical_v5/`。
